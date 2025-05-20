@@ -1,3 +1,12 @@
 _site/
 _draft/
 .jekyll-cache/
+.sass-cache/
+.jekyll-metadata
+*.exe
+*.class
+*.pyc
+
+# exclude the :Zone.Identifier files from WSL.
+*.Identifier
+.DS_Store
