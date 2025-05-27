@@ -93,7 +93,13 @@
                 <li class="category-title collapsible chapter" onclick="toggleCategory(this)">{{ cat }}</li>
                 <ul class="category-list">
                     {%- assign cat_posts = reversed_posts | where: "category", cat -%}
-                    {%- assign readme_post = cat_posts | where_exp: "item", "item.title == 'README' or item.path contains 'README.md'" | first -%}
+                    {%- assign readme_post = nil -%}
+                    {% for post in cat_posts %}
+                    {% if post.title == "README" or post.path contains "README.md" %}
+                        {%- assign readme_post = post -%}
+                        {% break %}
+                    {% endif %}
+                    {% endfor %}
                     {% if readme_post %}
                         <li class="chapter{% if page.url == readme_post.url %} active{% endif %}" data-level="1.1" data-path="{{site.baseurl}}{{readme_post.url}}">
                             <a href="{{site.baseurl}}{{readme_post.url}}" onclick="pageScrollToTop(this)">
