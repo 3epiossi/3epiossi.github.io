@@ -1,8 +1,11 @@
 # Configurations
 title:            Jekyll Gitbook
 longtitle:        Jekyll Gitbook
-author:           張寬水
+author:           NastYboY
 email:            3epiossi@gmail.com
+github_username: 3epiossi
+twitter_username: 3epiossi
+facebook_username: zhang.guan.qi.449284
 description: >
   Build Jekyll site with the GitBook style.
 
@@ -56,11 +59,6 @@ collections:
   others:
     output: true
     permalink: /:collection/:path/
-
-ordered_collections:
-  - posts
-  - pages
-  - others
 
 page_width: 800px
 

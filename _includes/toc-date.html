@@ -1,26 +1,64 @@
 <div class="book-summary">
     <script type="text/javascript">
-        // Fixes the page links scroll problem on both desktop and mobile browsers
-        function pageScrollToTop(element) {
-            // both mobile and non-mobile
-            $('div.body-inner').animate({scrollTop: 0});
-            $(element).parent().find('li>ul>li').removeClass('active');
-            return true;  // propagate
+        function getExpandedCats() {
+            try {
+                return JSON.parse(localStorage.getItem('expandedCats') || '[]');
+            } catch(e) { return []; }
         }
-        // Fixes the anchor links scroll problem on mobile browsers
-        function mobilePageScrollToAnchor(element) {
-            $(element).closest('li.chapter').find('ul>li').removeClass('active');
-            $(element).parent().addClass('active');
-            if ($(document).width() <= 1240) {
-                let target = $($(element).attr('href'));
-                if (target.length) {
-                    $('div.body-inner').animate({
-                        scrollTop: target.get(0).offsetTop,
-                    });
+        function setExpandedCats(arr) {
+            localStorage.setItem('expandedCats', JSON.stringify(arr));
+        }
+
+        function toggleCategory(element) {
+            var next = element.nextElementSibling;
+            var catName = element.textContent.trim();
+            var expandedCats = getExpandedCats();
+            if (next && next.classList.contains('category-list')) {
+                if (next.style.display === 'none' || next.style.display === '') {
+                    next.style.display = 'block';
+                    element.classList.remove('collapsed');
+                    if (!expandedCats.includes(catName)) {
+                        expandedCats.push(catName);
+                        setExpandedCats(expandedCats);
+                    }
+                } else {
+                    next.style.display = 'none';
+                    element.classList.add('collapsed');
+                    var idx = expandedCats.indexOf(catName);
+                    if (idx > -1) {
+                        expandedCats.splice(idx, 1);
+                        setExpandedCats(expandedCats);
+                    }
                 }
             }
-            return true;
         }
+
+        function initCollapsible() {
+            var expandedCats = getExpandedCats();
+            document.querySelectorAll('.category-title.collapsible').forEach(function(title) {
+                var next = title.nextElementSibling;
+                var catName = title.textContent.trim();
+                if (next && next.classList.contains('category-list')) {
+                    if (expandedCats.includes(catName)) {
+                        next.style.display = 'block';
+                        title.classList.remove('collapsed');
+                    } else {
+                        next.style.display = 'none';
+                        title.classList.add('collapsed');
+                    }
+                }
+            });
+        }
+
+        // 頁面載入時執行
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCollapsible);
+        } else {
+            initCollapsible();
+        }
+        window.addEventListener('load', function() {
+            setTimeout(initCollapsible, 100);
+        });
     </script>
 
     <nav role="navigation">
@@ -48,72 +86,52 @@
 
             <li class="divider"></li>
 
-            {% if site.ordered_collections %}
-                {% for label in site.ordered_collections %}
-                    {% assign collection = site.collections | where: "label", label | first %}
-                    <!-- <p>{{ collection.label }}</p> -->
-                    {% if collection.output %}
-                        {% if collection.label == "posts" %}
-                            {% assign reversed_posts = site[collection.label] | reverse %}
-                        {% else %}
-                            {% assign reversed_posts = site[collection.label] %}
-                        {% endif %}
-
-                        {% for post in reversed_posts %}
-                            {% if page.url == post.url %}
-                            <li class="chapter active" data-level="1.2" data-path="{{site.baseurl}}{{post.url}}">
-                            {% else %}
-                            <li class="chapter" data-level="1.1" data-path="{{site.baseurl}}{{post.url}}">
-                            {% endif %}
+            <!-- filepath: /Users/chang/github/IOT-and-Edge-Computing-for-Architects/_includes/toc-date.html -->
+            {%- assign reversed_posts = site.posts | reverse -%}
+            {%- assign categories = reversed_posts | map: "category" | uniq | sort -%}
+            {% for cat in categories %}
+                <li class="category-title collapsible chapter" onclick="toggleCategory(this)">{{ cat }}</li>
+                <ul class="category-list">
+                    {%- assign cat_posts = reversed_posts | where: "category", cat -%}
+                    {%- assign readme_post = cat_posts | where_exp: "item", "item.title == 'README' or item.path contains 'README.md'" | first -%}
+                    {% if readme_post %}
+                        <li class="chapter{% if page.url == readme_post.url %} active{% endif %}" data-level="1.1" data-path="{{site.baseurl}}{{readme_post.url}}">
+                            <a href="{{site.baseurl}}{{readme_post.url}}" onclick="pageScrollToTop(this)">
+                                {{ readme_post.title | escape }}
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% for post in cat_posts %}
+                        {% unless readme_post and post.url == readme_post.url %}
+                            <li class="chapter{% if page.url == post.url %} active{% endif %}" data-level="1.1" data-path="{{site.baseurl}}{{post.url}}">
                                 <a href="{{site.baseurl}}{{post.url}}" onclick="pageScrollToTop(this)">
                                     {{ post.title | escape }}
                                 </a>
-                                {% if site.toc.enabled %}
-                                    {% if page.url == post.url %}
-                                        {% include toc.html html=content h_min=site.toc.h_min h_max=site.toc.h_max %}
-                                    {% endif %}
-                                {% endif %}
                             </li>
-                        {% endfor %}
-
-                        {% if reversed_posts.size > 0 %}
-                            <li class="divider"></li>
-                        {% endif %}
-                    {% endif %}
-                {% endfor %}
-            {% else %}
-                {% for collection in site.collections %}
-                    <!-- <p>{{ collection.label }}</p> -->
-                    {% if collection.output %}
-                        {% if collection.label == "posts" %}
-                            {% assign reversed_posts = site[collection.label] | reverse %}
-                        {% else %}
-                            {% assign reversed_posts = site[collection.label] %}
-                        {% endif %}
-
-                        {% for post in reversed_posts %}
-                            {% if page.url == post.url %}
-                            <li class="chapter active" data-level="1.2" data-path="{{site.baseurl}}{{post.url}}">
-                            {% else %}
-                            <li class="chapter" data-level="1.1" data-path="{{site.baseurl}}{{post.url}}">
-                            {% endif %}
-                                <a href="{{site.baseurl}}{{post.url}}" onclick="pageScrollToTop(this)">
-                                    {{ post.title | escape }}
-                                </a>
-                                {% if site.toc.enabled %}
-                                    {% if page.url == post.url %}
-                                        {% include toc.html html=content h_min=site.toc.h_min h_max=site.toc.h_max %}
-                                    {% endif %}
-                                {% endif %}
-                            </li>
-                        {% endfor %}
-
-                        {% if reversed_posts.size > 0 %}
-                            <li class="divider"></li>
-                        {% endif %}
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
+                        {% endunless %}
+                    {% endfor %}
+                </ul>
+                <li class="divider"></li>
+            {% endfor %}
         </ul>
     </nav>
 </div>
+
+<style>
+.category-title.collapsible {
+    cursor: pointer;
+    font-weight: bold;
+    user-select: none;
+}
+.category-title.collapsible.collapsed::before {
+    content: " ▶ ";
+}
+.category-title.collapsible::before {
+    content: " ▼ ";
+}
+.category-list {
+    margin-left: 1em;
+    padding-left: 0;
+    list-style: none;
+}
+</style>
