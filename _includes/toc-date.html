@@ -78,7 +78,7 @@
                     {{ site.title | escape }}
                 </a>
                 {% if site.toc.enabled %}
-                    {% if site.toc.enabled_index %}
+                    {% if page.url == "/index.html" or page.url == "/" %}
                         {% include toc.html html=content h_min=site.toc.h_min h_max=site.toc.h_max %}
                     {% endif %}
                 {% endif %}
@@ -95,16 +95,21 @@
                     {%- assign cat_posts = reversed_posts | where: "category", cat -%}
                     {%- assign readme_post = nil -%}
                     {% for post in cat_posts %}
-                    {% if post.title == "README" or post.path contains "README.md" %}
-                        {%- assign readme_post = post -%}
-                        {% break %}
-                    {% endif %}
+                        {% if post.title == "README" or post.path contains "README.md" %}
+                            {%- assign readme_post = post -%}
+                            {% break %}
+                        {% endif %}
                     {% endfor %}
                     {% if readme_post %}
                         <li class="chapter{% if page.url == readme_post.url %} active{% endif %}" data-level="1.1" data-path="{{site.baseurl}}{{readme_post.url}}">
                             <a href="{{site.baseurl}}{{readme_post.url}}" onclick="pageScrollToTop(this)">
                                 {{ readme_post.title | escape }}
                             </a>
+                            {% if site.toc.enabled %}
+                                {% if page.url == readme_post.url %}
+                                    {% include toc.html html=content h_min=site.toc.h_min h_max=site.toc.h_max %}
+                                {% endif %}
+                            {% endif %}
                         </li>
                     {% endif %}
                     {% for post in cat_posts %}
@@ -113,6 +118,11 @@
                                 <a href="{{site.baseurl}}{{post.url}}" onclick="pageScrollToTop(this)">
                                     {{ post.title | escape }}
                                 </a>
+                                {% if site.toc.enabled %}
+                                    {% if page.url == post.url %}
+                                        {% include toc.html html=content h_min=site.toc.h_min h_max=site.toc.h_max %}
+                                    {% endif %}
+                                {% endif %}
                             </li>
                         {% endunless %}
                     {% endfor %}
@@ -130,10 +140,12 @@
     user-select: none;
 }
 .category-title.collapsible.collapsed::before {
-    content: " ▶ ";
+    content: "⟩ ";
+    font-size: 1em;
 }
 .category-title.collapsible::before {
-    content: " ▼ ";
+    content: "⌵ ";
+    font-size: 1em;
 }
 .category-list {
     margin-left: 1em;

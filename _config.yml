@@ -45,6 +45,9 @@ markdown_ext:             markdown,mkdown,mkdn,mkd,md
 # Permalinks
 permalink:                /:categories/:year-:month-:day-:title:output_ext
 
+tracker:
+  google_analytics: "G-4GBFHPC0QD"
+
 # Disqus comments
 # disqushandler:            sighingnow
 
