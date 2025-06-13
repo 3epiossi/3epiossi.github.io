@@ -46,7 +46,7 @@ markdown_ext:             markdown,mkdown,mkdn,mkd,md
 permalink:                /:categories/:year-:month-:day-:title:output_ext
 
 tracker:
-  google_analytics: "G-92EEXBVHYXD"
+  google_analytics: "G-92EEXBVHYX"
 
 # Disqus comments
 # disqushandler:            sighingnow
