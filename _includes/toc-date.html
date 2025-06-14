@@ -103,7 +103,7 @@
                     {% if readme_post %}
                         <li class="chapter{% if page.url == readme_post.url %} active{% endif %}" data-level="1.1" data-path="{{site.baseurl}}{{readme_post.url}}">
                             <a href="{{site.baseurl}}{{readme_post.url}}" onclick="pageScrollToTop(this)">
-                                {{ readme_post.title | escape }}
+                                🪧 {{ readme_post.title | escape }}
                             </a>
                             {% if site.toc.enabled %}
                                 {% if page.url == readme_post.url %}
@@ -116,7 +116,7 @@
                         {% unless readme_post and post.url == readme_post.url %}
                             <li class="chapter{% if page.url == post.url %} active{% endif %}" data-level="1.1" data-path="{{site.baseurl}}{{post.url}}">
                                 <a href="{{site.baseurl}}{{post.url}}" onclick="pageScrollToTop(this)">
-                                    {{ post.title | escape }}
+                                    📄 {{ post.title | escape }}
                                 </a>
                                 {% if site.toc.enabled %}
                                     {% if page.url == post.url %}
@@ -140,11 +140,11 @@
     user-select: none;
 }
 .category-title.collapsible.collapsed::before {
-    content: "⟩ ";
+    content: "📘 ";
     font-size: 1em;
 }
 .category-title.collapsible::before {
-    content: "⌵ ";
+    content: "📖 ";
     font-size: 1em;
 }
 .category-list {
