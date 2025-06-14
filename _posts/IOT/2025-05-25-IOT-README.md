@@ -18,7 +18,7 @@ mermaid: true
 * 資料通訊
   * [通信和資訊的理論與數學基礎（無線電變數、信噪比、路徑損耗和干擾，以及香農定律]({% link _posts/IOT/2025-06-12-COMM.md %})
   * [近距離通信（PAN，如藍牙5、Zigbee、Z-Wave）]({% link _posts/IOT/2025-06-13-NIP.md %})
-  * 無線局域網（LAN，如802.11 Wi-Fi）
+  * [無線局域網（LAN，如802.11 Wi-Fi）]({% link _posts/IOT/2025-06-14-IP.md %})
   * 遠距離通信（WAN，如蜂窩4G LTE、5G、LoRaWAN、Sigfox）
 
 * 邊緣運算
