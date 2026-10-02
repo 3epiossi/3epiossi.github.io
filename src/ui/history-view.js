@@ -2,7 +2,7 @@
  * 📜 骰子黑白棋 (Dice Othello) - 棋譜歷程與分支樹檢視元件 (History & Branch View)
  */
 
-import { tr, tx, pieceify } from "../i18n.js";
+import { tr, tx, pieceify, escapeHtml } from "../i18n.js";
 
 export class HistoryView {
   constructor({
@@ -119,7 +119,7 @@ export class HistoryView {
       prefix = isLast ? "└─ " : "├─ ";
     }
 
-    const label = tx(branch.name);
+    const label = escapeHtml(tx(branch.name));
     let html = `<div class="branchTreeRow${isActive ? " active" : ""}" data-branch-id="${branchId}" style="--depth:${depth}">
       <span class="branchTreePrefix">${prefix}</span>
       <span class="branchTreeName">${label}</span>
@@ -178,7 +178,7 @@ export class HistoryView {
             <span class="stepNum">#${node.stepIdx}</span>
           </div>
           <div class="historyContentCol">
-            <div class="historyLogText">${pieceify(tx(node.logText))}</div>
+            <div class="historyLogText">${pieceify(escapeHtml(tx(node.logText)))}</div>
             ${node.tag ? `<span class="tagBadge">${node.tag}</span>` : ''}
           </div>
         </div>
