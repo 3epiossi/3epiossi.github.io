@@ -119,7 +119,7 @@ npm start   # 本地靜態伺服器（預設 http://localhost:8000，可用 PORT
 npm test    # 執行單元測試
 npm run build   # 產生 dist/bundle.css（非必要，網站不依賴它）
 ```
-專案結構：`src/core`（規則與引擎）、`src/ai`（演算法）、`src/ui`（畫面元件）、`src/history`（對局樹與序列化）、`src/i18n.js`（動態文字翻譯）、`styles/`、`tests/`。
+專案結構：`src/core`（規則與引擎）、`src/ai`（演算法）、`src/ui`（畫面元件）、`src/history`（對局樹）、`src/i18n.js`（動態文字翻譯）、`styles/`、`tests/`。
 
 ---
 
