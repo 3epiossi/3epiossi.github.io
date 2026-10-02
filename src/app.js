@@ -24,7 +24,6 @@ import { ModalManager } from "./ui/modal-manager.js";
 import { sound } from "./ui/sound.js";
 import { Storage } from "./storage/storage.js";
 import { tr, tx, pieceify, escapeHtml, clampName } from "./i18n.js";
-import { tryLoadFromUrl } from "./history/serializer.js";
 import { findBestMoveForCPU, rankCandidateMoves } from "./ai/ai-service.js";
 import {
   SkinManager,
@@ -165,11 +164,8 @@ export class DiceOthelloApp {
     // 4. 套用初始主題
     this.applyTheme(this.settings.theme || "neon");
 
-    // 5. 嘗試從 URL 載入棋局
-    const loadedFromUrl = tryLoadFromUrl(this.engine);
-    if (!loadedFromUrl) {
-      this.engine.resetGame();
-    }
+    // 5. 開新局（不從網址載入棋局：網址內容不可信，且曾被用來注入 HTML）
+    this.engine.resetGame();
     // 開場若輪到 CPU，先停在暫停狀態，別讓使用者一進來就被 CPU 搶著下
     this.session.paused = this.session.seats[seatKey(this.engine.currentTurn)] === CPU_SEAT;
 
@@ -1613,7 +1609,7 @@ export class DiceOthelloApp {
         const prefix = depth > 0 ? (isLast ? "└─ " : "├─ ") : "";
         let html = `<div class="branchTreeRow${isActive ? " active" : ""}" data-branch-id="${branchId}" style="--depth:${depth}">
           <span class="branchTreePrefix">${prefix}</span>
-          <span class="branchTreeName">${tx(branch.name)}</span>
+          <span class="branchTreeName">${escapeHtml(tx(branch.name))}</span>
           ${isActive ? '<span class="branchTreeCheck">✓</span>' : ""}
         </div>`;
         for (let i = 0; i < children.length; i++) {
@@ -1873,7 +1869,7 @@ export class DiceOthelloApp {
     const instructionBox = document.getElementById("instructionBox");
     if (instructionBox) {
       if (isEnded) {
-        instructionBox.innerHTML = tr("insEnded", { reason: state.settlementData ? tx(state.settlementData.reason) : tr("reasonDefault") });
+        instructionBox.innerHTML = tr("insEnded", { reason: escapeHtml(state.settlementData ? tx(state.settlementData.reason) : tr("reasonDefault")) });
       } else if (isReview) {
         instructionBox.innerHTML = "";
       } else if (isPaused) {
