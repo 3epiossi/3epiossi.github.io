@@ -3,9 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>🎲 誰會贏？ - Who will win?</title>
+  <title>誰會贏？ - Who will win?</title>
   <meta name="description" content="誰會贏？ (Who will win?) 現代化對弈與棋譜分析平台：結合骰子隨機性、單向折線生子、純直線突擊吃子、PASS免骰特權與 Expectiminimax 四階博弈 AI。" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="256x256" href="./assets/icon.png">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
 
   <!-- 模組化樣式表 -->
   <link rel="stylesheet" href="./styles/base.css" />
@@ -25,7 +27,7 @@
     <!-- 頂部導航列 Top Bar -->
     <header class="topBar">
       <div class="brand">
-        <h1 data-i18n="brandName">🎲 誰會贏？</h1>
+        <h1 data-i18n="brandName">誰會贏？</h1>
       </div>
 
       <!-- 核心模式切換器 (instruction.md 第 2 點：對局、分析、擺盤、規則) -->
@@ -277,7 +279,7 @@
   <div id="tutorialModal" class="modalBackdrop" data-modal-id="tutorialModal" aria-hidden="true">
     <div class="modalDialog" role="dialog" aria-labelledby="tutorialModalTitle">
       <div class="modalHeader">
-        <div id="tutorialModalTitle" class="modalTitle" data-i18n="tutorialModalTitle">🎓 60 秒掌握遊戲規則！</div>
+        <div id="tutorialModalTitle" class="modalTitle" data-i18n="tutorialModalTitle">60 秒掌握遊戲規則！</div>
         <button class="modalCloseBtn" aria-label="關閉教學">✕</button>
       </div>
       <div class="modalBody">
@@ -532,10 +534,10 @@
   <script>
   const TAKU_TR = {
     zh: {
-      pageTitle:'🎲 誰會贏？',
-      brandName:'🎲 誰會贏？',
+      pageTitle:'誰會贏？',
+      brandName:'誰會贏？',
       modePlay:'🎮 對局模式', modeRules:'📜 規則學院',
-      btnTheme:'🎨 主題與外觀', btnSound:'🔊', skinSoundLabel:'🔊 遊戲音效', btnFlip:'🔃 左右互換', titleFlip:'黑白雙方位置左右互換', coachBarTitle:'🧠 AI 教練', nameLabel:'🏷️ 自訂雙方名稱（左：黑方　右：白方，留空用預設）：', skinClearImg:'🗑 移除圖片', ariaClose:'關閉', ariaModes:'遊戲模式', ariaBoard:'8x8 棋盤', ariaWhiteSeat:'白方由誰操作', ariaBlackSeat:'黑方由誰操作', tutorialFull:'📜 完整規則學院', btnTutorial:'🎓 教學',
+      btnTheme:'🎨 主題與外觀', btnSound:'🔊', skinSoundLabel:'🔊 遊戲音效', btnFlip:'🔃 左右互換', titleFlip:'黑白雙方位置左右互換', coachBarTitle:'🧠 AI 教練', nameLabel:'🏷️ 自訂雙方名稱（左：黑方　右：白方，留空用預設）：', skinClearImg:'🗑 移除圖片', ariaClose:'關閉', ariaModes:'遊戲模式', ariaBoard:'8x8 棋盤', ariaWhiteSeat:'白方由誰操作', ariaBlackSeat:'黑方由誰操作', tutorialFull:'📜 完整規則學院', btnTutorial:'教學',
       btnShare:'🔗 分享', btnSettings:'⚙️ 設定', btnRestart:'🔄 重設',
       titleTheme:'切換棋盤主題風格與客製棋子外觀', titleTutorial:'60秒新手互動教學',
       titleShare:'匯出/分享這局棋譜', titleSettings:'進階對弈設定', titleRestart:'重新開局',
@@ -561,7 +563,7 @@
       komiUnit:' 目', komi0:'0 目 (無貼目)', komi15:'+1.5 目',
       komi35:'+3.5 目 (450場大數據驗證黃金平衡點)', komi55:'+5.5 目 (圍棋標準)', komi75:'+7.5 目',
       speed150:'極速 (150ms)', speed350:'快速 (350ms)', speed600:'正常 (600ms)', speed1000:'沉思 (1000ms)',
-      tutorialModalTitle:'🎓 60 秒掌握遊戲規則！',
+      tutorialModalTitle:'60 秒掌握遊戲規則！',
       rule1Title:'規則一：每回合擲 1 顆骰子',
       rule1Text:'骰出的點數 D 即為該步必須走滿的步數。黑棋只能朝左/上進攻，白棋只能朝右/下進攻。',
       rule2Title:'規則二：生子（增殖繁衍）',
@@ -591,10 +593,10 @@
       skinPathSection:'🏹 移動路徑樣式與色彩', pathStyleStep:'🔵 步數指示（預設）', skinPathCustom:'自訂', pathStyleBrush:'🖌 毛筆筆觸', skinBlackPathLabel:'⚫ 黑方路徑色彩', skinWhitePathLabel:'⚪ 白方路徑色彩',
     },
     en: {
-      pageTitle:'🎲 Who will win?',
-      brandName:'🎲 Who will win?',
+      pageTitle:'Who will win?',
+      brandName:'Who will win?',
       modePlay:'🎮 Play', modeRules:'📜 Rules Academy',
-      btnTheme:'🎨 Themes & Skins', btnSound:'🔊', skinSoundLabel:'🔊 Sound effects', btnFlip:'🔃 Swap sides', titleFlip:'Swap the sides of Black and White', coachBarTitle:'🧠 AI Coach', nameLabel:'🏷️ Custom names (left: Black, right: White; blank = default):', skinClearImg:'🗑 Remove image', ariaClose:'Close', ariaModes:'Game mode', ariaBoard:'8x8 board', ariaWhiteSeat:'Who controls White', ariaBlackSeat:'Who controls Black', tutorialFull:'📜 Full Rules Academy', btnTutorial:'🎓 Tutorial',
+      btnTheme:'🎨 Themes & Skins', btnSound:'🔊', skinSoundLabel:'🔊 Sound effects', btnFlip:'🔃 Swap sides', titleFlip:'Swap the sides of Black and White', coachBarTitle:'🧠 AI Coach', nameLabel:'🏷️ Custom names (left: Black, right: White; blank = default):', skinClearImg:'🗑 Remove image', ariaClose:'Close', ariaModes:'Game mode', ariaBoard:'8x8 board', ariaWhiteSeat:'Who controls White', ariaBlackSeat:'Who controls Black', tutorialFull:'📜 Full Rules Academy', btnTutorial:'Tutorial',
       btnShare:'🔗 Share', btnSettings:'⚙️ Settings', btnRestart:'🔄 New Game',
       titleTheme:'Change board theme & piece skins', titleTutorial:'60-second interactive tutorial',
       titleShare:'Export / share this game record', titleSettings:'Advanced game settings', titleRestart:'Start a new game',
@@ -620,7 +622,7 @@
       komiUnit:' ', komi0:'0 (No Komi)', komi15:'+1.5',
       komi35:'+3.5 (Validated as golden balance across 450 games)', komi55:'+5.5 (Go standard)', komi75:'+7.5',
       speed150:'Instant (150ms)', speed350:'Fast (350ms)', speed600:'Normal (600ms)', speed1000:'Slow (1000ms)',
-      tutorialModalTitle:'🎓 Learn the Rules in 60 Seconds!',
+      tutorialModalTitle:'Learn the Rules in 60 Seconds!',
       rule1Title:'Rule 1: Roll the Dice Each Turn',
       rule1Text:'The dice result D is the exact number of steps you must take. Black attacks Left/Up; White attacks Right/Down.',
       rule2Title:'Rule 2: Spawn (Multiply Your Pieces)',
@@ -650,10 +652,10 @@
       skinPathSection:'🏹 Move Path Style & Colors', pathStyleStep:'🔵 Step markers (default)', skinPathCustom:'Custom', pathStyleBrush:'🖌 Brush stroke', skinBlackPathLabel:'⚫ Black Path Color', skinWhitePathLabel:'⚪ White Path Color',
     },
     ja: {
-      pageTitle:'🎲 誰が勝つ？',
-      brandName:'🎲 誰が勝つ？',
+      pageTitle:'誰が勝つ？',
+      brandName:'誰が勝つ？',
       modePlay:'🎮 対局モード', modeRules:'📜 ルール道場',
-      btnTheme:'🎨 テーマ・外観', btnSound:'🔊', skinSoundLabel:'🔊 効果音', btnFlip:'🔃 左右入替', titleFlip:'黒白の位置を入れ替える', coachBarTitle:'🧠 AIコーチ', nameLabel:'🏷️ プレイヤー名（左：黒番、右：白番、空欄でデフォルト）：', skinClearImg:'🗑 画像を削除', ariaClose:'閉じる', ariaModes:'ゲームモード', ariaBoard:'8x8 盤面', ariaWhiteSeat:'白番の操作者', ariaBlackSeat:'黒番の操作者', tutorialFull:'📜 ルール学院', btnTutorial:'🎓 チュートリアル',
+      btnTheme:'🎨 テーマ・外観', btnSound:'🔊', skinSoundLabel:'🔊 効果音', btnFlip:'🔃 左右入替', titleFlip:'黒白の位置を入れ替える', coachBarTitle:'🧠 AIコーチ', nameLabel:'🏷️ プレイヤー名（左：黒番、右：白番、空欄でデフォルト）：', skinClearImg:'🗑 画像を削除', ariaClose:'閉じる', ariaModes:'ゲームモード', ariaBoard:'8x8 盤面', ariaWhiteSeat:'白番の操作者', ariaBlackSeat:'黒番の操作者', tutorialFull:'📜 ルール学院', btnTutorial:'チュートリアル',
       btnShare:'🔗 シェア', btnSettings:'⚙️ 設定', btnRestart:'🔄 リセット',
       titleTheme:'ボードテーマ・石外観を変更', titleTutorial:'60秒インタラクティブチュートリアル',
       titleShare:'棋譜のエクスポート・シェア', titleSettings:'詳細対局設定', titleRestart:'新しいゲームを開始',
@@ -679,7 +681,7 @@
       komiUnit:' ', komi0:'0（コミなし）', komi15:'+1.5',
       komi35:'+3.5（450局データで検証した黄金バランス）', komi55:'+5.5（囲碁標準）', komi75:'+7.5',
       speed150:'超高速 (150ms)', speed350:'高速 (350ms)', speed600:'通常 (600ms)', speed1000:'熟考 (1000ms)',
-      tutorialModalTitle:'🎓 60秒でルールをマスター！',
+      tutorialModalTitle:'60秒でルールをマスター！',
       rule1Title:'ルール1：各ターンにダイスを1個振る',
       rule1Text:'ダイスの目Dが必ず移動しなければならない歩数です。黒石は左/上へ、白石は右/下へのみ進めます。',
       rule2Title:'ルール2：生子（石を増やす）',

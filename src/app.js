@@ -1304,10 +1304,10 @@ export class DiceOthelloApp {
     }
 
     // 3. 路徑箭頭顏色 Preset Chips
-    const bPathColor = config.pathBlack || "#2563eb";
-    const bPathId    = config.pathBlackId || "sapphire";
-    const wPathColor = config.pathWhite || "#fef3c7";
-    const wPathId    = config.pathWhiteId || "ivory";
+    const bPathColor = config.pathBlack || "#111827";
+    const bPathId    = config.pathBlackId || "obsidian";
+    const wPathColor = config.pathWhite || "#e2e8f0";
+    const wPathId    = config.pathWhiteId || "pearl";
 
     const bPathGroup = document.getElementById("blackPathPresetGroup");
     if (bPathGroup) {
@@ -1355,7 +1355,7 @@ export class DiceOthelloApp {
       text.textContent = window.t("skinPathCustom");
       const input = document.createElement("input");
       input.type = "color";
-      input.value = /^#[0-9a-f]{6}$/i.test(curColor) ? curColor : (isBlack ? "#2563eb" : "#fef3c7");
+      input.value = /^#[0-9a-f]{6}$/i.test(curColor) ? curColor : (isBlack ? "#111827" : "#e2e8f0");
       input.style.cssText = "position:absolute;opacity:0;width:0;height:0;pointer-events:none;";
       chip.style.position = "relative";
       chip.append(dot, text, input);

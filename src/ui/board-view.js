@@ -235,7 +235,7 @@ export class BoardView {
     const who = isAiHint && hintPlayer != null ? hintPlayer : move.player;
     const isBlack = who === BLACK;
     const isCapture = move.type === MOVE_TYPE.CAPTURE;
-    const color = isBlack ? "var(--path-black-fill, #2563eb)" : "var(--path-white-fill, #fef3c7)";
+    const color = isBlack ? "var(--path-black-fill, #111827)" : "var(--path-white-fill, #e2e8f0)";
     const badgeBg = isBlack ? "#0b1329" : "#ffffff";
     const badgeText = isBlack ? "#ffffff" : "#78350f";
 
@@ -307,7 +307,7 @@ export class BoardView {
     this.svgEl.innerHTML = "";
     const NS = "http://www.w3.org/2000/svg";
     const who = isAiHint && hintPlayer != null ? hintPlayer : move.player;
-    const color = who === BLACK ? "var(--path-black-fill, #2563eb)" : "var(--path-white-fill, #fef3c7)";
+    const color = who === BLACK ? "var(--path-black-fill, #111827)" : "var(--path-white-fill, #e2e8f0)";
 
     let seed = 2166136261;
     for (const p of pathData) seed = Math.imul(seed ^ (p.r * 8 + p.c + 1), 16777619);
