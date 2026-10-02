@@ -846,17 +846,10 @@
   box-shadow: 0 0 0 2px #facc15, 0 0 26px rgba(250, 204, 21, 0.55);
   animation: winnerPulse 1.4s ease-in-out infinite;
 }
-.seatGroup.winner::before {
-  content: "👑";
-  position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
-  font-size: 26px; animation: crownBob 1.2s ease-in-out infinite;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .5));
-}
 .seatGroup.winner .scoreNum { color: #fde047; transform: scale(1.18); text-shadow: 0 0 14px rgba(250, 204, 21, .8); }
 .seatGroup.loser { opacity: .5; filter: grayscale(.6); }
 .scoreDiffBadge.final { font-weight: 800; animation: badgePop .6s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes winnerPulse { 0%, 100% { box-shadow: 0 0 0 2px #facc15, 0 0 18px rgba(250, 204, 21, .4); } 50% { box-shadow: 0 0 0 3px #fde047, 0 0 36px rgba(250, 204, 21, .8); } }
-@keyframes crownBob { 0%, 100% { transform: translate(-50%, 0) rotate(-6deg); } 50% { transform: translate(-50%, -6px) rotate(6deg); } }
 @keyframes badgePop { 0% { transform: scale(.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 .confettiLayer { position: fixed; width: 0; height: 0; z-index: 9999; pointer-events: none; }
 .confettiPiece { position: absolute; left: 0; top: 0; opacity: 0; animation: confettiBurst 1.9s cubic-bezier(.15, .7, .3, 1) forwards; }
@@ -866,6 +859,6 @@
   100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 120px)) rotate(var(--rot)) scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .seatGroup.winner, .seatGroup.winner::before, .scoreDiffBadge.final { animation: none; }
+  .seatGroup.winner, .scoreDiffBadge.final { animation: none; }
   .confettiLayer { display: none; }
 }
