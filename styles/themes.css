@@ -1,0 +1,57 @@
+/**
+ * 🎨 骰子黑白棋 (Dice Othello) - 主題配色樣式 (Themes)
+ */
+
+body.theme-neon {
+  --color-bg: #0b1329;
+  --color-panel-bg: rgba(15, 23, 42, 0.88);
+  --color-card-bg: rgba(30, 41, 59, 0.7);
+}
+
+body.theme-classic {
+  --color-bg: #14281d;
+  --color-panel-bg: rgba(20, 45, 30, 0.9);
+  --color-card-bg: rgba(28, 60, 42, 0.7);
+}
+body.theme-classic .board {
+  background: #0f2d1b;
+  border-color: #1e5233;
+}
+body.theme-classic .cell {
+  background: #194d2d;
+}
+body.theme-classic .cell:hover {
+  background: #20633b;
+}
+
+body.theme-wood {
+  --color-bg: #1a130e;
+  --color-panel-bg: rgba(38, 25, 17, 0.9);
+  --color-card-bg: rgba(55, 37, 25, 0.7);
+}
+body.theme-wood .board {
+  background: #3a2211;
+  border-color: #59351a;
+}
+body.theme-wood .cell {
+  background: #50311a;
+}
+body.theme-wood .cell:hover {
+  background: #6b4122;
+}
+
+body.theme-slate {
+  --color-bg: #090d16;
+  --color-panel-bg: rgba(15, 23, 42, 0.9);
+  --color-card-bg: rgba(23, 32, 51, 0.7);
+}
+body.theme-slate .board {
+  background: #1e293b;
+  border-color: #334155;
+}
+body.theme-slate .cell {
+  background: #334155;
+}
+body.theme-slate .cell:hover {
+  background: #475569;
+}

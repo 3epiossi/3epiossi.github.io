@@ -1,0 +1,21 @@
+{
+  "name": "who-will-win",
+  "version": "2.0.0",
+  "description": "Who will win? - a dice-based Othello-style game and analysis platform",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js",
+    "build": "node build.js",
+    "export": "node export_workspace.js"
+  },
+  "keywords": [
+    "othello",
+    "reversi",
+    "board-game",
+    "expectiminimax",
+    "ai"
+  ],
+  "author": "Chang (3epiossi)",
+  "license": "MIT"
+}

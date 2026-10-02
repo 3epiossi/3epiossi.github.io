@@ -1,0 +1,2764 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎓 誰會贏？</title>
+  <meta name="description" content="誰會贏？互動規則學院：透過 8 道精選盤面題目，清晰易懂地掌握單向行棋、生子轉彎、直線吃子、受阻PASS特權與自然終局勢力填滿等正式規則。">
+
+  <style>
+    :root {
+      --cell: clamp(34px, 5.6vw, 52px);
+      --coord: 22px;
+      --accent: #38bdf8;
+      --bg: #0b1329;
+      --panel-bg: rgba(15, 23, 42, 0.85);
+      --border: rgba(255, 255, 255, 0.12);
+      --gold: #facc15;
+      --purple: #c084fc;
+      --navy: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: var(--bg);
+      color: #f8fafc;
+      min-height: 100vh;
+      user-select: none;
+    }
+
+    .app {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Top Navigation Bar */
+    .topNav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .brandTitle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #f8fafc;
+    }
+
+    .badge {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      font-weight: 700;
+    }
+
+    .navActions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    button {
+      border-radius: 10px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.16s ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.32);
+      transform: translateY(-1px);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border-color: rgba(147, 197, 253, 0.4);
+      color: white;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+
+    button.green {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      border-color: rgba(134, 239, 172, 0.4);
+      color: white;
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+    }
+
+    button.purple {
+      background: linear-gradient(135deg, #9333ea, #7e22ce);
+      border-color: rgba(216, 180, 254, 0.4);
+      color: white;
+      box-shadow: 0 4px 14px rgba(147, 51, 234, 0.35);
+    }
+
+    button.amber {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      border-color: rgba(253, 224, 71, 0.4);
+      color: white;
+      box-shadow: 0 4px 14px rgba(217, 119, 6, 0.3);
+    }
+
+    button.warning {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #1e1b4b;
+      font-weight: 800;
+    }
+
+    /* Main Tutorial Grid Layout */
+    .tutorialLayout {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .tutorialLayout {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+    }
+
+    /* Board Container Style identical to index.html */
+    .boardArea {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    /* Turn status banner above board — matches game's statusBanner style */
+    .tutorialStatusBanner {
+      width: 100%;
+      border-radius: 12px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 10px;
+      transition: all 0.25s ease;
+    }
+
+    .tutorialStatusBanner.black {
+      background: linear-gradient(135deg, rgba(30, 58, 138, 0.4), rgba(15, 23, 42, 0.7));
+      border: 1px solid rgba(59, 130, 246, 0.5);
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
+    }
+
+    .tutorialStatusBanner.white {
+      background: linear-gradient(135deg, rgba(120, 53, 15, 0.4), rgba(15, 23, 42, 0.7));
+      border: 1px solid rgba(251, 191, 36, 0.5);
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+    }
+
+    .tutorialTurnDot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .tutorialTurnDot.black {
+      background: #38bdf8;
+      box-shadow: 0 0 8px #38bdf8;
+    }
+
+    .tutorialTurnDot.white {
+      background: #facc15;
+      box-shadow: 0 0 8px #facc15;
+    }
+
+    .boardWrap {
+      position: relative;
+      display: inline-block;
+      padding: 14px;
+      padding-right: 148px; /* Reserved space for sideDiceWidget */
+      background: linear-gradient(160deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.9));
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .boardFrame {
+      position: relative;
+      display: inline-block;
+      padding-top: var(--coord);
+      padding-left: var(--coord);
+    }
+
+    .coordTop {
+      position: absolute;
+      top: 0;
+      left: var(--coord);
+      display: grid;
+      grid-template-columns: repeat(8, var(--cell));
+      column-gap: 3px;
+      padding-left: 6px;
+      height: var(--coord);
+      align-items: center;
+      text-align: center;
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+
+    .coordLeft {
+      position: absolute;
+      top: var(--coord);
+      left: 0;
+      display: grid;
+      grid-template-rows: repeat(8, var(--cell));
+      row-gap: 3px;
+      padding-top: 6px;
+      width: var(--coord);
+      align-items: center;
+      text-align: center;
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(8, var(--cell));
+      grid-template-rows: repeat(8, var(--cell));
+      gap: 3px;
+      background: #113621;
+      padding: 6px;
+      border-radius: 14px;
+      border: 2px solid #1e4a30;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 2px 8px rgba(255, 255, 255, 0.05);
+    }
+
+    .cell {
+      background: #166534;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      user-select: none;
+      cursor: pointer;
+      aspect-ratio: 1;
+      transition: background 0.15s ease, transform 0.1s ease;
+      z-index: 1;
+    }
+
+    .cell:hover {
+      background: #15803d;
+    }
+
+    /* Pieces (Discs) matching index.html */
+    .disc {
+      width: calc(var(--cell) * 0.82);
+      height: calc(var(--cell) * 0.82);
+      border-radius: 50%;
+      position: relative;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.2);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .disc.black {
+      background: radial-gradient(circle at 35% 30%, #475569 0%, #1e293b 50%, #0f172a 100%);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .disc.white {
+      background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e2e8f0 60%, #cbd5e1 100%);
+      border: 1px solid rgba(0, 0, 0, 0.15);
+    }
+
+    /* Interactive state on board */
+    .cell.can-act .disc {
+      box-shadow: 0 0 0 2px #facc15, 0 4px 10px rgba(250, 204, 21, 0.4);
+    }
+
+    .cell.selected {
+      background: rgba(250, 204, 21, 0.25) !important;
+    }
+
+    .cell.selected .disc {
+      transform: scale(1.08);
+      box-shadow: 0 0 0 3px #facc15, 0 6px 14px rgba(250, 204, 21, 0.6);
+    }
+
+    /* Spawn target */
+    .cell.dest-spawn {
+      cursor: pointer;
+      background: rgba(34, 197, 94, 0.28) !important;
+    }
+
+    .cell.dest-spawn::after {
+      content: "";
+      width: 28%;
+      height: 28%;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    /* Capture target */
+    .cell.dest-capture {
+      cursor: pointer !important;
+      background: rgba(239, 68, 68, 0.35) !important;
+    }
+
+    .cell.dest-capture::after {
+      content: "⚔️";
+      font-size: 15px;
+      position: absolute;
+      z-index: 2;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+    }
+
+    .cell.filled-territory {
+      animation: fadeInFilled 0.8s ease forwards;
+    }
+
+    @keyframes fadeInFilled {
+      from { opacity: 0.3; transform: scale(0.85); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .cell.hint-highlight {
+      box-shadow: inset 0 0 0 2px #facc15, 0 0 12px rgba(250, 204, 21, 0.5) !important;
+    }
+
+    /* SVG Path Overlay matching index.html */
+    .pathOverlay, .pathOverlay * {
+      pointer-events: none !important;
+    }
+
+    .pathOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 7;
+      overflow: visible;
+    }
+
+    @keyframes dash-move {
+      to {
+        stroke-dashoffset: -20;
+      }
+    }
+
+    .animated-path-dash {
+      animation: dash-move 1.2s linear infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(0.95);
+        opacity: 0.8;
+      }
+
+      50% {
+        transform: scale(1.15);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(0.95);
+        opacity: 0.8;
+      }
+    }
+
+    .pulse-start-ring {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: pulse-ring 1.8s ease-in-out infinite;
+    }
+
+    .pulse-end-ring {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: pulse-ring 1.5s ease-in-out infinite;
+    }
+
+    .path-waypoint-text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .path-dest-badge {
+      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.6));
+    }
+
+    /* Prominent Side Dice Widget right beside board */
+    .sideDiceWidget {
+      position: absolute;
+      top: var(--coord);
+      left: calc(100% + 14px);
+      width: 110px;
+      background: linear-gradient(160deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.9));
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 16px;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 900px) {
+      .boardWrap {
+        padding-right: 12px !important;
+      }
+
+      .sideDiceWidget {
+        position: static;
+        flex-direction: row;
+        width: 100%;
+        max-width: 380px;
+        justify-content: space-around;
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .sideDiceValBadge {
+        width: auto !important;
+      }
+    }
+
+    .diceBox {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+      border-radius: 14px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), inset 0 -2px 5px rgba(0, 0, 0, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .pipGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      width: 48px;
+      height: 48px;
+      align-items: center;
+      justify-items: center;
+    }
+
+    .diceValText, .diceQuestionMark {
+      grid-column: 1 / -1;
+      grid-row: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 800;
+      color: #94a3b8;
+    }
+
+    .pipDot {
+      width: 8px;
+      height: 8px;
+      background: #0f172a;
+      border-radius: 50%;
+      margin: auto;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    .pipDot.red {
+      background: #dc2626;
+      box-shadow: inset 0 1px 2px rgba(153, 27, 27, 0.9);
+    }
+
+    .sideDiceValBadge {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(90deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* Right Panel: Rule Mission Card */
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 22px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .puzzleHeaderBox {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 14px;
+      gap: 10px;
+    }
+
+    .puzzleCategoryTag {
+      font-size: 12px;
+      color: #38bdf8;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .puzzleTitle {
+      font-size: 20px;
+      font-weight: 800;
+      color: #f8fafc;
+      margin: 0;
+    }
+
+    .puzzleGoalBox {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-left: 4px solid #38bdf8;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: #f1f5f9;
+    }
+
+    .feedbackBox {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.55;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .feedbackBox.success {
+      background: rgba(34, 197, 94, 0.18);
+      border: 1px solid rgba(34, 197, 94, 0.45);
+      color: #86efac;
+      display: block;
+    }
+
+    .feedbackBox.warning {
+      background: rgba(245, 158, 11, 0.18);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      color: #fde047;
+      display: block;
+    }
+
+    /* Official Rule Document Card */
+    .ruleDocCard {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .ruleDocHeader {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #c084fc;
+      margin-bottom: 8px;
+    }
+
+    .ruleDocContent {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #cbd5e1;
+      margin: 0;
+    }
+
+    /* Puzzle Quick Index Navigation Grid */
+    .puzzleNavGrid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+    }
+
+    .puzzleNavBtn {
+      padding: 8px 4px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: #94a3b8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .puzzleNavBtn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #f8fafc;
+    }
+
+    .puzzleNavBtn.active {
+      background: rgba(56, 189, 248, 0.25);
+      border-color: #38bdf8;
+      color: #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    }
+
+    .puzzleNavBtn.solved::after {
+      content: "✓";
+      font-size: 11px;
+      color: #22c55e;
+      font-weight: bold;
+    }
+
+    .bottomControls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .langSwitcher { display: inline-flex; gap: 3px; align-items: center; }
+    .langBtn { padding: 4px 9px; font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #94a3b8; transition: all 0.15s; }
+    .langBtn.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8; }
+    .langBtn:hover:not(.active) { background: rgba(255,255,255,0.15); color: #f8fafc; }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Top Navigation Bar -->
+    <header class="topNav">
+      <div class="langSwitcher">
+        <button class="langBtn" data-lang="zh" onclick="setLang('zh')">中</button>
+        <button class="langBtn" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="langBtn" data-lang="ja" onclick="setLang('ja')">日</button>
+      </div>
+      <div class="brandTitle">
+        <span id="brandTitleText">🎓 誰會贏？</span>
+        <span class="badge" id="badgeText">官方規則學院</span>
+      </div>
+      <div class="navActions">
+        <span id="puzzleProgressText" style="font-size: 13px; color: #94a3b8; font-weight: 600;">已完成 0 / 8 規則</span>
+        <a href="index.html" style="text-decoration: none;">
+          <button class="primary" id="backToGameBtn">🎮 返回遊戲對弈</button>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="tutorialLayout">
+      <!-- Left: Board Area -->
+      <section class="boardArea">
+        <!-- Turn Status Banner -->
+        <div id="tutorialStatusBanner" class="tutorialStatusBanner black" aria-live="polite">
+          <span id="tutorialTurnDot" class="tutorialTurnDot black"></span>
+          <span id="tutorialTurnText">⚫ 黑棋回合</span>
+        </div>
+        <div class="boardWrap">
+          <div class="boardFrame">
+            <div class="coordTop" aria-hidden="true">
+              <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span>
+            </div>
+            <div class="coordLeft" aria-hidden="true">
+              <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span>
+            </div>
+            <div class="board" id="tutorialBoard">
+              <!-- SVG Path Overlay -->
+              <svg id="tutorialPathOverlay" class="pathOverlay" aria-hidden="true">
+                <defs>
+                  <!-- Black Markers (Navy Blue for both spawn and capture) -->
+                  <marker id="arrow-black-spawn" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M 0 1 L 7 4 L 0 7 z" fill="#2563eb" />
+                  </marker>
+                  <marker id="arrow-black-capture" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M 0 1 L 7 4 L 0 7 z" fill="#2563eb" />
+                  </marker>
+
+                  <!-- White Markers (Golden Amber for both spawn and capture) -->
+                  <marker id="arrow-white-spawn" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M 0 1 L 7 4 L 0 7 z" fill="#f59e0b" />
+                  </marker>
+                  <marker id="arrow-white-capture" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                    <path d="M 0 1 L 7 4 L 0 7 z" fill="#f59e0b" />
+                  </marker>
+
+                  <!-- Glow Filters -->
+                  <filter id="glow-black-spawn" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="3.5" flood-color="#1d4ed8" flood-opacity="0.85" />
+                  </filter>
+                  <filter id="glow-black-capture" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="3.5" flood-color="#1d4ed8" flood-opacity="0.85" />
+                  </filter>
+                  <filter id="glow-white-spawn" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="3.5" flood-color="#f59e0b" flood-opacity="0.9" />
+                  </filter>
+                  <filter id="glow-white-capture" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="3.5" flood-color="#f59e0b" flood-opacity="0.9" />
+                  </filter>
+                </defs>
+                <g id="tutorialPathGroup"></g>
+              </svg>
+            </div>
+
+            <!-- Prominent Side Dice Widget -->
+            <div class="sideDiceWidget" id="sideDiceWidget">
+              <div class="diceBox" id="puzzleDiceBox" title="當前題目骰子點數">
+                <div class="pipGrid" id="puzzlePipGrid"></div>
+              </div>
+              <div class="sideDiceValBadge" id="puzzleDiceValText">2 步</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Control Buttons under Board -->
+        <div class="bottomControls" style="width: 100%;">
+          <div style="display: flex; gap: 8px;">
+            <button id="btnHint" class="amber">💡 提示</button>
+            <button id="btnSolution" class="purple">👀 示範解答</button>
+            <button id="btnStepDemo" class="green" style="display: none;">🐾 極端 6 點手動推導</button>
+            <button id="btnReset">🔄 重設</button>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button id="btnPrev">⬅ 上一題</button>
+            <button id="btnNext" class="green">下一題 ➔</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Rule Mission & Article Card -->
+      <section class="panel puzzleDetails">
+        <div class="puzzleHeaderBox">
+          <div>
+            <div class="puzzleCategoryTag" id="puzzleCategoryTag">規則一：開局與方向</div>
+            <h2 class="puzzleTitle" id="puzzleTitle">題目 1：認識單向行棋方向</h2>
+          </div>
+          <span id="puzzleDiffBadge" style="font-size: 11.5px; padding: 3px 8px; border-radius: 6px; font-weight: 700; background: rgba(34, 197, 94, 0.2); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.35)">
+            基本規則
+          </span>
+        </div>
+
+        <!-- Mission Goal -->
+        <div class="puzzleGoalBox" id="puzzleGoalBox"></div>
+
+        <!-- Dynamic Feedback Box -->
+        <div class="feedbackBox" id="feedbackBox"></div>
+
+        <!-- Official Rule Document Article -->
+        <div class="ruleDocCard">
+          <div class="ruleDocHeader">
+            <span>📜</span>
+            <span id="ruleDocTitle">官方規則條文</span>
+          </div>
+          <p class="ruleDocContent" id="ruleDocText"></p>
+        </div>
+
+        <!-- Quick 8 Puzzles Navigation Grid -->
+        <div>
+          <div style="font-size: 12.5px; font-weight: 700; color: #94a3b8; margin-bottom: 8px; display:flex; justify-content:space-between;">
+            <span id="navGridLabel">規則題目導航 (共 8 關)：</span>
+            <span id="clearProgressBtn" style="color: #64748b; font-weight: normal; cursor: pointer; text-decoration: underline;">重置通關記錄</span>
+          </div>
+          <div class="puzzleNavGrid" id="puzzleNavGrid"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const N = 8;
+    const EMPTY = 0, BLACK = 1, WHITE = 2;
+    const FILES = "ABCDEFGH";
+    function posToCoord(r, c) { return FILES[c] + (r + 1); }
+
+    // ─── i18n ─────────────────────────────────────────────────
+    let currentLang = localStorage.getItem('takuLang') || 'zh';
+
+    const UI_T = {
+      zh: {
+        brandTitle:'🎓 誰會贏？', badge:'官方規則學院',
+        progressFn:(n,t)=>`已完成 ${n} / ${t} 規則`,
+        backBtn:'🎮 返回遊戲對弈', navLabel:'規則題目導航 (共 8 關)：',
+        clearBtn:'重置通關記錄',
+        btnHintTxt:'💡 提示', btnSolTxt:'👀 示範解答',
+        btnStepTxt:'🐾 極端 6 點手動推導', btnResetTxt:'🔄 重設',
+        btnPrevTxt:'⬅ 上一題', btnNextTxt:'下一題 ➔',
+        blackTurn:'⚫ 黑棋回合', whiteTurn:'⚪ 白棋回合', privLabel:'🎁 特權指定',
+        stepsLbl:(n)=>`${n} 步`, stepsPrivLbl:(n)=>`${n} 步 (特權指定)`,
+        successHdr:'🎉 恭喜答對！完全掌握本規則！',
+        wrongHdr:'⚠️ 走法不符合本題規則重點！',
+        hintLbl:'💡 規則提示：',
+        pageTitle:'🎓 誰會贏？ - 互動規則學院',
+      },
+      en: {
+        brandTitle:'🎓 Who will win?', badge:'Official Rules Academy',
+        progressFn:(n,t)=>`Completed ${n} / ${t} Rules`,
+        backBtn:'🎮 Back to Game', navLabel:'Puzzle Navigation (8 total):',
+        clearBtn:'Reset Progress',
+        btnHintTxt:'💡 Hint', btnSolTxt:'👀 Show Solution',
+        btnStepTxt:'🐾 Extreme 6-Dice Walkthrough', btnResetTxt:'🔄 Reset',
+        btnPrevTxt:'⬅ Previous', btnNextTxt:'Next ➔',
+        blackTurn:"⚫ Black's Turn", whiteTurn:"⚪ White's Turn", privLabel:'🎁 Privilege Active',
+        stepsLbl:(n)=>`${n} step${n!==1?'s':''}`, stepsPrivLbl:(n)=>`${n} step${n!==1?'s':''} (Privilege)`,
+        successHdr:"🎉 Correct! You've mastered this rule!",
+        wrongHdr:"⚠️ That move doesn't highlight this rule's key point!",
+        hintLbl:'💡 Rule Hint: ',
+        pageTitle:'🎓 Who will win? - Rules Academy',
+      },
+      ja: {
+        brandTitle:'🎓 誰が勝つ？', badge:'公式ルール道場',
+        progressFn:(n,t)=>`クリア ${n} / ${t} ルール`,
+        backBtn:'🎮 ゲームに戻る', navLabel:'パズルナビ（全8問）：',
+        clearBtn:'クリア記録をリセット',
+        btnHintTxt:'💡 ヒント', btnSolTxt:'👀 解答を見る',
+        btnStepTxt:'🐾 極端6ダイス手動推導', btnResetTxt:'🔄 リセット',
+        btnPrevTxt:'⬅ 前の問題', btnNextTxt:'次の問題 ➔',
+        blackTurn:'⚫ 黒番', whiteTurn:'⚪ 白番', privLabel:'🎁 特権行使中',
+        stepsLbl:(n)=>`${n} 歩`, stepsPrivLbl:(n)=>`${n} 歩（特権）`,
+        successHdr:'🎉 正解！このルールをマスターしました！',
+        wrongHdr:'⚠️ このルールのポイントを示す手ではありません！',
+        hintLbl:'💡 ルールヒント：',
+        pageTitle:'🎓 誰が勝つ？ - ルール道場',
+      }
+    };
+
+    function TUI(key,...args) {
+      const t = UI_T[currentLang] || UI_T.zh;
+      const v = t[key] !== undefined ? t[key] : UI_T.zh[key];
+      return typeof v === 'function' ? v(...args) : (v || key);
+    }
+
+    // Puzzle text per language — merged over the base PUZZLES array at runtime
+    const PUZZLE_TEXT = {
+      zh: [
+        { category:'規則一：單向行棋', title:'題目 1：單向行棋原則', diff:'基礎規則',
+          goalHtml:'黑棋在 <strong>H8</strong>，骰出 <strong>2 點</strong>。<br>黑棋每步只能往<strong>上 ↑</strong> 或<strong>左 ←</strong>，不可逆行或走斜線。<br>👉 點選 <strong>H8</strong>，再點綠格落子。',
+          hintText:'可走：F8（左 2）、H6（上 2）或 G7（上 1 左 1）。',
+          successText:'黑棋朝左上推進，白棋朝右下推進，雙方各走單向，不走回頭路。',
+          ruleDocTitle:'規則一條文：單向行棋',
+          ruleDocText:'8×8 棋盤，白棋起於 A1，黑棋起於 H8。黑棋只能往上或左；白棋只能往下或右，不可逆行或斜走。' },
+        { category:'規則二：生子規則', title:'題目 2：生子與棋子增長', diff:'生子基礎',
+          goalHtml:'黑棋在 <strong>F6</strong>，骰出 <strong>2 點</strong>。<br><strong>生子</strong>：走到空格時，原棋留原位，目標格新增一顆己方棋子。<br>👉 點選 <strong>F6</strong>，再點綠格生子。',
+          hintText:'點 F6 後選任一綠格（D6、F4 或 E5），原棋子保留不動。',
+          successText:'F6 黑棋留存，目標格新增一顆，共 2 顆黑棋。',
+          ruleDocTitle:'規則二條文：生子規則',
+          ruleDocText:'步數等於骰值且目標格為空格時，出發棋留原位，目標格長出一顆新棋，棋子總數增加。' },
+        { category:'規則二：生子規則', title:'題目 3：生子路徑直角轉彎', diff:'路徑規則',
+          goalHtml:'黑棋在 <strong>G7</strong>，骰出 <strong>3 點</strong>。正上方 G4 與正左方 D7 被敵棋堵住。<br><strong>轉彎</strong>：生子路徑可直角折彎，只要每步方向合規、步數總和等於骰值即可。<br>👉 點選 <strong>G7</strong>，折彎至 F5（上 2 左 1）或 E6（上 1 左 2）。',
+          hintText:'直線被堵，改走上 2 左 1 至 F5，或上 1 左 2 至 E6。',
+          successText:'生子路徑在合規方向內可轉折繞過障礙。',
+          ruleDocTitle:'規則二條文：生子路徑轉彎',
+          ruleDocText:'生子每步需往允許的方向走（黑棋：上或左；白棋：下或右），步數總和等於骰值即可，路徑可轉彎。' },
+        { category:'規則二：生子規則', title:'題目 4：穿透友軍與敵軍阻擋', diff:'路徑阻擋',
+          goalHtml:'黑棋在 <strong>F7</strong>，骰出 <strong>3 點</strong>。F6 是己方棋（可穿透）；E7 是敵棋（路徑阻斷）。<br>👉 點選 <strong>F7</strong>，穿過 F6，落到 F4、E5 或 D6 生子。',
+          hintText:'往左被 E7 敵棋擋住；往上穿過 F6 友棋可抵達 F4、E5 或 D6。',
+          successText:'己方棋子借道穿透；敵方棋子擋路，路徑中斷，不可跨越。',
+          ruleDocTitle:'規則二條文：穿透與阻擋',
+          ruleDocText:'生子路徑遇己方棋子可直接穿透繼續前進；遇敵方棋子即遭阻斷，不可穿越。' },
+        { category:'規則三：吃子規則', title:'題目 5：直線吃子與移位', diff:'吃子基礎',
+          goalHtml:'白棋在 <strong>C3</strong>，骰出 <strong>3 點</strong>。正右方 3 格為 <strong>F3 黑棋</strong>。<br><strong>吃子</strong>：步數恰好抵達敵棋時，敵棋移出，己方棋子移至該格，原格清空。<br>👉 點選 <strong>C3</strong>，再點紅格 <strong>F3</strong> 吃子。',
+          hintText:'正右 3 格即 F3，點紅色準星吃掉它。',
+          successText:'F3 敵棋移出場外，白棋移至 F3，原 C3 清空。',
+          ruleDocTitle:'規則三條文：吃子規則',
+          ruleDocText:'步數恰好等於敵棋距離時可吃子：敵棋移出，己方棋子移佔該格，原出發格清空。' },
+        { category:'規則三：吃子規則', title:'題目 6：吃子限制全程純直線', diff:'吃子限制',
+          goalHtml:'黑棋在 <strong>F6</strong>，骰出 <strong>3 點</strong>。正上方 <strong>F3</strong>（純直線 3 步）和斜上方 <strong>D5</strong>（需轉彎 3 步）各有一顆白棋。<br><strong>吃子限制</strong>：吃子全程必須為純直線，不可轉彎。<br>👉 點選 <strong>F6</strong>，只能吃正上方 <strong>F3</strong>，不能吃 D5。',
+          hintText:'F3 是純直線可吃；D5 需轉彎，不符合吃子規則。',
+          successText:'生子可轉彎，吃子全程必須是純直線。',
+          ruleDocTitle:'規則三條文：吃子直線限制',
+          ruleDocText:'吃子路徑必須全程為直線（同一橫行或縱列），不可折彎，即使步數相符也不例外。' },
+        { category:'規則四：PASS 與特權', title:'題目 7：無步 PASS 與特權補償', diff:'PASS 機制',
+          goalHtml:'黑棋在 <strong>H8</strong>，骰出 <strong>2 點</strong>。H7、G8 被敵棋堵住，其他方向超出棋盤，無合法走法。<br><strong>PASS 與特權</strong>：無法行動時強制 PASS；對手下一回合可免擲骰，選 1～6 任一點數。<br>👉 跟隨下方步驟操作。',
+          hintText:'點 H8 觸發 PASS。白棋獲特權，選 1 點從 H7 直線吃掉 H8 黑棋。',
+          successText:'無合法步時強制 PASS，對手獲免擲骰特權，可精準落子。',
+          ruleDocTitle:'規則四條文：PASS 與特權',
+          ruleDocText:'當前骰值無任何合法走法時，該方必須 PASS。對手下一回合免擲骰，可直接在 1～6 中任選所需點數。' },
+        { category:'規則五：自然終局與勢力填滿', title:'題目 8：自然終局與極端推導', diff:'終局結算',
+          goalHtml:'黑棋在左上（<strong>B2、C2</strong>），白棋在右下（<strong>G7、H7</strong>）。因為單向規則，雙方幾何上永遠無法相遇，達成<strong>自然終局</strong>。<br>👉 跟隨步驟推導，驗證「極端 6 點手動推導」與「自動填滿」結果完全一致。',
+          hintText:'雙方已無互吃可能。按步驟推導，或點「⚡ 一鍵自動填滿」直接看結果。',
+          successText:'極端 6 點推導：黑 6 顆、白 4 顆（+割目 2.5，共 6.5），白棋淨勝 0.5 顆。自動填滿為等效快速結算。',
+          ruleDocTitle:'規則五條文：自然終局與勢力填滿',
+          ruleDocText:'雙方棋子幾何上已無互吃可能時，達成自然終局。各方填滿可抵達的勢力範圍，無法到達的空格保持空白，加上割目後計算勝負。' },
+      ],
+      en: [
+        { category:'Rule 1: One-Directional Movement', title:'Puzzle 1: One-Directional Movement', diff:'Basic Rule',
+          goalHtml:'Black is at <strong>H8</strong>, dice = <strong>2</strong>.<br>Black can only move <strong>Up ↑</strong> or <strong>Left ←</strong> — no reversals or diagonal moves.<br>👉 Click <strong>H8</strong>, then click a green cell.',
+          hintText:'Legal moves: F8 (left 2), H6 (up 2), or G7 (up 1, left 1).',
+          successText:'Black advances upper-left; White advances lower-right. Each side moves in one direction only.',
+          ruleDocTitle:'Rule 1: One-Directional Movement',
+          ruleDocText:'8×8 board. White starts at A1, Black starts at H8. Black may only move Up or Left; White may only move Down or Right. No reversals or diagonal moves.' },
+        { category:'Rule 2: Spawn', title:'Puzzle 2: Spawn — Growing Your Pieces', diff:'Spawn Basics',
+          goalHtml:'Black is at <strong>F6</strong>, dice = <strong>2</strong>.<br><strong>Spawn</strong>: Moving to an empty cell leaves the original piece in place and creates a new piece at the destination.<br>👉 Click <strong>F6</strong>, then click a green cell to spawn.',
+          hintText:'Click F6, then any green cell (D6, F4, or E5). The original piece stays.',
+          successText:'The F6 piece stays; a new piece appears at the destination. Now there are 2 Black pieces.',
+          ruleDocTitle:'Rule 2: Spawn',
+          ruleDocText:'When you move exactly dice-value steps to an empty cell, the starting piece stays and a new piece is created at the destination. Total piece count increases by one.' },
+        { category:'Rule 2: Spawn', title:'Puzzle 3: Spawn Paths Can Turn Corners', diff:'Path Rules',
+          goalHtml:'Black is at <strong>G7</strong>, dice = <strong>3</strong>. G4 (straight up) and D7 (straight left) are blocked by enemy pieces.<br><strong>Corner turns</strong>: Spawn paths may turn corners — as long as each step goes in a legal direction and the total equals the dice value.<br>👉 Click <strong>G7</strong>, turn to reach F5 (up 2, left 1) or E6 (up 1, left 2).',
+          hintText:'Straight lines are blocked. Turn: up 2 then left 1 to F5, or up 1 then left 2 to E6.',
+          successText:'Spawn paths can turn corners to get around obstacles, as long as each step follows the legal direction.',
+          ruleDocTitle:'Rule 2: Spawn Path Turns',
+          ruleDocText:'Each step of a spawn path must follow the allowed direction (Black: up or left; White: down or right). The total steps must equal the dice value. The path may turn corners.' },
+        { category:'Rule 2: Spawn', title:'Puzzle 4: Tunnel Through Friendly Pieces; Enemy Pieces Block', diff:'Path Blocking',
+          goalHtml:'Black is at <strong>F7</strong>, dice = <strong>3</strong>. F6 is a friendly piece (can pass through); E7 is an enemy piece (blocks the path).<br>👉 Click <strong>F7</strong>, pass through F6, and land on F4, E5, or D6 to spawn.',
+          hintText:'Going left is blocked by the enemy at E7. Going up, pass through the friendly F6 to reach F4, E5, or D6.',
+          successText:'Friendly pieces let you pass through; enemy pieces cut off the path and cannot be crossed during a spawn.',
+          ruleDocTitle:'Rule 2: Pass-Through and Blocking',
+          ruleDocText:'During a spawn, your path can pass through your own pieces. Enemy pieces in the path block all further movement — you cannot jump over them.' },
+        { category:'Rule 3: Capture', title:'Puzzle 5: Straight-Line Capture', diff:'Capture Basics',
+          goalHtml:'White is at <strong>C3</strong>, dice = <strong>3</strong>. Three cells to the right is <strong>F3 Black</strong>.<br><strong>Capture</strong>: When your steps land exactly on an enemy piece, that piece is removed and you move there; your starting cell becomes empty.<br>👉 Click <strong>C3</strong>, then click the red cell <strong>F3</strong> to capture.',
+          hintText:'F3 is exactly 3 cells to the right. Click the red crosshair to capture it.',
+          successText:'The F3 enemy piece is removed. White moves to F3; C3 becomes empty.',
+          ruleDocTitle:'Rule 3: Capture',
+          ruleDocText:'When the number of steps exactly equals the distance to an enemy piece, you may capture it: the enemy is removed and you move to that cell. Your starting cell becomes empty.' },
+        { category:'Rule 3: Capture', title:'Puzzle 6: Capture Must Be a Straight Line', diff:'Capture Limit',
+          goalHtml:'Black is at <strong>F6</strong>, dice = <strong>3</strong>. Straight up is <strong>F3</strong> (straight line, 3 steps) and diagonally up-left is <strong>D5</strong> (requires a turn, 3 steps).<br><strong>Capture limit</strong>: Capture paths must be entirely straight — no turns allowed.<br>👉 Click <strong>F6</strong>. Only <strong>F3</strong> (straight up) is a valid capture. D5 cannot be captured.',
+          hintText:'F3 (straight up) is a valid capture. D5 requires a turn — captures must be straight lines only.',
+          successText:'Captures must be straight-line moves only. D5 requires a turn, so it cannot be captured.',
+          ruleDocTitle:'Rule 3: Capture Must Be Straight',
+          ruleDocText:'A capture requires a completely straight-line path (same row or column). Unlike spawns, turns are not allowed during a capture, even if the step count matches.' },
+        { category:'Rule 4: PASS & Privilege', title:'Puzzle 7: PASS and Opponent\'s Privilege', diff:'PASS Rule',
+          goalHtml:'Black is at <strong>H8</strong>, dice = <strong>2</strong>. H7 and G8 are blocked by enemy pieces; all other directions go off the board. No legal moves exist.<br><strong>PASS & Privilege</strong>: When you have no legal moves, you must PASS. Your opponent\'s next turn, they may choose any dice value 1–6 without rolling.<br>👉 Follow the steps below.',
+          hintText:'Click H8 to trigger PASS. White gets the privilege, chooses 1, and captures H8 from H7 in a straight line.',
+          successText:'When blocked, you must PASS and your opponent gets a free dice choice for a precise strike.',
+          ruleDocTitle:'Rule 4: PASS and Privilege',
+          ruleDocText:'If you have no legal moves on your turn, you must PASS. Your opponent then gets a privilege: on their next turn they may freely select any dice value from 1 to 6 instead of rolling.' },
+        { category:'Rule 5: Natural Endgame', title:'Puzzle 8: Natural Endgame', diff:'Endgame',
+          goalHtml:'Black is in the upper-left (<strong>B2, C2</strong>); White is in the lower-right (<strong>G7, H7</strong>). Due to one-directional movement, the two sides can geometrically never meet — a <strong>natural endgame</strong> is reached.<br>👉 Follow the steps to verify that the \'extreme 6-dice manual walkthrough\' and the \'auto-fill\' produce exactly the same result.',
+          hintText:"Neither side can ever capture the other. Follow the steps, or click '⚡ Auto-Fill' to see the result directly.",
+          successText:'Extreme 6-dice walkthrough: Black 6 pieces, White 4 pieces (+komi 2.5, total 6.5) — White wins by 0.5. Auto-fill gives the equivalent fast result.',
+          ruleDocTitle:'Rule 5: Natural Endgame & Territory Fill',
+          ruleDocText:'When it is geometrically impossible for either side to capture the other, the game ends naturally. Each side fills its reachable territory; unreachable cells remain empty. Winner is determined by piece count plus komi.' },
+      ],
+      ja: [
+        { category:'ルール1：一方向の移動', title:'問題1：一方向移動の基本', diff:'基本ルール',
+          goalHtml:'黒石は <strong>H8</strong>、ダイス <strong>2</strong>。<br>黒石は <strong>上 ↑</strong> か <strong>左 ←</strong> にしか動けません。逆走・斜め移動は禁止。<br>👉 <strong>H8</strong> をクリックし、緑のマスに着手。',
+          hintText:'合法手：F8（左2）・H6（上2）・G7（上1左1）。',
+          successText:'黒は左上へ、白は右下へ進みます。各自一方向のみ移動します。',
+          ruleDocTitle:'ルール1：一方向移動',
+          ruleDocText:'8×8盤面。白はA1スタート、黒はH8スタート。黒は上または左にのみ移動可能。白は下または右のみ。逆走・斜め移動は不可。' },
+        { category:'ルール2：生子（石を増やす）', title:'問題2：生子の基本', diff:'生子基礎',
+          goalHtml:'黒石は <strong>F6</strong>、ダイス <strong>2</strong>。<br><strong>生子</strong>：空きマスへ移動すると、元の石はそのまま残り、移動先に新たな石が生まれます。<br>👉 <strong>F6</strong> をクリックし、緑のマスに着手。',
+          hintText:'F6をクリックし、緑のマス（D6・F4・E5）を選択。元の石は残ります。',
+          successText:'F6の石はそのまま。移動先に新たな石が生まれ、黒石が2個になりました。',
+          ruleDocTitle:'ルール2：生子',
+          ruleDocText:'ダイスの目と同じ歩数で空きマスに到達すると、出発石はその場に残り、目的マスに新たな石が生まれます。石の総数が増えます。' },
+        { category:'ルール2：生子（石を増やす）', title:'問題3：生子の経路は直角に曲がれる', diff:'経路ルール',
+          goalHtml:'黒石は <strong>G7</strong>、ダイス <strong>3</strong>。真上G4と真左D7が敵石でふさがれています。<br><strong>曲がり</strong>：生子の経路は直角に曲がれます。各歩が合法方向で、合計歩数がダイスの目に等しければOK。<br>👉 <strong>G7</strong> をクリックし、F5（上2左1）またはE6（上1左2）に着手。',
+          hintText:'直線は塞がれています。上2左1でF5、または上1左2でE6へ曲がってください。',
+          successText:'生子の経路は、合法方向内で曲がって障害物を回避できます。',
+          ruleDocTitle:'ルール2：生子経路の曲がり',
+          ruleDocText:'生子の各歩は許可された方向に進む必要があります（黒：上または左、白：下または右）。合計歩数はダイスの目と等しくなければなりません。経路は曲がっても構いません。' },
+        { category:'ルール2：生子（石を増やす）', title:'問題4：味方石を通過、敵石は遮断', diff:'経路の遮断',
+          goalHtml:'黒石は <strong>F7</strong>、ダイス <strong>3</strong>。F6は味方石（通過可）、E7は敵石（経路遮断）。<br>👉 <strong>F7</strong> をクリックし、F6を通過してF4・E5・D6に生子してください。',
+          hintText:'左はE7の敵石でふさがれています。上方向でF6を通過し、F4・E5・D6に到達できます。',
+          successText:'味方石は通過できます。敵石は経路を遮断し、越えることができません。',
+          ruleDocTitle:'ルール2：通過と遮断',
+          ruleDocText:'生子の経路は自分の石を通過できます。経路上の敵石はそれ以上の前進を遮断し、越えることができません。' },
+        { category:'ルール3：取り（吃子）', title:'問題5：直線で敵石を取る', diff:'取りの基礎',
+          goalHtml:'白石は <strong>C3</strong>、ダイス <strong>3</strong>。右方向3マス先に <strong>F3 黒石</strong>があります。<br><strong>取り</strong>：歩数がちょうど敵石に到達するとき、敵石を除去し、自石がそのマスに移動。元のマスは空になります。<br>👉 <strong>C3</strong> をクリックし、赤マス <strong>F3</strong> で取ってください。',
+          hintText:'F3はちょうど右3マス。赤い十字マークをクリックして取ってください。',
+          successText:'F3の敵石が除去されました。白石はF3へ移動し、C3は空になりました。',
+          ruleDocTitle:'ルール3：取り（吃子）',
+          ruleDocText:'歩数がちょうど敵石との距離に等しいとき、その石を取ることができます。敵石が除去され、自石がそのマスに移動します。出発マスは空になります。' },
+        { category:'ルール3：取り（吃子）', title:'問題6：取りは純直線のみ', diff:'取りの制限',
+          goalHtml:'黒石は <strong>F6</strong>、ダイス <strong>3</strong>。真上に <strong>F3</strong>（純直線3歩）、斜め上に <strong>D5</strong>（曲がり3歩）があります。<br><strong>取りの制限</strong>：取りは全経路が純直線でなければなりません。曲がり不可。<br>👉 <strong>F6</strong> をクリック。真上の <strong>F3</strong> のみ取れます。D5は取れません。',
+          hintText:'F3（真上直線）は取れます。D5は曲がりが必要なので不可。',
+          successText:'取りは純直線のみ。D5は曲がりが必要なため取ることができません。',
+          ruleDocTitle:'ルール3：取りは純直線',
+          ruleDocText:'取りには純直線の経路が必要です（同じ行または列）。生子と異なり、取りでは曲がりは認められません。' },
+        { category:'ルール4：パスと特権', title:'問題7：パスと相手の特権', diff:'パスルール',
+          goalHtml:'黒石は <strong>H8</strong>、ダイス <strong>2</strong>。H7とG8が敵石でふさがれており、他の方向は盤外。合法手がありません。<br><strong>パスと特権</strong>：合法手がないときは強制パス。相手は次のターン、ダイスを振らずに1〜6の任意の目を選べます。<br>👉 以下のステップに従ってください。',
+          hintText:'H8をクリックしてパスを発動。白は特権を得て1を選択し、H7からH8を直線で取ります。',
+          successText:'封鎖されるとパス強制となり、相手に精密攻撃の機会を与えます。',
+          ruleDocTitle:'ルール4：パスと特権',
+          ruleDocText:'自分のターンに合法手がない場合、強制的にパスとなります。相手は次のターン、ダイスを振らずに1〜6の任意の目を選ぶ特権を得ます。' },
+        { category:'ルール5：自然終局', title:'問題8：自然終局', diff:'終局ルール',
+          goalHtml:'黒は左上（<strong>B2・C2</strong>）、白は右下（<strong>G7・H7</strong>）。一方向ルールのため、幾何学的に双方は永遠に出会えません。<strong>自然終局</strong>です。<br>👉 「極端6ダイス手動推導」と「自動地填め」の結果が完全に一致することを確認してください。',
+          hintText:"双方はあまりに遠く、永遠に出会えません。ステップに従うか、「⚡ 自動地填め」で結果を直接確認してください。",
+          successText:'極端6ダイス推導：黒6個・白4個（コミ2.5込みで6.5）—白の0.5個勝利。自動地填めも同じ結果になります。',
+          ruleDocTitle:'ルール5：自然終局と地填め',
+          ruleDocText:'幾何学的にどちらも相手を取ることが不可能になった時点でゲームが終了します。各プレイヤーが到達可能な地を埋め、到達不能なマスは空のまま。石の数にコミを加えて勝者を決定します。' },
+      ]
+    };
+
+    // Q7 step HTML per language
+    const Q7_STEPS = {
+      zh: {
+        step1: (s) => `
+          <div style="font-size: 12.5px; font-weight: 700; color: #38bdf8; margin-bottom: 6px;">${s}</div>
+          <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.6; color: #f1f5f9;">
+            H8 黑棋四面受阻，2 點走不出任何合法步。<br>
+            👉 點選 <strong>H8</strong> 或按下方按鈕確認 PASS。
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="advanceQ7Step1()" class="amber" style="font-size: 13px; padding: 7px 14px; cursor: pointer;">👉 確認黑棋 PASS</button>
+          </div>`,
+        step2: (s) => `
+          <div style="font-size: 12.5px; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">${s}</div>
+          <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.6; color: #f1f5f9;">
+            黑棋 PASS，白棋獲特權，可選 1～6 任一點。<br>
+            選 1 點，H7 直線吃掉 H8 黑棋。<br>
+            👉 點 <strong>H7</strong>、目標格 <strong>H8</strong> 或按鈕執行。
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="advanceQ7Step2()" class="purple" style="font-size: 13px; padding: 7px 14px; cursor: pointer;">👉 H7 吃掉 H8 黑棋</button>
+          </div>`,
+        success: `
+          <div style="font-size: 14.5px; font-weight: 700; margin-bottom: 4px;">🎉 PASS 與特權教學完成</div>
+          <div style="font-size: 13px; line-height: 1.6; color: #e2e8f0;">
+            1. <strong>黑棋受阻 PASS</strong>：2 點無法行動，跳過回合。<br>
+            2. <strong>白棋特權</strong>：免擲骰選 1 點，H7 直線吃掉 H8。<br>
+            避免讓己方棋子完全受阻，否則對手精準打擊。
+          </div>`
+      },
+      en: {
+        step1: (s) => `
+          <div style="font-size: 12.5px; font-weight: 700; color: #38bdf8; margin-bottom: 6px;">${s}</div>
+          <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.6; color: #f1f5f9;">
+            The Black piece at H8 is blocked on all sides. With a roll of 2, there are no legal moves.<br>
+            👉 Click <strong>H8</strong> or the button below to confirm PASS.
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="advanceQ7Step1()" class="amber" style="font-size: 13px; padding: 7px 14px; cursor: pointer;">👉 Confirm Black PASS</button>
+          </div>`,
+        step2: (s) => `
+          <div style="font-size: 12.5px; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">${s}</div>
+          <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.6; color: #f1f5f9;">
+            Black PASSed → White gains the privilege to choose any value 1–6.<br>
+            Choose 1: H7 captures H8 in a straight line.<br>
+            👉 Click <strong>H7</strong>, target <strong>H8</strong>, or press the button.
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="advanceQ7Step2()" class="purple" style="font-size: 13px; padding: 7px 14px; cursor: pointer;">👉 H7 Captures H8</button>
+          </div>`,
+        success: `
+          <div style="font-size: 14.5px; font-weight: 700; margin-bottom: 4px;">🎉 PASS &amp; Privilege Complete</div>
+          <div style="font-size: 13px; line-height: 1.6; color: #e2e8f0;">
+            1. <strong>Black blocked → PASS</strong>: Dice 2, no legal moves, turn skipped.<br>
+            2. <strong>White's privilege</strong>: Chose 1 freely; H7 captured H8 in a straight line.<br>
+            Keep your pieces from getting fully trapped, or your opponent will exploit the free dice choice.
+          </div>`
+      },
+      ja: {
+        step1: (s) => `
+          <div style="font-size: 12.5px; font-weight: 700; color: #38bdf8; margin-bottom: 6px;">${s}</div>
+          <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.6; color: #f1f5f9;">
+            H8の黒石は四方を囲まれており、ダイス2では合法手がありません。<br>
+            👉 <strong>H8</strong> をクリックするか、下のボタンでパスを確定してください。
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="advanceQ7Step1()" class="amber" style="font-size: 13px; padding: 7px 14px; cursor: pointer;">👉 黒石パスを確定</button>
+          </div>`,
+        step2: (s) => `
+          <div style="font-size: 12.5px; font-weight: 700; color: #fbbf24; margin-bottom: 6px;">${s}</div>
+          <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.6; color: #f1f5f9;">
+            黒石がパス → 白石は1〜6の任意の目を選べます。<br>
+            1を選択：H7からH8を直線で取ります。<br>
+            👉 <strong>H7</strong>・目標 <strong>H8</strong>、またはボタンで実行してください。
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="advanceQ7Step2()" class="purple" style="font-size: 13px; padding: 7px 14px; cursor: pointer;">👉 H7がH8を取る</button>
+          </div>`,
+        success: `
+          <div style="font-size: 14.5px; font-weight: 700; margin-bottom: 4px;">🎉 パスと特権の練習完了</div>
+          <div style="font-size: 13px; line-height: 1.6; color: #e2e8f0;">
+            1. <strong>黒石が封鎖→パス</strong>：ダイス2では行動不能、ターンをスキップ。<br>
+            2. <strong>白石の特権</strong>：1を自由に選択；H7からH8を直線で取得。<br>
+            自分の石が完全に封鎖されないようにしましょう。そうでないと相手に精密攻撃の機会を与えます。
+          </div>`
+      }
+    };
+
+    // Q8 step data per language (14 steps)
+    // Each entry: { header, headerColor, body, btns }
+    function _q8Btn(fn, cls, txt) {
+      return `<button onclick="${fn}" class="${cls}" style="font-size: 13px; padding: 7px 14px; cursor: pointer;">${txt}</button>`;
+    }
+    function _q8BtnSm(fn, cls, txt) {
+      return `<button onclick="${fn}" class="${cls}" style="font-size: 12px; padding: 5px 10px; cursor: pointer;">${txt}</button>`;
+    }
+    const Q8_DATA = {
+      zh: [
+        { hc:'#38bdf8', h:'步驟 1／14：黑棋受阻 PASS',
+          b:'B2、C2 黑棋距邊界僅 2 步，6 點必定超出棋盤，無合法走法。<br>👉 點 <strong>B2、C2</strong> 或按鈕確認 PASS。',
+          bt:_q8Btn('advanceQ8(1)','amber','👉 確認黑棋 PASS')+_q8BtnSm('executeEndgameDemo()','purple','⚡ 一鍵自動填滿') },
+        { hc:'#fbbf24', h:'步驟 2／14：白棋特權生子',
+          b:'黑棋 PASS，白棋獲特權，可選 1～6 任一點。<br>選 1 點，<strong>G7</strong> 在 <strong>G8</strong> 生子。<br>👉 點 <strong>G7</strong>、目標格 <strong>G8</strong> 或按鈕落子。',
+          bt:_q8Btn('advanceQ8(2)','purple','👉 白棋在 G8 生子') },
+        { hc:'#38bdf8', h:'步驟 3／14：黑棋再次受阻 PASS',
+          b:'黑棋 6 點仍無合法走法。<br>👉 點 <strong>B2、C2</strong> 或按鈕確認 PASS。',
+          bt:_q8Btn('advanceQ8(3)','amber','👉 確認黑棋 PASS') },
+        { hc:'#fbbf24', h:'步驟 4／14：白棋特權在 H8 生子',
+          b:'黑棋再度 PASS，白棋獲特權，選 1 點。<br><strong>H7</strong> 在 <strong>H8</strong> 生子。<br>👉 點 <strong>H7</strong>、目標格 <strong>H8</strong> 或按鈕落子。',
+          bt:_q8Btn('advanceQ8(4)','purple','👉 白棋在 H8 生子') },
+        { hc:'#38bdf8', h:'步驟 5／14：黑棋第三次受阻 PASS',
+          b:'黑棋 6 點仍然超界，無合法走法。<br>👉 點 <strong>B2、C2</strong> 或按鈕確認 PASS。',
+          bt:_q8Btn('advanceQ8(5)','amber','👉 確認黑棋 PASS') },
+        { hc:'#fbbf24', h:'步驟 6／14：白棋也無步可走 PASS',
+          b:'白棋也無法抵達黑棋陣地，雙方幾何上永遠無法相遇。<br>白棋同樣無法行動。<br>👉 點任一白棋或按鈕確認 PASS。',
+          bt:_q8Btn('advanceQ8(6)','amber','👉 確認白棋 PASS') },
+        { hc:'#38bdf8', h:'步驟 7／14：黑棋獲特權（骰 2）A1 生子',
+          b:'白棋 PASS，黑棋獲特權，選 2 點。<br><strong>B2</strong> 在 <strong>A1</strong> 生子（上 1 左 1）。<br>👉 點 <strong>B2</strong>、目標格 <strong>A1</strong> 或按鈕落子。',
+          bt:_q8Btn('advanceQ8(7)','purple','👉 B2 在 A1 生子') },
+        { hc:'#fbbf24', h:'步驟 8／14：白棋繼續 PASS',
+          b:'白棋仍無法抵達黑棋陣地，再次 PASS。<br>👉 點任一白棋或按鈕確認 PASS。',
+          bt:_q8Btn('advanceQ8(8)','amber','👉 確認白棋 PASS') },
+        { hc:'#38bdf8', h:'步驟 9／14：黑棋獲特權（骰 1）B1 生子',
+          b:'白棋 PASS，黑棋再獲特權，選 1 點。<br><strong>B2</strong> 在 <strong>B1</strong> 生子（上 1）。<br>👉 點 <strong>B2</strong>、目標格 <strong>B1</strong> 或按鈕落子。',
+          bt:_q8Btn('advanceQ8(9)','purple','👉 B2 在 B1 生子') },
+        { hc:'#fbbf24', h:'步驟 10／14：白棋繼續 PASS',
+          b:'白棋仍無法行動，再次 PASS。<br>👉 點任一白棋或按鈕確認 PASS。',
+          bt:_q8Btn('advanceQ8(10)','amber','👉 確認白棋 PASS') },
+        { hc:'#38bdf8', h:'步驟 11／14：黑棋獲特權（骰 1）A2 生子',
+          b:'白棋 PASS，黑棋再獲特權，選 1 點。<br><strong>B2</strong> 在 <strong>A2</strong> 生子（左 1）。<br>👉 點 <strong>B2</strong>、目標格 <strong>A2</strong> 或按鈕落子。',
+          bt:_q8Btn('advanceQ8(11)','purple','👉 B2 在 A2 生子') },
+        { hc:'#fbbf24', h:'步驟 12／14：白棋繼續 PASS',
+          b:'白棋仍無法行動，再次 PASS。<br>👉 點任一白棋或按鈕確認 PASS。',
+          bt:_q8Btn('advanceQ8(12)','amber','👉 確認白棋 PASS') },
+        { hc:'#38bdf8', h:'步驟 13／14：黑棋獲特權（骰 1）C1 生子',
+          b:'白棋 PASS，黑棋再獲特權，選 1 點。<br><strong>C2</strong> 在 <strong>C1</strong> 生子（上 1）。<br>👉 點 <strong>C2</strong>、目標格 <strong>C1</strong> 或按鈕落子。',
+          bt:_q8Btn('advanceQ8(13)','purple','👉 C2 在 C1 生子') },
+        { hc:'#c084fc', h:'步驟 14／14：🏁 結算勝負',
+          b:'雙方都已無步可走，達成自然終局。<br>👉 點擊確認終局並查看結算結果。',
+          bt:_q8Btn('advanceQ8(14)','primary','👉 確認終局結算') },
+      ],
+      en: [
+        { hc:'#38bdf8', h:'Step 1/14: Black Must PASS',
+          b:'B2 and C2 are only 2 cells from the board edge. A roll of 6 would overshoot the board — no legal moves exist.<br>👉 Click <strong>B2, C2</strong> or the button to confirm PASS.',
+          bt:_q8Btn('advanceQ8(1)','amber','👉 Confirm Black PASS')+_q8BtnSm('executeEndgameDemo()','purple','⚡ Auto-Fill Now') },
+        { hc:'#fbbf24', h:'Step 2/14: White Spawns with Privilege',
+          b:'Black PASSed → White gains privilege and chooses 1.<br><strong>G7</strong> spawns to <strong>G8</strong>.<br>👉 Click <strong>G7</strong>, target <strong>G8</strong>, or press the button.',
+          bt:_q8Btn('advanceQ8(2)','purple','👉 White Spawns at G8') },
+        { hc:'#38bdf8', h:'Step 3/14: Black Must PASS Again',
+          b:'Black still has no legal moves with a roll of 6.<br>👉 Click <strong>B2, C2</strong> or the button to PASS.',
+          bt:_q8Btn('advanceQ8(3)','amber','👉 Confirm Black PASS') },
+        { hc:'#fbbf24', h:'Step 4/14: White Spawns at H8',
+          b:'Black PASSed again → White gets privilege again, chooses 1.<br><strong>H7</strong> spawns to <strong>H8</strong>.<br>👉 Click <strong>H7</strong>, target <strong>H8</strong>, or press the button.',
+          bt:_q8Btn('advanceQ8(4)','purple','👉 White Spawns at H8') },
+        { hc:'#38bdf8', h:'Step 5/14: Black Must PASS Again',
+          b:'Black cannot move. Roll of 6 — still off the board.<br>👉 Click <strong>B2, C2</strong> or press the button.',
+          bt:_q8Btn('advanceQ8(5)','amber','👉 Confirm Black PASS') },
+        { hc:'#fbbf24', h:"Step 6/14: White Can't Move Either — PASS",
+          b:"White can no longer reach Black's territory — the two sides can never meet geometrically.<br>White also has no legal moves.<br>👉 Click any White piece or the button to PASS.",
+          bt:_q8Btn('advanceQ8(6)','amber','👉 Confirm White PASS') },
+        { hc:'#38bdf8', h:'Step 7/14: Black Plays with Privilege (dice=2) → A1',
+          b:'White PASSed → Black gains privilege, chooses 2.<br><strong>B2</strong> spawns to <strong>A1</strong> (up 1, left 1).<br>👉 Click <strong>B2</strong>, target <strong>A1</strong>, or press the button.',
+          bt:_q8Btn('advanceQ8(7)','purple','👉 B2 Spawns to A1') },
+        { hc:'#fbbf24', h:'Step 8/14: White Must PASS',
+          b:"White still cannot reach Black — PASS again.<br>👉 Click any White piece or the button.",
+          bt:_q8Btn('advanceQ8(8)','amber','👉 Confirm White PASS') },
+        { hc:'#38bdf8', h:'Step 9/14: Black Plays with Privilege (dice=1) → B1',
+          b:'White PASSed → Black gains privilege again, chooses 1.<br><strong>B2</strong> spawns to <strong>B1</strong> (up 1).<br>👉 Click <strong>B2</strong>, target <strong>B1</strong>, or press the button.',
+          bt:_q8Btn('advanceQ8(9)','purple','👉 B2 Spawns to B1') },
+        { hc:'#fbbf24', h:'Step 10/14: White Must PASS',
+          b:"White still blocked. PASS.<br>👉 Click any White piece or the button.",
+          bt:_q8Btn('advanceQ8(10)','amber','👉 Confirm White PASS') },
+        { hc:'#38bdf8', h:'Step 11/14: Black Plays with Privilege (dice=1) → A2',
+          b:'White PASSed again → Black keeps privilege, chooses 1.<br><strong>B2</strong> spawns to <strong>A2</strong> (left 1).<br>👉 Click <strong>B2</strong>, target <strong>A2</strong>, or press the button.',
+          bt:_q8Btn('advanceQ8(11)','purple','👉 B2 Spawns to A2') },
+        { hc:'#fbbf24', h:'Step 12/14: White Must PASS',
+          b:"White cannot move. PASS.<br>👉 Click any White piece or the button.",
+          bt:_q8Btn('advanceQ8(12)','amber','👉 Confirm White PASS') },
+        { hc:'#38bdf8', h:'Step 13/14: Black Plays with Privilege (dice=1) → C1',
+          b:'White PASSed → Black keeps privilege, chooses 1.<br><strong>C2</strong> spawns to <strong>C1</strong> (up 1).<br>👉 Click <strong>C2</strong>, target <strong>C1</strong>, or press the button.',
+          bt:_q8Btn('advanceQ8(13)','purple','👉 C2 Spawns to C1') },
+        { hc:'#c084fc', h:'Step 14/14: 🏁 Final Settlement',
+          b:'Both sides have no more legal moves. Calculate the final result.<br>👉 Click to confirm the endgame and tally scores.',
+          bt:_q8Btn('advanceQ8(14)','primary','👉 Confirm Endgame') },
+      ],
+      ja: [
+        { hc:'#38bdf8', h:'ステップ 1/14：黒石が強制パス',
+          b:'B2・C2は盤端まで2マスしかなく、ダイス6では必ず盤外に出てしまいます。合法手なし。<br>👉 <strong>B2・C2</strong> をクリックするか、ボタンでパスを確定。',
+          bt:_q8Btn('advanceQ8(1)','amber','👉 黒石パスを確定')+_q8BtnSm('executeEndgameDemo()','purple','⚡ 自動地填め') },
+        { hc:'#fbbf24', h:'ステップ 2/14：白石が特権で生子',
+          b:'黒石がパス → 白石が特権を得て1を選択。<br><strong>G7</strong> から <strong>G8</strong> に生子。<br>👉 <strong>G7</strong>・目標 <strong>G8</strong>、またはボタンで着手。',
+          bt:_q8Btn('advanceQ8(2)','purple','👉 白石がG8に生子') },
+        { hc:'#38bdf8', h:'ステップ 3/14：黒石が再びパス',
+          b:'ダイス6では黒石はまだ合法手がありません。<br>👉 <strong>B2・C2</strong> またはボタンでパス確定。',
+          bt:_q8Btn('advanceQ8(3)','amber','👉 黒石パスを確定') },
+        { hc:'#fbbf24', h:'ステップ 4/14：白石がH8に生子',
+          b:'黒石が再びパス → 白石が再び特権を得て1を選択。<br><strong>H7</strong> から <strong>H8</strong> に生子。<br>👉 <strong>H7</strong>・目標 <strong>H8</strong>、またはボタンで着手。',
+          bt:_q8Btn('advanceQ8(4)','purple','👉 白石がH8に生子') },
+        { hc:'#38bdf8', h:'ステップ 5/14：黒石がまたパス',
+          b:'ダイス6では黒石はまだ動けません。<br>👉 <strong>B2・C2</strong> またはボタンでパス。',
+          bt:_q8Btn('advanceQ8(5)','amber','👉 黒石パスを確定') },
+        { hc:'#fbbf24', h:'ステップ 6/14：白石もパス',
+          b:'白石も黒石の陣地に届けなくなりました。幾何学的に双方は永遠に出会えません。<br>今度は白石も合法手なし。<br>👉 白石をクリックするか、ボタンでパス確定。',
+          bt:_q8Btn('advanceQ8(6)','amber','👉 白石パスを確定') },
+        { hc:'#38bdf8', h:'ステップ 7/14：黒石が特権で着手（ダイス2）→ A1',
+          b:'白石がパス → 黒石が特権を得て2を選択。<br><strong>B2</strong> から <strong>A1</strong> に生子（上1左1）。<br>👉 <strong>B2</strong>・目標 <strong>A1</strong>、またはボタンで着手。',
+          bt:_q8Btn('advanceQ8(7)','purple','👉 B2からA1に生子') },
+        { hc:'#fbbf24', h:'ステップ 8/14：白石が再びパス',
+          b:'白石はまだ黒石に届きません。再びパス。<br>👉 白石をクリックするか、ボタンで確定。',
+          bt:_q8Btn('advanceQ8(8)','amber','👉 白石パスを確定') },
+        { hc:'#38bdf8', h:'ステップ 9/14：黒石が特権で着手（ダイス1）→ B1',
+          b:'白石がパス → 黒石が再び特権、1を選択。<br><strong>B2</strong> から <strong>B1</strong> に生子（上1）。<br>👉 <strong>B2</strong>・目標 <strong>B1</strong>、またはボタンで着手。',
+          bt:_q8Btn('advanceQ8(9)','purple','👉 B2からB1に生子') },
+        { hc:'#fbbf24', h:'ステップ 10/14：白石がパス',
+          b:'白石は封鎖されています。パス。<br>👉 白石またはボタンで確定。',
+          bt:_q8Btn('advanceQ8(10)','amber','👉 白石パスを確定') },
+        { hc:'#38bdf8', h:'ステップ 11/14：黒石が特権で着手（ダイス1）→ A2',
+          b:'白石が再びパス → 黒石が特権継続、1を選択。<br><strong>B2</strong> から <strong>A2</strong> に生子（左1）。<br>👉 <strong>B2</strong>・目標 <strong>A2</strong>、またはボタンで着手。',
+          bt:_q8Btn('advanceQ8(11)','purple','👉 B2からA2に生子') },
+        { hc:'#fbbf24', h:'ステップ 12/14：白石がパス',
+          b:'白石は動けません。パス。<br>👉 白石またはボタンで確定。',
+          bt:_q8Btn('advanceQ8(12)','amber','👉 白石パスを確定') },
+        { hc:'#38bdf8', h:'ステップ 13/14：黒石が特権で着手（ダイス1）→ C1',
+          b:'白石がパス → 黒石が特権継続、1を選択。<br><strong>C2</strong> から <strong>C1</strong> に生子（上1）。<br>👉 <strong>C2</strong>・目標 <strong>C1</strong>、またはボタンで着手。',
+          bt:_q8Btn('advanceQ8(13)','purple','👉 C2からC1に生子') },
+        { hc:'#c084fc', h:'ステップ 14/14：🏁 最終集計',
+          b:'双方ともに合法手がなくなりました。最終結果を集計します。<br>👉 クリックして終局と得点を確認してください。',
+          bt:_q8Btn('advanceQ8(14)','primary','👉 終局を確定') },
+      ]
+    };
+
+    function setLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('takuLang', lang);
+      document.querySelectorAll('.langBtn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === currentLang);
+      });
+      applyTutorialI18n();
+      loadPuzzle(currentPuzzleIdx);
+    }
+
+    function applyTutorialI18n() {
+      document.documentElement.lang = currentLang === 'ja' ? 'ja' : (currentLang === 'en' ? 'en' : 'zh-Hant');
+      document.title = TUI('pageTitle');
+      const brandEl = document.getElementById('brandTitleText');
+      if (brandEl) brandEl.textContent = TUI('brandTitle');
+      const badgeEl = document.getElementById('badgeText');
+      if (badgeEl) badgeEl.textContent = TUI('badge');
+      const backEl = document.getElementById('backToGameBtn');
+      if (backEl) backEl.textContent = TUI('backBtn');
+      const navEl = document.getElementById('navGridLabel');
+      if (navEl) navEl.textContent = TUI('navLabel');
+      const clearEl = document.getElementById('clearProgressBtn');
+      if (clearEl) clearEl.textContent = TUI('clearBtn');
+      const btnHintEl = document.getElementById('btnHint');
+      if (btnHintEl) btnHintEl.textContent = TUI('btnHintTxt');
+      const btnSolEl = document.getElementById('btnSolution');
+      if (btnSolEl) btnSolEl.textContent = TUI('btnSolTxt');
+      const btnStepEl = document.getElementById('btnStepDemo');
+      if (btnStepEl) btnStepEl.textContent = TUI('btnStepTxt');
+      const btnResetEl = document.getElementById('btnReset');
+      if (btnResetEl) btnResetEl.textContent = TUI('btnResetTxt');
+      const btnPrevEl = document.getElementById('btnPrev');
+      if (btnPrevEl) btnPrevEl.textContent = TUI('btnPrevTxt');
+      const btnNextEl = document.getElementById('btnNext');
+      if (btnNextEl) btnNextEl.textContent = TUI('btnNextTxt');
+      document.querySelectorAll('.langBtn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === currentLang);
+      });
+      updateProgress();
+    }
+
+    // ─────────────────────────────────────────────────────────
+
+    // ===== 8 道純規則棋局題庫定義 =====
+    const PUZZLES = [
+      // 規則 1
+      {
+        id: 1,
+        category: "規則一：單向行棋",
+        title: "題目 1：單向行棋原則",
+        diff: "基礎規則",
+        diffColor: "#86efac",
+        turn: BLACK,
+        dice: 2,
+        initialBoard: [
+          { r: 7, c: 7, color: BLACK }, // H8
+          { r: 0, c: 0, color: WHITE }  // A1
+        ],
+        goalHtml: "黑棋在 <strong>H8</strong>，骰出 <strong>2 點</strong>。<br>黑棋每步只能往<strong>上 ↑</strong> 或<strong>左 ←</strong>，不可逆行或走斜線。<br>👉 點選 <strong>H8</strong>，再點綠格落子。",
+        isTargetSolved: (move) => move.type === "spawn" && (
+          (move.toR === 7 && move.toC === 5) || // F8
+          (move.toR === 5 && move.toC === 7) || // H6
+          (move.toR === 6 && move.toC === 6)    // G7
+        ),
+        demoMove: { fromR: 7, fromC: 7, toR: 6, toC: 6, type: "spawn" },
+        hintText: "可走：F8（左 2）、H6（上 2）或 G7（上 1 左 1）。",
+        successText: "黑棋朝左上推進，白棋朝右下推進，雙方各走單向，不走回頭路。",
+        ruleDocTitle: "規則一條文：單向行棋",
+        ruleDocText: "8×8 棋盤，白棋起於 A1，黑棋起於 H8。黑棋只能往上或左；白棋只能往下或右，不可逆行或斜走。"
+      },
+
+      // 規則 2
+      {
+        id: 2,
+        category: "規則二：生子規則",
+        title: "題目 2：生子與棋子增長",
+        diff: "生子基礎",
+        diffColor: "#86efac",
+        turn: BLACK,
+        dice: 2,
+        initialBoard: [
+          { r: 5, c: 5, color: BLACK }, // F6
+          { r: 0, c: 0, color: WHITE }  // A1
+        ],
+        goalHtml: "黑棋在 <strong>F6</strong>，骰出 <strong>2 點</strong>。<br><strong>生子</strong>：走到空格時，原棋留原位，目標格新增一顆己方棋子。<br>👉 點選 <strong>F6</strong>，再點綠格生子。",
+        isTargetSolved: (move) => move.type === "spawn" && (
+          (move.toR === 3 && move.toC === 5) || // F4
+          (move.toR === 5 && move.toC === 3) || // D6
+          (move.toR === 4 && move.toC === 4)    // E5
+        ),
+        demoMove: { fromR: 5, fromC: 5, toR: 3, toC: 5, type: "spawn" },
+        hintText: "點 F6 後選任一綠格（D6、F4 或 E5），原棋子保留不動。",
+        successText: "F6 黑棋留存，目標格新增一顆，共 2 顆黑棋。",
+        ruleDocTitle: "規則二條文：生子規則",
+        ruleDocText: "步數等於骰值且目標格為空格時，出發棋留原位，目標格長出一顆新棋，棋子總數增加。"
+      },
+
+      // 規則 3
+      {
+        id: 3,
+        category: "規則二：生子規則",
+        title: "題目 3：生子路徑直角轉彎",
+        diff: "路徑規則",
+        diffColor: "#38bdf8",
+        turn: BLACK,
+        dice: 3,
+        initialBoard: [
+          { r: 6, c: 6, color: BLACK }, // G7
+          { r: 3, c: 6, color: WHITE }, // G4
+          { r: 6, c: 3, color: WHITE }, // D7
+          { r: 0, c: 0, color: WHITE }
+        ],
+        goalHtml: "黑棋在 <strong>G7</strong>，骰出 <strong>3 點</strong>。正上方 G4 與正左方 D7 被敵棋堵住。<br><strong>轉彎</strong>：生子路徑可直角折彎，只要每步方向合規、步數總和等於骰值即可。<br>👉 點選 <strong>G7</strong>，折彎至 F5（上 2 左 1）或 E6（上 1 左 2）。",
+        isTargetSolved: (move) => move.type === "spawn" && (
+          (move.toR === 4 && move.toC === 5) || // F5
+          (move.toR === 5 && move.toC === 4)    // E6
+        ),
+        demoMove: { fromR: 6, fromC: 6, toR: 4, toC: 5, type: "spawn" },
+        hintText: "直線被堵，改走上 2 左 1 至 F5，或上 1 左 2 至 E6。",
+        successText: "生子路徑在合規方向內可轉折繞過障礙。",
+        ruleDocTitle: "規則二條文：生子路徑轉彎",
+        ruleDocText: "生子每步需往允許的方向走（黑棋：上或左；白棋：下或右），步數總和等於骰值即可，路徑可轉彎。"
+      },
+
+      // 規則 4
+      {
+        id: 4,
+        category: "規則二：生子規則",
+        title: "題目 4：穿透友軍與敵軍阻擋",
+        diff: "路徑阻擋",
+        diffColor: "#38bdf8",
+        turn: BLACK,
+        dice: 3,
+        initialBoard: [
+          { r: 6, c: 5, color: BLACK }, // F7 (出發黑棋)
+          { r: 5, c: 5, color: BLACK }, // F6 (友軍隊友，正上方)
+          { r: 6, c: 4, color: WHITE }, // E7 (敵方白棋，正左方)
+          { r: 0, c: 0, color: WHITE }
+        ],
+        goalHtml: "黑棋在 <strong>F7</strong>，骰出 <strong>3 點</strong>。F6 是己方棋（可穿透）；E7 是敵棋（路徑阻斷）。<br>👉 點選 <strong>F7</strong>，穿過 F6，落到 F4、E5 或 D6 生子。",
+        isTargetSolved: (move) => move.type === "spawn" && (
+          (move.toR === 3 && move.toC === 5) || // F4 (穿過F6直走3格)
+          (move.toR === 4 && move.toC === 4) || // E5 (穿過F6後轉左1)
+          (move.toR === 5 && move.toC === 3)    // D6 (穿過F6後轉左2)
+        ),
+        demoMove: { fromR: 6, fromC: 5, toR: 3, toC: 5, type: "spawn" },
+        hintText: "往左被 E7 敵棋擋住；往上穿過 F6 友棋可抵達 F4、E5 或 D6。",
+        successText: "己方棋子借道穿透；敵方棋子擋路，路徑中斷，不可跨越。",
+        ruleDocTitle: "規則二條文：穿透與阻擋",
+        ruleDocText: "生子路徑遇己方棋子可直接穿透繼續前進；遇敵方棋子即遭阻斷，不可穿越。"
+      },
+
+      // 規則 5
+      {
+        id: 5,
+        category: "規則三：吃子規則",
+        title: "題目 5：直線吃子與移位",
+        diff: "吃子基礎",
+        diffColor: "#f87171",
+        turn: WHITE,
+        dice: 3,
+        initialBoard: [
+          { r: 2, c: 2, color: WHITE }, // C3
+          { r: 2, c: 5, color: BLACK }, // F3 (正右方 3 格處黑棋)
+          { r: 7, c: 7, color: BLACK }
+        ],
+        goalHtml: "白棋在 <strong>C3</strong>，骰出 <strong>3 點</strong>。正右方 3 格為 <strong>F3 黑棋</strong>。<br><strong>吃子</strong>：步數恰好抵達敵棋時，敵棋移出，己方棋子移至該格，原格清空。<br>👉 點選 <strong>C3</strong>，再點紅格 <strong>F3</strong> 吃子。",
+        isTargetSolved: (move) => move.type === "capture" && move.toR === 2 && move.toC === 5,
+        demoMove: { fromR: 2, fromC: 2, toR: 2, toC: 5, type: "capture" },
+        hintText: "正右 3 格即 F3，點紅色準星吃掉它。",
+        successText: "F3 敵棋移出場外，白棋移至 F3，原 C3 清空。",
+        ruleDocTitle: "規則三條文：吃子規則",
+        ruleDocText: "步數恰好等於敵棋距離時可吃子：敵棋移出，己方棋子移佔該格，原出發格清空。"
+      },
+
+      // 規則 6
+      {
+        id: 6,
+        category: "規則三：吃子規則",
+        title: "題目 6：吃子限制全程純直線",
+        diff: "吃子限制",
+        diffColor: "#f87171",
+        turn: BLACK,
+        dice: 3,
+        initialBoard: [
+          { r: 5, c: 5, color: BLACK }, // F6
+          { r: 4, c: 3, color: WHITE }, // D5 (曼哈頓距離為3：上1左2，斜位敵棋)
+          { r: 2, c: 5, color: WHITE }, // F3 (正上方直線距離恰為3的敵棋)
+          { r: 0, c: 0, color: WHITE }
+        ],
+        goalHtml: "黑棋在 <strong>F6</strong>，骰出 <strong>3 點</strong>。正上方 <strong>F3</strong>（純直線 3 步）和斜上方 <strong>D5</strong>（需轉彎 3 步）各有一顆白棋。<br><strong>吃子限制</strong>：吃子全程必須為純直線，不可轉彎。<br>👉 點選 <strong>F6</strong>，只能吃正上方 <strong>F3</strong>，不能吃 D5。",
+        isTargetSolved: (move) => move.type === "capture" && move.toR === 2 && move.toC === 5,
+        demoMove: { fromR: 5, fromC: 5, toR: 2, toC: 5, type: "capture" },
+        hintText: "F3 是純直線可吃；D5 需轉彎，不符合吃子規則。",
+        successText: "生子可轉彎，吃子全程必須是純直線。",
+        ruleDocTitle: "規則三條文：吃子直線限制",
+        ruleDocText: "吃子路徑必須全程為直線（同一橫行或縱列），不可折彎，即使步數相符也不例外。"
+      },
+
+      // 規則 7
+      {
+        id: 7,
+        category: "規則四：PASS 與特權",
+        title: "題目 7：無步 PASS 與特權補償",
+        diff: "PASS 機制",
+        diffColor: "#fbbf24",
+        turn: BLACK,
+        dice: 2,
+        initialBoard: [
+          { r: 7, c: 7, color: BLACK }, // H8
+          { r: 6, c: 7, color: WHITE }, // H7 (正上方堵死)
+          { r: 7, c: 6, color: WHITE }, // G8 (正左方堵死)
+          { r: 0, c: 0, color: WHITE }  // A1
+        ],
+        goalHtml: "黑棋在 <strong>H8</strong>，骰出 <strong>2 點</strong>。H7、G8 被敵棋堵住，其他方向超出棋盤，無合法走法。<br><strong>PASS 與特權</strong>：無法行動時強制 PASS；對手下一回合可免擲骰，選 1～6 任一點數。<br>👉 跟隨下方步驟操作。",
+        isTargetSolved: (move) => move.type === "pass" || move.player === WHITE,
+        demoMove: { type: "pass" },
+        hintText: "點 H8 觸發 PASS。白棋獲特權，選 1 點從 H7 直線吃掉 H8 黑棋。",
+        successText: "無合法步時強制 PASS，對手獲免擲骰特權，可精準落子。",
+        ruleDocTitle: "規則四條文：PASS 與特權",
+        ruleDocText: "當前骰值無任何合法走法時，該方必須 PASS。對手下一回合免擲骰，可直接在 1～6 中任選所需點數。"
+      },
+
+      // 規則 8
+      {
+        id: 8,
+        category: "規則五：自然終局與勢力填滿",
+        title: "題目 8：自然終局與極端推導",
+        diff: "終局結算",
+        diffColor: "#c084fc",
+        turn: BLACK,
+        dice: 6,
+        initialBoard: [
+          { r: 1, c: 1, color: BLACK }, // B2
+          { r: 1, c: 2, color: BLACK }, // C2
+          { r: 6, c: 6, color: WHITE }, // G7
+          { r: 6, c: 7, color: WHITE }  // H7
+        ],
+        goalHtml: "黑棋在左上（<strong>B2、C2</strong>），白棋在右下（<strong>G7、H7</strong>）。因為單向規則，雙方幾何上永遠無法相遇，達成<strong>自然終局</strong>。<br>👉 跟隨步驟推導，驗證「極端 6 點手動推導」與「自動填滿」結果完全一致。",
+        isTargetSolved: (move) => move.type === "endgame_demo" || move.type === "step_demo",
+        demoMove: { type: "endgame_demo" },
+        hintText: "雙方已無互吃可能。按步驟推導，或點「⚡ 一鍵自動填滿」直接看結果。",
+        successText: "極端 6 點推導：黑 6 顆、白 4 顆（+割目 2.5，共 6.5），白棋淨勝 0.5 顆。自動填滿為等效快速結算。",
+        ruleDocTitle: "規則五條文：自然終局與勢力填滿",
+        ruleDocText: "雙方棋子幾何上已無互吃可能時，達成自然終局。各方填滿可抵達的勢力範圍，無法到達的空格保持空白，加上割目後計算勝負。"
+      }
+    ];
+
+    // ===== 全域狀態 =====
+    let currentPuzzleIdx = 0;
+    let board = [];
+    let selectedCell = null;
+    let legalMovesForSelected = { spawns: [], captures: [] };
+    let solvedPuzzles = new Set();
+    let lastPuzzleMove = null;
+    let endgameFilledCells = new Set();
+    let q7Step = 1;
+    let q8Step = 1;
+    let passDemoTimer1 = null;
+    let passDemoTimer2 = null;
+    let passDemoRunning = false;
+    let stepDemoTimers = [];
+
+    function clearPassDemoTimers() {
+      if (passDemoTimer1) clearTimeout(passDemoTimer1);
+      if (passDemoTimer2) clearTimeout(passDemoTimer2);
+      passDemoTimer1 = null;
+      passDemoTimer2 = null;
+      passDemoRunning = false;
+    }
+
+    function clearStepDemoTimers() {
+      if (stepDemoTimers && stepDemoTimers.length > 0) {
+        stepDemoTimers.forEach(t => clearTimeout(t));
+        stepDemoTimers = [];
+      }
+    }
+
+    // DOM 元素快取
+    const boardEl = document.getElementById("tutorialBoard");
+    const pathGroup = document.getElementById("tutorialPathGroup");
+    const puzzleTitle = document.getElementById("puzzleTitle");
+    const puzzleCategoryTag = document.getElementById("puzzleCategoryTag");
+    const puzzleDiffBadge = document.getElementById("puzzleDiffBadge");
+    const puzzleGoalBox = document.getElementById("puzzleGoalBox");
+    const feedbackBox = document.getElementById("feedbackBox");
+    const ruleDocTitle = document.getElementById("ruleDocTitle");
+    const ruleDocText = document.getElementById("ruleDocText");
+    const turnIndicatorBadge = (() => {
+      const style = {};
+      function sync(text) {
+        if (typeof updateTurnBanner !== "function") return;
+        const isEnd = text.includes("自然終局");
+        if (isEnd) return;
+        const hasPriv = text.includes("特權指定");
+        if (text.includes("⚪")) updateTurnBanner(WHITE, hasPriv ? "🎁 特權指定" : "");
+        else if (text.includes("⚫")) updateTurnBanner(BLACK, hasPriv ? "🎁 特權指定" : "");
+      }
+      return {
+        get style() { return style; },
+        set textContent(v) { sync(String(v)); },
+        set innerHTML(v) { sync(String(v)); }
+      };
+    })();
+    const puzzleDiceValText = document.getElementById("puzzleDiceValText");
+    const puzzlePipGrid = document.getElementById("puzzlePipGrid");
+    const puzzleNavGrid = document.getElementById("puzzleNavGrid");
+    const puzzleProgressText = document.getElementById("puzzleProgressText");
+    const btnHint = document.getElementById("btnHint");
+    const btnSolution = document.getElementById("btnSolution");
+    const btnStepDemo = document.getElementById("btnStepDemo");
+    const btnReset = document.getElementById("btnReset");
+    const btnPrev = document.getElementById("btnPrev");
+    const btnNext = document.getElementById("btnNext");
+    const clearProgressBtn = document.getElementById("clearProgressBtn");
+
+    // ===== 音效產生器 =====
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function getPuzzle(idx) {
+      const base = PUZZLES[idx];
+      const text = (PUZZLE_TEXT[currentLang] || PUZZLE_TEXT.zh)[idx];
+      return { ...base, ...text };
+    }
+
+    function updateTurnBanner(turn, extraLabel = "") {
+      const banner = document.getElementById("tutorialStatusBanner");
+      const dot = document.getElementById("tutorialTurnDot");
+      const text = document.getElementById("tutorialTurnText");
+      if (!banner || !dot || !text) return;
+      const isBlack = turn === BLACK;
+      banner.className = `tutorialStatusBanner ${isBlack ? "black" : "white"}`;
+      dot.className = `tutorialTurnDot ${isBlack ? "black" : "white"}`;
+      text.textContent = (isBlack ? TUI('blackTurn') : TUI('whiteTurn')) + (extraLabel ? `　${extraLabel}` : "");
+    }
+
+    function playBeep(freq = 520, type = "sine", duration = 0.12) {
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playSuccessSound() {
+      try {
+        const ctx = getAudioCtx();
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => playBeep(freq, "triangle", 0.18), idx * 75);
+        });
+      } catch (e) {}
+    }
+
+    // ===== 盤面操作與勢力填滿演算法 =====
+    function cloneBoard(b) {
+      return b.map(row => [...row]);
+    }
+
+    // ===== 終局勢力填滿演算法（依照規則一與規則二） =====
+    function fillTerritoryRule1Rule2(b, firstTurn) {
+      const result = cloneBoard(b);
+
+      // 黑棋最短步數傳播 (只能往左 c-1、往上 r-1)
+      const distB = Array.from({ length: N }, () => Array(N).fill(Infinity));
+      const qB = [];
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          if (result[r][c] === BLACK) {
+            distB[r][c] = 0;
+            qB.push({ r, c, d: 0 });
+          }
+        }
+      }
+      while (qB.length > 0) {
+        const { r, c, d } = qB.shift();
+        for (const [dr, dc] of [[-1, 0], [0, -1]]) {
+          const nr = r + dr, nc = c + dc;
+          if (inBounds(nr, nc) && result[nr][nc] !== WHITE) {
+            if (d + 1 < distB[nr][nc]) {
+              distB[nr][nc] = d + 1;
+              qB.push({ r: nr, c: nc, d: d + 1 });
+            }
+          }
+        }
+      }
+
+      // 白棋最短步數傳播 (只能往右 c+1、往下 r+1)
+      const distW = Array.from({ length: N }, () => Array(N).fill(Infinity));
+      const qW = [];
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          if (result[r][c] === WHITE) {
+            distW[r][c] = 0;
+            qW.push({ r, c, d: 0 });
+          }
+        }
+      }
+      while (qW.length > 0) {
+        const { r, c, d } = qW.shift();
+        for (const [dr, dc] of [[1, 0], [0, 1]]) {
+          const nr = r + dr, nc = c + dc;
+          if (inBounds(nr, nc) && result[nr][nc] !== BLACK) {
+            if (d + 1 < distW[nr][nc]) {
+              distW[nr][nc] = d + 1;
+              qW.push({ r: nr, c: nc, d: d + 1 });
+            }
+          }
+        }
+      }
+
+      const newlyFilled = new Set();
+      let filledCount = 0;
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          if (result[r][c] === EMPTY) {
+            const dB = distB[r][c];
+            const dW = distW[r][c];
+            if (dB < Infinity && dW === Infinity) {
+              result[r][c] = BLACK;
+              newlyFilled.add(`${r},${c}`);
+              filledCount++;
+            } else if (dW < Infinity && dB === Infinity) {
+              result[r][c] = WHITE;
+              newlyFilled.add(`${r},${c}`);
+              filledCount++;
+            } else if (dB < Infinity && dW < Infinity) {
+              if (dB < dW) result[r][c] = BLACK;
+              else if (dW < dB) result[r][c] = WHITE;
+              else result[r][c] = firstTurn;
+              newlyFilled.add(`${r},${c}`);
+              filledCount++;
+            }
+          }
+        }
+      }
+
+      return { filledBoard: result, filledCount, newlyFilled };
+    }
+
+    // ===== 坐標中心計算 =====
+    function inBounds(r, c) {
+      return r >= 0 && r < N && c >= 0 && c < N;
+    }
+
+    function getCellCenter(r, c) {
+      const cells = boardEl.querySelectorAll(".cell");
+      const idx = r * N + c;
+      const cell = cells[idx];
+      if (!cell) return { x: 0, y: 0 };
+      return {
+        x: cell.offsetLeft + cell.offsetWidth / 2,
+        y: cell.offsetTop + cell.offsetHeight / 2
+      };
+    }
+
+    // ===== 合法走法計算（嚴格遵循規則） =====
+    function getLegalMovesForPiece(b, r0, c0, player, D) {
+      if (!inBounds(r0, c0) || b[r0][c0] !== player || D <= 0) {
+        return { spawns: [], captures: [] };
+      }
+
+      const enemy = player === BLACK ? WHITE : BLACK;
+      const spawns = [];
+      const captures = [];
+
+      const stepDirs = player === BLACK
+        ? [[0, -1], [-1, 0]] // 黑棋：左、上
+        : [[0, 1], [1, 0]];   // 白棋：右、下
+
+      // 1. 生子 (規則二) - 曼哈頓最短路徑
+      const visited = new Set();
+      const queue = [{ r: r0, c: c0, dist: 0, path: [{ r: r0, c: c0 }] }];
+      visited.add(`${r0},${c0},0`);
+      const reachableSpawns = new Map();
+
+      while (queue.length > 0) {
+        const curr = queue.shift();
+
+        if (curr.dist === D) {
+          if (b[curr.r][curr.c] === EMPTY) {
+            reachableSpawns.set(`${curr.r},${curr.c}`, {
+              r: curr.r,
+              c: curr.c,
+              path: curr.path
+            });
+          }
+          continue;
+        }
+
+        for (const [dr, dc] of stepDirs) {
+          const nr = curr.r + dr;
+          const nc = curr.c + dc;
+          const ndist = curr.dist + 1;
+
+          if (!inBounds(nr, nc)) continue;
+          if (b[nr][nc] === enemy) continue; // 敵棋阻隔
+
+          const key = `${nr},${nc},${ndist}`;
+          if (!visited.has(key)) {
+            visited.add(key);
+            queue.push({
+              r: nr,
+              c: nc,
+              dist: ndist,
+              path: [...curr.path, { r: nr, c: nc }]
+            });
+          }
+        }
+      }
+
+      for (const target of reachableSpawns.values()) {
+        spawns.push({
+          fromR: r0,
+          fromC: c0,
+          toR: target.r,
+          toC: target.c,
+          type: "spawn",
+          path: target.path,
+          player: player
+        });
+      }
+
+      // 2. 吃子 (規則三) - 純直線直行
+      for (const [dr, dc] of stepDirs) {
+        let blocked = false;
+        const capturePath = [{ r: r0, c: c0 }];
+
+        for (let step = 1; step < D; step++) {
+          const ir = r0 + dr * step;
+          const ic = c0 + dc * step;
+          if (!inBounds(ir, ic)) { blocked = true; break; }
+          if (b[ir][ic] === enemy) { blocked = true; break; }
+          capturePath.push({ r: ir, c: ic });
+        }
+
+        if (blocked) continue;
+
+        const tr = r0 + dr * D;
+        const tc = c0 + dc * D;
+        if (inBounds(tr, tc) && b[tr][tc] === enemy) {
+          capturePath.push({ r: tr, c: tc });
+          captures.push({
+            fromR: r0,
+            fromC: c0,
+            toR: tr,
+            toC: tc,
+            type: "capture",
+            path: capturePath,
+            player: player
+          });
+        }
+      }
+
+      return { spawns, captures };
+    }
+
+    // ===== 繪製路徑箭頭與步數徽章 =====
+    function clearMovePath() {
+      if (pathGroup) pathGroup.innerHTML = "";
+    }
+
+    function drawMovePath(move) {
+      if (!pathGroup) return;
+      pathGroup.innerHTML = "";
+      if (!move || !move.path || move.path.length < 2) return;
+
+      const p = PUZZLES[currentPuzzleIdx];
+      const player = move.player != null 
+        ? move.player 
+        : (board[move.fromR]?.[move.fromC] || (p ? p.turn : BLACK));
+      const isBlack = (player === BLACK);
+      const isCapture = move.type === "capture";
+
+      // Theme design configurations:
+      // 黑棋：海軍藍 (Navy Blue) - 不論生子或吃子皆同
+      // 白棋：曜金香檳 (Golden Amber) - 不論生子或吃子皆同
+      let theme;
+      if (isBlack) {
+        theme = {
+          glowColor: "#1e3a8a",
+          glowFilter: "url(#glow-black-spawn)",
+          lineStroke: "#38bdf8",
+          arrowMarker: "url(#arrow-black-spawn)",
+          startRing: "rgba(37, 99, 235, 0.35)",
+          startBorder: "#2563eb",
+          startDot: "#3b82f6",
+          waypointBg: "#0b1329",
+          waypointBorder: "#2563eb",
+          waypointText: "#ffffff",
+          destHalo: "rgba(37, 99, 235, 0.3)",
+          destHaloBorder: "#2563eb",
+          destBg: "#0b1329",
+          destBorder: "#3b82f6",
+          destText: "#ffffff"
+        };
+      } else {
+        theme = {
+          glowColor: "#d97706",
+          glowFilter: "url(#glow-white-spawn)",
+          lineStroke: "#fde047",
+          arrowMarker: "url(#arrow-white-spawn)",
+          startRing: "rgba(245, 158, 11, 0.35)",
+          startBorder: "#f59e0b",
+          startDot: "#fbbf24",
+          waypointBg: "#ffffff",
+          waypointBorder: "#d97706",
+          waypointText: "#78350f",
+          destHalo: "rgba(251, 191, 36, 0.35)",
+          destHaloBorder: "#f59e0b",
+          destBg: "#ffffff",
+          destBorder: "#d97706",
+          destText: "#78350f"
+        };
+      }
+
+      const points = move.path.map(pt => getCellCenter(pt.r, pt.c));
+      const startPt = points[0];
+      const endPt = points[points.length - 1];
+      const prevPt = points[points.length - 2];
+
+      const distLast = Math.hypot(endPt.x - prevPt.x, endPt.y - prevPt.y);
+      const trimDist = 13.5;
+      const ux = distLast > 0 ? (endPt.x - prevPt.x) / distLast : 0;
+      const uy = distLast > 0 ? (endPt.y - prevPt.y) / distLast : 0;
+      const lineEnd = distLast > trimDist ? { x: endPt.x - ux * trimDist, y: endPt.y - uy * trimDist } : endPt;
+
+      const pathPoints = [...points.slice(0, -1), lineEnd];
+      const dStr = pathPoints.map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ");
+
+      // 1. Glowing backdrop line
+      const glowLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      glowLine.setAttribute("d", dStr);
+      glowLine.setAttribute("fill", "none");
+      glowLine.setAttribute("stroke", theme.glowColor);
+      glowLine.setAttribute("stroke-width", "6.5");
+      glowLine.setAttribute("stroke-linecap", "round");
+      glowLine.setAttribute("stroke-linejoin", "round");
+      glowLine.setAttribute("opacity", "0.5");
+      glowLine.setAttribute("filter", theme.glowFilter);
+      pathGroup.appendChild(glowLine);
+
+      // 2. Animated dashed foreground path with directional arrow
+      const mainLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      mainLine.setAttribute("d", dStr);
+      mainLine.setAttribute("fill", "none");
+      mainLine.setAttribute("stroke", theme.lineStroke);
+      mainLine.setAttribute("stroke-width", "3.5");
+      mainLine.setAttribute("stroke-linecap", "round");
+      mainLine.setAttribute("stroke-linejoin", "round");
+      mainLine.setAttribute("stroke-dasharray", "6 4");
+      mainLine.setAttribute("class", "animated-path-dash");
+      mainLine.setAttribute("marker-end", theme.arrowMarker);
+      pathGroup.appendChild(mainLine);
+
+      // 3. Start node marker (Origin beacon)
+      const startOuter = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      startOuter.setAttribute("cx", startPt.x);
+      startOuter.setAttribute("cy", startPt.y);
+      startOuter.setAttribute("r", "14");
+      startOuter.setAttribute("fill", theme.startRing);
+      startOuter.setAttribute("stroke", theme.startBorder);
+      startOuter.setAttribute("stroke-width", "1.8");
+      startOuter.setAttribute("class", "pulse-start-ring");
+      pathGroup.appendChild(startOuter);
+
+      const startInner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      startInner.setAttribute("cx", startPt.x);
+      startInner.setAttribute("cy", startPt.y);
+      startInner.setAttribute("r", "4.5");
+      startInner.setAttribute("fill", theme.startDot);
+      pathGroup.appendChild(startInner);
+
+      // 4. Intermediate step badges (1, 2, ... D-1)
+      for (let i = 1; i < points.length - 1; i++) {
+        const pt = points[i];
+        const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        dot.setAttribute("cx", pt.x);
+        dot.setAttribute("cy", pt.y);
+        dot.setAttribute("r", "9.5");
+        dot.setAttribute("fill", theme.waypointBg);
+        dot.setAttribute("stroke", theme.waypointBorder);
+        dot.setAttribute("stroke-width", "1.8");
+        pathGroup.appendChild(dot);
+
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", pt.x);
+        text.setAttribute("y", pt.y);
+        text.setAttribute("dy", "0.35em");
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("font-size", "10");
+        text.setAttribute("font-weight", "800");
+        text.setAttribute("class", "path-waypoint-text");
+        text.setAttribute("fill", theme.waypointText);
+        text.textContent = String(i);
+        pathGroup.appendChild(text);
+      }
+
+      // 5. Destination badge (Step D)
+      const totalSteps = points.length - 1;
+
+      const endRing = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      endRing.setAttribute("cx", endPt.x);
+      endRing.setAttribute("cy", endPt.y);
+      endRing.setAttribute("r", "17.5");
+      endRing.setAttribute("fill", theme.destHalo);
+      endRing.setAttribute("stroke", theme.destHaloBorder);
+      endRing.setAttribute("stroke-width", "2");
+      if (isCapture) {
+        endRing.setAttribute("stroke-dasharray", "3 3");
+      }
+      endRing.setAttribute("class", "pulse-end-ring");
+      pathGroup.appendChild(endRing);
+
+      const endBadge = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      endBadge.setAttribute("cx", endPt.x);
+      endBadge.setAttribute("cy", endPt.y);
+      endBadge.setAttribute("r", "12");
+      endBadge.setAttribute("fill", theme.destBg);
+      endBadge.setAttribute("stroke", theme.destBorder);
+      endBadge.setAttribute("stroke-width", "2.4");
+      endBadge.setAttribute("class", "path-dest-badge");
+      pathGroup.appendChild(endBadge);
+
+      const endText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      endText.setAttribute("x", endPt.x);
+      endText.setAttribute("y", endPt.y);
+      endText.setAttribute("dy", "0.35em");
+      endText.setAttribute("text-anchor", "middle");
+      endText.setAttribute("font-size", "12");
+      endText.setAttribute("font-weight", "900");
+      endText.setAttribute("class", "path-waypoint-text");
+      endText.setAttribute("fill", theme.destText);
+      endText.textContent = String(totalSteps);
+      pathGroup.appendChild(endText);
+    }
+
+    // ===== 骰子圖標渲染 =====
+    function renderDiceVisual(val) {
+      puzzlePipGrid.innerHTML = "";
+      if (val == null) return;
+      const patterns = {
+        1: [4],
+        2: [0, 8],
+        3: [0, 4, 8],
+        4: [0, 2, 6, 8],
+        5: [0, 2, 4, 6, 8],
+        6: [0, 2, 3, 5, 6, 8]
+      };
+      const activePips = patterns[val] || [4];
+      for (let i = 0; i < 9; i++) {
+        const d = document.createElement("div");
+        if (activePips.includes(i)) {
+          d.className = (val === 1 || val === 4) ? "pipDot red" : "pipDot";
+        }
+        puzzlePipGrid.appendChild(d);
+      }
+    }
+
+    // ===== 棋盤格 Hover 預覽 =====
+    function handleCellMouseEnter(r, c) {
+      if (!selectedCell) return;
+      const targetMove = legalMovesForSelected.spawns.find(m => m.toR === r && m.toC === c) ||
+                         legalMovesForSelected.captures.find(m => m.toR === r && m.toC === c);
+      if (targetMove) {
+        drawMovePath(targetMove);
+      }
+    }
+
+    function handleCellMouseLeave(r, c) {
+      if (lastPuzzleMove) {
+        drawMovePath(lastPuzzleMove);
+      } else {
+        clearMovePath();
+      }
+    }
+
+    // ===== 棋盤 DOM 初始化 =====
+    function initBoardDOM() {
+      boardEl.querySelectorAll(".cell").forEach(c => c.remove());
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          cell.addEventListener("click", () => handleCellClick(r, c));
+          cell.addEventListener("mouseenter", () => handleCellMouseEnter(r, c));
+          cell.addEventListener("mouseleave", () => handleCellMouseLeave(r, c));
+          boardEl.appendChild(cell);
+        }
+      }
+    }
+
+    // ===== 棋盤狀態繪製 =====
+    function renderBoard() {
+      const p = PUZZLES[currentPuzzleIdx];
+      const cells = boardEl.querySelectorAll(".cell");
+
+      const spawnDestMap = new Set(legalMovesForSelected.spawns.map(m => `${m.toR},${m.toC}`));
+      const captureDestMap = new Set(legalMovesForSelected.captures.map(m => `${m.toR},${m.toC}`));
+
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          const idx = r * N + c;
+          const cell = cells[idx];
+          const val = board[r][c];
+
+          cell.className = "cell";
+          cell.innerHTML = "";
+
+          if (val === BLACK) {
+            const disc = document.createElement("div");
+            disc.className = "disc black";
+            cell.appendChild(disc);
+          } else if (val === WHITE) {
+            const disc = document.createElement("div");
+            disc.className = "disc white";
+            cell.appendChild(disc);
+          }
+
+          if (val === p.turn) {
+            const legals = getLegalMovesForPiece(board, r, c, p.turn, p.dice);
+            if (legals.spawns.length > 0 || legals.captures.length > 0) {
+              cell.classList.add("can-act");
+            }
+          }
+
+          if (currentPuzzleIdx === 6 && q7Step === 1 && r === 7 && c === 7) {
+            cell.classList.add("hint-highlight");
+            cell.classList.add("can-act");
+          }
+          if (currentPuzzleIdx === 7 && (q8Step === 1 || q8Step === 3 || q8Step === 5) && ((r === 1 && c === 1) || (r === 1 && c === 2))) {
+            cell.classList.add("hint-highlight");
+            cell.classList.add("can-act");
+          }
+          if (currentPuzzleIdx === 7 && q8Step === 6 && ((r === 6 && c === 6) || (r === 6 && c === 7) || (r === 7 && c === 6) || (r === 7 && c === 7))) {
+            cell.classList.add("hint-highlight");
+            cell.classList.add("can-act");
+          }
+
+          if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+            cell.classList.add("selected");
+          }
+
+          if (spawnDestMap.has(`${r},${c}`)) {
+            cell.classList.add("dest-spawn");
+            cell.title = `生子至 ${posToCoord(r, c)}`;
+          }
+
+          if (captureDestMap.has(`${r},${c}`)) {
+            cell.classList.add("dest-capture");
+            cell.title = `直線吃掉 ${posToCoord(r, c)} 的敵棋`;
+          }
+
+          if (endgameFilledCells && endgameFilledCells.has(`${r},${c}`)) {
+            cell.classList.add("filled-territory");
+          }
+        }
+      }
+    }
+
+    // ===== 載入當前題目 =====
+    function loadPuzzle(idx) {
+      if (idx < 0 || idx >= PUZZLES.length) return;
+      currentPuzzleIdx = idx;
+      const p = getPuzzle(idx);
+
+      // 重設盤面
+      clearPassDemoTimers();
+      clearStepDemoTimers();
+      board = Array.from({ length: N }, () => Array(N).fill(EMPTY));
+      p.initialBoard.forEach(item => {
+        board[item.r][item.c] = item.color;
+      });
+
+      selectedCell = null;
+      legalMovesForSelected = { spawns: [], captures: [] };
+      lastPuzzleMove = null;
+      endgameFilledCells.clear();
+      clearMovePath();
+
+      // UI 文本更新
+      turnIndicatorBadge.textContent = p.turn === BLACK ? TUI('blackTurn') : TUI('whiteTurn');
+      turnIndicatorBadge.style.background = p.turn === BLACK ? "rgba(37, 99, 235, 0.25)" : "rgba(251, 191, 36, 0.25)";
+      turnIndicatorBadge.style.color = p.turn === BLACK ? "#93c5fd" : "#fde047";
+
+      updateTurnBanner(p.turn);
+
+      puzzleDiceValText.textContent = TUI('stepsLbl', p.dice);
+      renderDiceVisual(p.dice);
+
+      puzzleCategoryTag.textContent = p.category;
+      puzzleTitle.textContent = p.title;
+      puzzleDiffBadge.textContent = p.diff;
+      puzzleDiffBadge.style.color = p.diffColor;
+      puzzleDiffBadge.style.borderColor = p.diffColor;
+
+      puzzleGoalBox.innerHTML = p.goalHtml;
+      feedbackBox.className = "feedbackBox";
+      feedbackBox.style.display = "none";
+      feedbackBox.innerHTML = "";
+
+      ruleDocTitle.textContent = p.ruleDocTitle;
+      ruleDocText.textContent = p.ruleDocText;
+
+      btnPrev.disabled = idx === 0;
+      btnNext.disabled = idx === PUZZLES.length - 1;
+
+      if (btnStepDemo) {
+        btnStepDemo.style.display = (idx === 7) ? "inline-flex" : "none";
+        btnStepDemo.textContent = TUI('btnStepTxt');
+      }
+
+      if (idx === 6) {
+        q7Step = 1;
+        renderQ7Step();
+      } else if (idx === 7) {
+        q8Step = 1;
+        renderQ8Step();
+      } else {
+        renderBoard();
+      }
+      updateNavGrid();
+      updateProgress();
+    }
+
+    // ===== 點擊棋盤格互動處理 =====
+    function handleCellClick(r, c) {
+      const p = getPuzzle(currentPuzzleIdx);
+
+      // 題目 7：新手教學指示互動處理
+      if (currentPuzzleIdx === 6) {
+        handleQ7Click(r, c);
+        return;
+      }
+
+      // 題目 8：新手教學指示互動處理
+      if (currentPuzzleIdx === 7) {
+        handleQ8Click(r, c);
+        return;
+      }
+
+      // 1. 點擊己方可動棋子
+      if (board[r][c] === p.turn) {
+        selectedCell = { r, c };
+        legalMovesForSelected = getLegalMovesForPiece(board, r, c, p.turn, p.dice);
+        clearMovePath();
+        playBeep(440, "sine", 0.08);
+        renderBoard();
+        return;
+      }
+
+      // 2. 若已選中棋子，點選目標格
+      if (selectedCell) {
+        const foundSpawn = legalMovesForSelected.spawns.find(m => m.toR === r && m.toC === c);
+        const foundCapture = legalMovesForSelected.captures.find(m => m.toR === r && m.toC === c);
+        const move = foundSpawn || foundCapture;
+
+        if (move) {
+          if (move.type === "capture") {
+            board[move.fromR][move.fromC] = EMPTY;
+            board[move.toR][move.toC] = p.turn;
+          } else {
+            board[move.toR][move.toC] = p.turn;
+          }
+
+          move.player = p.turn;
+          lastPuzzleMove = move;
+          drawMovePath(move);
+          selectedCell = null;
+          legalMovesForSelected = { spawns: [], captures: [] };
+          renderBoard();
+
+          // 驗證過關
+          const isCorrect = p.isTargetSolved(move);
+          if (isCorrect) {
+            playSuccessSound();
+            feedbackBox.className = "feedbackBox success";
+            feedbackBox.innerHTML = `<strong>${TUI('successHdr')}</strong><br>${p.successText}`;
+            solvedPuzzles.add(p.id);
+            saveSolvedProgress();
+            updateNavGrid();
+            updateProgress();
+          } else {
+            playBeep(220, "sawtooth", 0.2);
+            feedbackBox.className = "feedbackBox warning";
+            feedbackBox.innerHTML = `<strong>${TUI('wrongHdr')}</strong><br>${p.hintText}`;
+          }
+        }
+      }
+    }
+
+    // ===== 提示按鈕事件 =====
+    btnHint.addEventListener("click", () => {
+      const p = getPuzzle(currentPuzzleIdx);
+      feedbackBox.className = "feedbackBox warning";
+      feedbackBox.innerHTML = `<strong>${TUI('hintLbl')}</strong><br>${p.hintText}`;
+      playBeep(620, "sine", 0.1);
+
+      // 高亮標示目標格
+      const m = p.demoMove;
+      if (m && m.toR != null && m.toC != null) {
+        const cells = boardEl.querySelectorAll(".cell");
+        const idx = m.toR * N + m.toC;
+        if (cells[idx]) {
+          cells[idx].classList.add("hint-highlight");
+          setTimeout(() => cells[idx].classList.remove("hint-highlight"), 1600);
+        }
+      }
+    });
+
+    // ===== 題目 7：新手教學指示互動處理 =====
+    function renderQ7Step() {
+      clearMovePath();
+      const lang = Q7_STEPS[currentLang] ? currentLang : 'zh';
+      if (q7Step === 1) {
+        turnIndicatorBadge.style.background = "rgba(37, 99, 235, 0.25)";
+        turnIndicatorBadge.style.color = "#93c5fd";
+        turnIndicatorBadge.textContent = TUI('blackTurn');
+        puzzleDiceValText.textContent = TUI('stepsLbl', 2);
+        renderDiceVisual(2);
+        selectedCell = { r: 7, c: 7 };
+        legalMovesForSelected = { spawns: [], captures: [] };
+        renderBoard();
+        puzzleGoalBox.innerHTML = Q7_STEPS[lang].step1(TUI('blackTurn'));
+      } else if (q7Step === 2) {
+        turnIndicatorBadge.style.background = "rgba(245, 158, 11, 0.3)";
+        turnIndicatorBadge.style.color = "#fde047";
+        turnIndicatorBadge.innerHTML = `${TUI('whiteTurn')} <span style="background:#f59e0b; color:#1e293b; padding:2px 6px; border-radius:4px; font-size:11px; margin-left:4px; font-weight:700;">${TUI('privLabel')}</span>`;
+        puzzleDiceValText.textContent = TUI('stepsPrivLbl', 1);
+        renderDiceVisual(1);
+        selectedCell = { r: 6, c: 7 };
+        legalMovesForSelected = {
+          spawns: [],
+          captures: [{ fromR: 6, fromC: 7, toR: 7, toC: 7, type: "capture", path: [{ r: 6, c: 7 }, { r: 7, c: 7 }], player: WHITE }]
+        };
+        renderBoard();
+        drawMovePath({ fromR: 6, fromC: 7, toR: 7, toC: 7, type: "capture", player: WHITE });
+        puzzleGoalBox.innerHTML = Q7_STEPS[lang].step2(TUI('whiteTurn'));
+      }
+    }
+
+    function advanceQ7Step1() {
+      if (q7Step !== 1) return;
+      playBeep(260, "sawtooth", 0.3);
+      q7Step = 2;
+      renderQ7Step();
+    }
+
+    function advanceQ7Step2() {
+      if (q7Step !== 2) return;
+      board[6][7] = EMPTY;
+      board[7][7] = WHITE;
+
+      const move = {
+        fromR: 6, fromC: 7,
+        toR: 7, toC: 7,
+        type: "capture",
+        path: [{ r: 6, c: 7 }, { r: 7, c: 7 }],
+        player: WHITE
+      };
+
+      lastPuzzleMove = move;
+      drawMovePath(move);
+      selectedCell = null;
+      legalMovesForSelected = { spawns: [], captures: [] };
+      renderBoard();
+      playSuccessSound();
+
+      feedbackBox.className = "feedbackBox success";
+      feedbackBox.style.display = "block";
+      feedbackBox.innerHTML = (Q7_STEPS[currentLang] || Q7_STEPS.zh).success;
+
+      solvedPuzzles.add(7);
+      saveSolvedProgress();
+      updateNavGrid();
+      updateProgress();
+    }
+
+    function handleQ7Click(r, c) {
+      if (q7Step === 1) {
+        advanceQ7Step1();
+      } else if (q7Step === 2) {
+        advanceQ7Step2();
+      }
+    }
+
+    // ===== 題目 8：新手教學指示互動處理 =====
+    function _q8BlackTurn(dice) {
+      turnIndicatorBadge.style.background = "rgba(37, 99, 235, 0.25)";
+      turnIndicatorBadge.style.color = "#93c5fd";
+      turnIndicatorBadge.textContent = TUI('blackTurn');
+      puzzleDiceValText.textContent = TUI('stepsLbl', dice);
+      renderDiceVisual(dice);
+    }
+    function _q8BlackPriv(dice) {
+      turnIndicatorBadge.style.background = "rgba(37, 99, 235, 0.3)";
+      turnIndicatorBadge.style.color = "#93c5fd";
+      turnIndicatorBadge.innerHTML = `${TUI('blackTurn')} <span style="background:#2563eb; color:white; padding:2px 6px; border-radius:4px; font-size:11px; margin-left:4px; font-weight:700;">${TUI('privLabel')}</span>`;
+      puzzleDiceValText.textContent = TUI('stepsPrivLbl', dice);
+      renderDiceVisual(dice);
+    }
+    function _q8WhiteTurn() {
+      turnIndicatorBadge.style.background = "rgba(245, 158, 11, 0.25)";
+      turnIndicatorBadge.style.color = "#fde047";
+      turnIndicatorBadge.textContent = TUI('whiteTurn');
+      puzzleDiceValText.textContent = "0 步 (無步)";
+      renderDiceVisual(1);
+    }
+    function _q8WhitePriv(dice) {
+      turnIndicatorBadge.style.background = "rgba(245, 158, 11, 0.3)";
+      turnIndicatorBadge.style.color = "#fde047";
+      turnIndicatorBadge.innerHTML = `${TUI('whiteTurn')} <span style="background:#f59e0b; color:#1e293b; padding:2px 6px; border-radius:4px; font-size:11px; margin-left:4px; font-weight:700;">${TUI('privLabel')}</span>`;
+      puzzleDiceValText.textContent = TUI('stepsPrivLbl', dice);
+      renderDiceVisual(dice);
+    }
+
+    function renderQ8Step() {
+      clearMovePath();
+      selectedCell = null;
+      legalMovesForSelected = { spawns: [], captures: [] };
+
+      if (q8Step === 1 || q8Step === 3 || q8Step === 5) {
+        _q8BlackTurn(6);
+        selectedCell = { r: 1, c: 1 };
+        renderBoard();
+      } else if (q8Step === 2) {
+        _q8WhitePriv(1);
+        selectedCell = { r: 6, c: 6 };
+        legalMovesForSelected = { spawns: [{ fromR: 6, fromC: 6, toR: 7, toC: 6, type: "spawn", player: WHITE }], captures: [] };
+        renderBoard();
+        drawMovePath({ fromR: 6, fromC: 6, toR: 7, toC: 6, type: "spawn", player: WHITE });
+      } else if (q8Step === 4) {
+        _q8WhitePriv(1);
+        selectedCell = { r: 6, c: 7 };
+        legalMovesForSelected = { spawns: [{ fromR: 6, fromC: 7, toR: 7, toC: 7, type: "spawn", player: WHITE }], captures: [] };
+        renderBoard();
+        drawMovePath({ fromR: 6, fromC: 7, toR: 7, toC: 7, type: "spawn", player: WHITE });
+      } else if (q8Step === 6) {
+        _q8WhiteTurn();
+        selectedCell = { r: 6, c: 6 };
+        renderBoard();
+      } else if (q8Step === 7) {
+        _q8BlackPriv(2);
+        selectedCell = { r: 1, c: 1 };
+        legalMovesForSelected = { spawns: [{ fromR: 1, fromC: 1, toR: 0, toC: 0, type: "spawn", player: BLACK }], captures: [] };
+        renderBoard();
+        drawMovePath({ fromR: 1, fromC: 1, toR: 0, toC: 0, type: "spawn", player: BLACK, path: [{r:1,c:1},{r:0,c:1},{r:0,c:0}] });
+      } else if (q8Step === 8 || q8Step === 10 || q8Step === 12) {
+        _q8WhiteTurn();
+        renderBoard();
+      } else if (q8Step === 9) {
+        _q8BlackPriv(1);
+        selectedCell = { r: 1, c: 1 };
+        legalMovesForSelected = { spawns: [{ fromR: 1, fromC: 1, toR: 0, toC: 1, type: "spawn", player: BLACK }], captures: [] };
+        renderBoard();
+        drawMovePath({ fromR: 1, fromC: 1, toR: 0, toC: 1, type: "spawn", player: BLACK, path: [{r:1,c:1},{r:0,c:1}] });
+      } else if (q8Step === 11) {
+        _q8BlackPriv(1);
+        selectedCell = { r: 1, c: 1 };
+        legalMovesForSelected = { spawns: [{ fromR: 1, fromC: 1, toR: 1, toC: 0, type: "spawn", player: BLACK }], captures: [] };
+        renderBoard();
+        drawMovePath({ fromR: 1, fromC: 1, toR: 1, toC: 0, type: "spawn", player: BLACK, path: [{r:1,c:1},{r:1,c:0}] });
+      } else if (q8Step === 13) {
+        _q8BlackPriv(1);
+        selectedCell = { r: 1, c: 2 };
+        legalMovesForSelected = { spawns: [{ fromR: 1, fromC: 2, toR: 0, toC: 2, type: "spawn", player: BLACK }], captures: [] };
+        renderBoard();
+        drawMovePath({ fromR: 1, fromC: 2, toR: 0, toC: 2, type: "spawn", player: BLACK, path: [{r:1,c:2},{r:0,c:2}] });
+      } else if (q8Step === 14) {
+        turnIndicatorBadge.style.background = "rgba(147, 51, 234, 0.3)";
+        turnIndicatorBadge.style.color = "#d8b4fe";
+        turnIndicatorBadge.textContent = "🏁 達成自然終局";
+        puzzleDiceValText.textContent = "連續 PASS";
+        renderDiceVisual(1);
+        renderBoard();
+      }
+
+      // Text content from Q8_DATA
+      const d = (Q8_DATA[currentLang] || Q8_DATA.zh)[q8Step - 1];
+      if (d) {
+        puzzleGoalBox.innerHTML = `
+          <div style="font-size: 12.5px; font-weight: 700; color: ${d.hc}; margin-bottom: 6px;">${d.h}</div>
+          <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 1.6; color: #f1f5f9;">${d.b}</p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">${d.bt}</div>
+        `;
+      }
+    }
+
+    function advanceQ8(step) {
+      if (step === 1 && q8Step === 1) {
+        playBeep(280, "sawtooth", 0.25);
+        q8Step = 2;
+        renderQ8Step();
+      } else if (step === 2 && q8Step === 2) {
+        board[7][6] = WHITE; // G8
+        playBeep(640, "sine", 0.12);
+        q8Step = 3;
+        renderQ8Step();
+      } else if (step === 3 && q8Step === 3) {
+        playBeep(280, "sawtooth", 0.25);
+        q8Step = 4;
+        renderQ8Step();
+      } else if (step === 4 && q8Step === 4) {
+        board[7][7] = WHITE; // H8
+        playBeep(640, "sine", 0.12);
+        q8Step = 5;
+        renderQ8Step();
+      } else if (step === 5 && q8Step === 5) {
+        playBeep(280, "sawtooth", 0.25);
+        q8Step = 6;
+        renderQ8Step();
+      } else if (step === 6 && q8Step === 6) {
+        playBeep(280, "sawtooth", 0.25);
+        q8Step = 7;
+        renderQ8Step();
+      } else if (step === 7 && q8Step === 7) {
+        board[0][0] = BLACK; // A1
+        playBeep(640, "sine", 0.12);
+        q8Step = 8;
+        renderQ8Step();
+      } else if (step === 8 && q8Step === 8) {
+        playBeep(280, "sawtooth", 0.25);
+        q8Step = 9;
+        renderQ8Step();
+      } else if (step === 9 && q8Step === 9) {
+        board[0][1] = BLACK; // B1
+        playBeep(640, "sine", 0.12);
+        q8Step = 10;
+        renderQ8Step();
+      } else if (step === 10 && q8Step === 10) {
+        playBeep(280, "sawtooth", 0.25);
+        q8Step = 11;
+        renderQ8Step();
+      } else if (step === 11 && q8Step === 11) {
+        board[1][0] = BLACK; // A2
+        playBeep(640, "sine", 0.12);
+        q8Step = 12;
+        renderQ8Step();
+      } else if (step === 12 && q8Step === 12) {
+        playBeep(280, "sawtooth", 0.25);
+        q8Step = 13;
+        renderQ8Step();
+      } else if (step === 13 && q8Step === 13) {
+        board[0][2] = BLACK; // C1
+        playBeep(640, "sine", 0.12);
+        q8Step = 14;
+        renderQ8Step();
+      } else if (step === 14 && q8Step === 14) {
+        playSuccessSound();
+        endgameFilledCells.clear();
+        for (let r = 0; r < 2; r++) {
+          for (let c = 0; c < 3; c++) {
+            endgameFilledCells.add(`${r},${c}`);
+          }
+        }
+        for (let r = 6; r < 8; r++) {
+          for (let c = 6; c < 8; c++) {
+            endgameFilledCells.add(`${r},${c}`);
+          }
+        }
+        renderBoard();
+
+        feedbackBox.className = "feedbackBox success";
+        feedbackBox.style.display = "block";
+        feedbackBox.innerHTML = `
+          <div style="font-size: 14.5px; font-weight: 700; margin-bottom: 4px;">🏁 極端 6 點推導完成</div>
+          <div style="font-size: 13px; line-height: 1.6; color: #f8fafc;">
+            ⚫ <strong>黑棋</strong>：左上角 <strong>6 顆</strong>（A1–C2）<br>
+            ⚪ <strong>白棋</strong>：右下角 <strong>4 顆</strong>（G7–H8）<br>
+            ⬜ 中央 54 格無法抵達，保持空白。<br>
+            ⚖️ 黑 6 vs 白 4 + 割目 2.5 = <strong>白棋淨勝 0.5 顆</strong>。<br>
+            手動推導與自動填滿結果完全一致。
+          </div>
+        `;
+
+        solvedPuzzles.add(8);
+        saveSolvedProgress();
+        updateNavGrid();
+        updateProgress();
+      }
+    }
+
+    function handleQ8Click(r, c) {
+      if (q8Step >= 1 && q8Step <= 14) {
+        advanceQ8(q8Step);
+      }
+    }
+
+    // ===== 終局勢力填滿動態示範 =====
+    function executeEndgameDemo() {
+      clearPassDemoTimers();
+      clearStepDemoTimers();
+      const p = PUZZLES[currentPuzzleIdx];
+      const { filledBoard, newlyFilled, filledCount } = fillTerritoryRule1Rule2(board, p.turn);
+      board = filledBoard;
+      endgameFilledCells = newlyFilled;
+      selectedCell = null;
+      legalMovesForSelected = { spawns: [], captures: [] };
+      clearMovePath();
+      renderBoard();
+      playSuccessSound();
+
+      let bCount = 0, wCount = 0, emptyCount = 0;
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          if (board[r][c] === BLACK) bCount++;
+          else if (board[r][c] === WHITE) wCount++;
+          else emptyCount++;
+        }
+      }
+      const komi = 2.5;
+      const wFinal = wCount + komi;
+      const margin = Math.abs(bCount - wFinal);
+
+      feedbackBox.className = "feedbackBox success";
+      feedbackBox.style.display = "block";
+      feedbackBox.innerHTML = `<strong>🏁 自然終局勢力填滿完成</strong><br>
+⚫ <strong>黑棋</strong>：左上 <strong>${bCount} 顆</strong>（A1–C2）<br>
+⚪ <strong>白棋</strong>：右下 <strong>${wCount} 顆</strong>（G7–H8）<br>
+⬜ 剩餘 ${emptyCount} 格雙方無法抵達，保持空白。<br>
+⚖️ 黑 ${bCount} vs 白 ${wCount} + 割目 ${komi}（白共 ${wFinal}）➔ <strong>⚪ 白棋淨勝 ${margin} 顆。</strong>`;
+
+      solvedPuzzles.add(p.id);
+      saveSolvedProgress();
+      updateNavGrid();
+      updateProgress();
+    }
+
+    if (btnStepDemo) {
+      btnStepDemo.addEventListener("click", () => {
+        loadPuzzle(7);
+      });
+    }
+
+    // ===== 示範解答按鈕事件 =====
+    btnSolution.addEventListener("click", () => {
+      const p = getPuzzle(currentPuzzleIdx);
+      loadPuzzle(currentPuzzleIdx);
+
+      if (currentPuzzleIdx === 6) {
+        advanceQ7Step1();
+        setTimeout(() => advanceQ7Step2(), 700);
+        return;
+      }
+
+      if (currentPuzzleIdx === 7) {
+        executeEndgameDemo();
+        return;
+      }
+
+      const m = p.demoMove;
+      selectedCell = { r: m.fromR, c: m.fromC };
+      legalMovesForSelected = getLegalMovesForPiece(board, m.fromR, m.fromC, p.turn, p.dice);
+      renderBoard();
+
+      setTimeout(() => {
+        const validMove = legalMovesForSelected.spawns.find(x => x.toR === m.toR && x.toC === m.toC) ||
+                          legalMovesForSelected.captures.find(x => x.toR === m.toR && x.toC === m.toC) ||
+                          m;
+        if (validMove.type === "capture") {
+          board[validMove.fromR][validMove.fromC] = EMPTY;
+          board[validMove.toR][validMove.toC] = p.turn;
+        } else {
+          board[validMove.toR][validMove.toC] = p.turn;
+        }
+
+        validMove.player = p.turn;
+        lastPuzzleMove = validMove;
+        drawMovePath(validMove);
+        selectedCell = null;
+        legalMovesForSelected = { spawns: [], captures: [] };
+        renderBoard();
+
+        playSuccessSound();
+        feedbackBox.className = "feedbackBox success";
+        feedbackBox.innerHTML = `<strong>👀 規則示範步驟展示：</strong><br>${p.successText}`;
+        solvedPuzzles.add(p.id);
+        saveSolvedProgress();
+        updateNavGrid();
+        updateProgress();
+      }, 450);
+    });
+
+    // ===== 導航切換與重設 =====
+    btnReset.addEventListener("click", () => loadPuzzle(currentPuzzleIdx));
+    btnPrev.addEventListener("click", () => loadPuzzle(currentPuzzleIdx - 1));
+    btnNext.addEventListener("click", () => loadPuzzle(currentPuzzleIdx + 1));
+
+    function updateNavGrid() {
+      puzzleNavGrid.innerHTML = "";
+      PUZZLES.forEach((pz, i) => {
+        const b = document.createElement("button");
+        b.className = "puzzleNavBtn";
+        if (i === currentPuzzleIdx) b.classList.add("active");
+        if (solvedPuzzles.has(pz.id)) b.classList.add("solved");
+        b.innerHTML = `<span>題 ${i + 1}</span>`;
+        b.title = `${pz.title} (${solvedPuzzles.has(pz.id) ? "已通關" : "未完成"})`;
+        b.addEventListener("click", () => loadPuzzle(i));
+        puzzleNavGrid.appendChild(b);
+      });
+    }
+
+    function updateProgress() {
+      const count = solvedPuzzles.size;
+      puzzleProgressText.textContent = TUI('progressFn', count, PUZZLES.length);
+    }
+
+    function saveSolvedProgress() {
+      try {
+        localStorage.setItem("dice_othello_rules_solved", JSON.stringify([...solvedPuzzles]));
+      } catch (e) {}
+    }
+
+    function loadSavedProgress() {
+      try {
+        const saved = localStorage.getItem("dice_othello_rules_solved");
+        if (saved) {
+          solvedPuzzles = new Set(JSON.parse(saved));
+        }
+      } catch (e) {}
+    }
+
+    clearProgressBtn.addEventListener("click", () => {
+      if (confirm("確定要重設所有規則題庫的通關記錄嗎？")) {
+        solvedPuzzles.clear();
+        try {
+          localStorage.removeItem("dice_othello_rules_solved");
+        } catch (e) {}
+        updateNavGrid();
+        updateProgress();
+      }
+    });
+
+    // ===== 初始化啟動 =====
+    loadSavedProgress();
+    initBoardDOM();
+    applyTutorialI18n();
+    const hashIdx = parseInt(window.location.hash.replace("#", ""), 10) - 1;
+    const paramIdx = parseInt(new URLSearchParams(window.location.search).get("p"), 10) - 1;
+    const startIdx = (!isNaN(hashIdx) && hashIdx >= 0 && hashIdx < PUZZLES.length) ? hashIdx
+      : ((!isNaN(paramIdx) && paramIdx >= 0 && paramIdx < PUZZLES.length) ? paramIdx : 0);
+    loadPuzzle(startIdx);
+  </script>
+</body>
+
+</html>

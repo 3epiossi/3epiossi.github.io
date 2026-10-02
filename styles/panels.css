@@ -1,0 +1,871 @@
+/**
+ * 🎛️ 骰子黑白棋 (Dice Othello) - 側欄與面板樣式 (Panels & Widgets Styles)
+ */
+
+.app {
+  max-width: 1260px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 頂部導航 Top Bar */
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 10px 18px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand h1 {
+  font-size: 20px;
+  margin: 0;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.5px;
+}
+
+.brandSub {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.navControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 模式切換器 Mode Switcher Tabs */
+.modeTabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.tabBtn {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.tabBtn.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 雙欄佈局 (Main App Grid) */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panelCard {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 回合狀態卡片 Turn Card */
+.turnCard {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.turnPlayerInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.turnIndicatorDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+}
+.turnIndicatorDot.black {
+  background: #38bdf8;
+  color: #38bdf8;
+}
+.turnIndicatorDot.white {
+  background: #facc15;
+  color: #facc15;
+}
+
+.turnTitle {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.turnRoleBadge {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+/* 骰子控制區 Dice Box */
+.diceRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.diceBox {
+  width: 58px;
+  height: 58px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+@keyframes diceShake {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-14deg) scale(1.08); }
+  50% { transform: rotate(12deg) scale(1.05); }
+  75% { transform: rotate(-8deg) scale(1.02); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+.diceBox.rolling {
+  animation: diceShake 0.42s ease-in-out;
+}
+
+.diceGrid {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  align-items: center;
+  justify-items: center;
+}
+
+.dicePip {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: transparent;
+}
+.dicePip.active {
+  background: #1e293b;
+}
+.dicePip.active.centerRed {
+  background: #dc2626;
+  width: 13px;
+  height: 13px;
+}
+
+.diceQuestionMark {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  color: #94a3b8;
+  user-select: none;
+  margin: 0;
+  padding: 0;
+}
+
+.diceControls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-grow: 1;
+}
+
+.diceStatusText {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.diceStatusText.locked {
+  color: #86efac;
+  font-weight: 600;
+}
+
+.freePickBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.freePickBadge {
+  font-size: 11px;
+  color: #facc15;
+  font-weight: 700;
+}
+.quickDiceGroup {
+  display: flex;
+  gap: 4px;
+}
+.quickDiceBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.quickDiceBtn.active, .quickDiceBtn:hover {
+  background: #2563eb;
+  border-color: #60a5fa;
+}
+
+/* 模式 × 控制者 狀態橫幅 (Status Banner, flow.md 第 2 & 7 節) */
+/* ===== 席位控制列 (Seat Bar) ===== */
+.seatBar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid var(--color-border, rgba(148, 163, 184, 0.25));
+}
+
+.seatGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 200px;
+  min-width: 0;
+  justify-content: center;
+}
+
+.seatGroup.isTurn {
+  background: rgba(56, 189, 248, 0.1);
+  border-radius: 10px;
+  padding: 3px 8px;
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.35);
+}
+
+.seatLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+
+.seatToggle {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.seatBtn {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  background: transparent;
+  padding: 5px 12px;
+  border-radius: 7px;
+  white-space: nowrap;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.seatBtn:hover:not(.active) {
+  color: #e2e8f0;
+  background: rgba(148, 163, 184, 0.14);
+}
+
+.seatBtn.active[data-owner="human"] {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+}
+
+.seatBtn.active[data-owner="cpu"] {
+  background: linear-gradient(135deg, #9333ea, #7e22ce);
+  color: #ffffff;
+}
+
+.settingsHint {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #bae6fd;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+
+.statusBanner {
+  width: 100%;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  transition: all 0.25s ease;
+  margin-bottom: 8px;
+}
+
+.statusLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.statusBadge {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.statusActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* 狀態色彩變體 (flow.md 第 7 節) */
+.statusBanner.human {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.4), rgba(15, 23, 42, 0.7));
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
+}
+
+.statusBanner.cpu {
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.45), rgba(15, 23, 42, 0.75));
+  border: 1px solid rgba(168, 85, 247, 0.55);
+  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.2);
+}
+
+.statusBanner.paused {
+  background: linear-gradient(135deg, rgba(146, 64, 14, 0.45), rgba(15, 23, 42, 0.75));
+  border: 1px solid rgba(245, 158, 11, 0.55);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+}
+
+.statusBanner.review {
+  background: linear-gradient(135deg, rgba(154, 52, 18, 0.45), rgba(15, 23, 42, 0.8));
+  border: 1px dashed rgba(249, 115, 22, 0.65);
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.2);
+}
+
+.statusBanner.ended {
+  background: linear-gradient(135deg, rgba(51, 65, 85, 0.45), rgba(15, 23, 42, 0.75));
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+/* 操作指示條 (Action Instruction) */
+.instructionBox {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #bae6fd;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.instructionBox:empty {
+  display: none;
+}
+
+/* AI 教練卡片 Coach View */
+.coachCard {
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coachEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 6px;
+  text-align: center;
+  font-size: 12.5px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.coachThinking {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  font-size: 13px;
+  color: #a78bfa;
+}
+
+
+.coachHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.coachTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e9d5ff;
+}
+.coachBadge {
+  font-size: 11px;
+  background: rgba(168, 85, 247, 0.25);
+  color: #d8b4fe;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.coachBestMoveCard {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coachBestMoveRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.coachMoveCoords {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.typeBadge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.typeBadge.spawn { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+.typeBadge.capture { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+
+.coachExplanation {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+.proItem { color: #86efac; }
+.conItem { color: #fca5a5; }
+
+.coachCandidateList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.candidateItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.candidateItem:hover {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.4);
+}
+.candidateLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 棋譜歷程區 History Box */
+.historySection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.historyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* Branch tree picker */
+.branchSelectorWrap {
+  position: relative;
+}
+.branchPickerBtn {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.15s;
+}
+.branchPickerBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.branchPickerArrow {
+  font-size: 10px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.branchPickerPanel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 220px;
+  max-width: 320px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: #1e293b;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 200;
+  padding: 6px 0;
+}
+.branchTreeRows {
+  display: flex;
+  flex-direction: column;
+}
+.branchTreeRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px 6px calc(12px + var(--depth, 0) * 16px);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  transition: background 0.12s;
+  user-select: none;
+}
+.branchTreeRow:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-main);
+}
+.branchTreeRow.active {
+  color: #86efac;
+  background: rgba(134, 239, 172, 0.08);
+}
+.branchTreePrefix {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+.branchTreeName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.branchTreeCheck {
+  font-size: 11px;
+  color: #86efac;
+  flex-shrink: 0;
+}
+.branchTreeManage {
+  border-top: 1px solid var(--color-border);
+  margin-top: 4px;
+  padding-top: 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.branchModalTree {
+  min-height: 60px;
+}
+.branchModalTree .branchTreeRow {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+/* 歷史操作回放列 (Time Machine Playback Bar) */
+.historyPlaybackBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 4px 6px;
+}
+.historyPlaybackBar .btn {
+  flex: 1;
+  padding: 5px 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* 檢視歷史步數提示橫幅 (Preview Banner) */
+.historyPreviewBanner {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.16), rgba(202, 138, 4, 0.22));
+  border: 1px solid #facc15;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.historyPreviewText {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fef08a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.historyPreviewActions {
+  display: flex;
+  gap: 6px;
+}
+.historyPreviewActions .btn {
+  flex: 1;
+  font-size: 11.5px;
+  padding: 4px 8px;
+}
+
+.historyBox {
+  height: 200px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.historyItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.historyItem.active {
+  background: rgba(56, 189, 248, 0.2);
+  border-left: 3px solid var(--color-info);
+}
+.stepNum {
+  font-weight: 700;
+  color: #94a3b8;
+  margin-right: 6px;
+}
+
+
+.historyTipHint {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+  padding: 2px 4px;
+}
+
+/* 播放回放控制條 Playback Controls */
+.playbackBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px;
+}
+
+/* 開發者模式 HUD (Developer Mode ?debug=1) */
+.developerHud {
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #22c55e;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #86efac;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.hudItem span {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* ── 介面分區：頂部=網站層級工具、席位列=誰下/換邊、橫幅=CPU 控制、右欄=教練 ── */
+.navDivider { width: 1px; height: 20px; background: var(--color-border); margin: 0 4px; }
+.seatSwapBtn { flex: 0 0 auto; }
+.statusRight { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.statusControls { display: flex; align-items: center; gap: 6px; }
+.coachSection { display: flex; flex-direction: column; gap: 8px; }
+.coachSectionBar { display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+.coachSectionTitle { font-weight: 700; font-size: 14px; }
+.boardTools { gap: 8px; }
+
+.seatPlayers { display: flex; align-items: center; justify-content: center; gap: 10px; flex: 1 1 auto; flex-wrap: wrap; min-width: 0; }
+.seatSettingsBtn { flex: 0 0 auto; margin-left: auto; }
+.historyHeaderRight { display: flex; align-items: center; gap: 8px; }
+
+/* 席位列 = 每方「名稱 · 我/CPU · 比分」合一 */
+.seatGroup { flex: 1 1 auto; }
+.seatScore { display: flex; align-items: baseline; gap: 6px; }
+.seatScore .scoreNum { font-size: 22px; font-weight: 800; min-width: 28px; text-align: center; }
+.komiTag { font-size: 11px; color: var(--color-text-muted, #94a3b8); white-space: nowrap; }
+.seatCenter { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 0 0 auto; }
+
+/* 每方卡片：上排 名稱＋我/CPU，下排 比分 */
+.seatGroup { flex-direction: column; align-items: center; gap: 4px; }
+.seatRow { display: flex; align-items: center; gap: 8px; }
+.statusBanner { margin-top: 8px; margin-bottom: 0; }
+
+/* 席位卡片的「我/CPU」徽章（唯讀，點一下開設定） */
+.seatWho { min-width: 64px; }
+.seatWho.isCpu { background: rgba(124, 58, 237, 0.35); border-color: rgba(167, 139, 250, 0.6); }
+/* 設定視窗：每方一塊（我/CPU + 演算法） */
+.settingsSide { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 12px; background: rgba(0,0,0,0.18); }
+.settingsSideHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.settingsSideName { font-weight: 700; }
+.settingsSideLabel { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+
+.seatLabel { font-size: 20px; font-weight: 800; }
+
+/* ── 終局：直接在比分板上慶祝 ── */
+.seatGroup { position: relative; transition: opacity .4s ease, filter .4s ease, box-shadow .4s ease; }
+.seatGroup.winner {
+  border-radius: 12px;
+  background: linear-gradient(160deg, rgba(250, 204, 21, 0.22), rgba(250, 204, 21, 0.05));
+  box-shadow: 0 0 0 2px #facc15, 0 0 26px rgba(250, 204, 21, 0.55);
+  animation: winnerPulse 1.4s ease-in-out infinite;
+}
+.seatGroup.winner::before {
+  content: "👑";
+  position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+  font-size: 26px; animation: crownBob 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .5));
+}
+.seatGroup.winner .scoreNum { color: #fde047; transform: scale(1.18); text-shadow: 0 0 14px rgba(250, 204, 21, .8); }
+.seatGroup.loser { opacity: .5; filter: grayscale(.6); }
+.scoreDiffBadge.final { font-weight: 800; animation: badgePop .6s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes winnerPulse { 0%, 100% { box-shadow: 0 0 0 2px #facc15, 0 0 18px rgba(250, 204, 21, .4); } 50% { box-shadow: 0 0 0 3px #fde047, 0 0 36px rgba(250, 204, 21, .8); } }
+@keyframes crownBob { 0%, 100% { transform: translate(-50%, 0) rotate(-6deg); } 50% { transform: translate(-50%, -6px) rotate(6deg); } }
+@keyframes badgePop { 0% { transform: scale(.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.confettiLayer { position: fixed; width: 0; height: 0; z-index: 9999; pointer-events: none; }
+.confettiPiece { position: absolute; left: 0; top: 0; opacity: 0; animation: confettiBurst 1.9s cubic-bezier(.15, .7, .3, 1) forwards; }
+@keyframes confettiBurst {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0) scale(.4); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 120px)) rotate(var(--rot)) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seatGroup.winner, .seatGroup.winner::before, .scoreDiffBadge.final { animation: none; }
+  .confettiLayer { display: none; }
+}

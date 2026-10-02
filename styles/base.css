@@ -1,0 +1,199 @@
+/**
+ * 🎨 骰子黑白棋 (Dice Othello) - 基礎樣式與設計標籤 (Design Tokens & Base Styles)
+ */
+
+:root {
+  /* 視覺語意系統 (Visual Semantic System) */
+  --color-spawn: #22c55e;     /* 綠色：合法落子 / 生子增殖 */
+  --color-capture: #ef4444;   /* 紅色：直線吃子 / 威脅警戒 */
+  --color-selected: #facc15;  /* 黃色：選取焦點 / 當前操作 */
+  --color-info: #38bdf8;      /* 藍色：資訊導航 / 規則路徑 */
+  --color-ai: #c084fc;        /* 紫色：AI 評估 / 教練推薦 */
+
+  /* 介面色階 */
+  --color-bg: #0b1329;
+  --color-panel-bg: rgba(15, 23, 42, 0.85);
+  --color-card-bg: rgba(30, 41, 59, 0.7);
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-text-main: #f8fafc;
+  --color-text-muted: #94a3b8;
+
+  /* 棋盤預設尺寸 */
+  --board-max-size: 520px;
+  --board-gap: 3px;
+  --coord-size: 24px;
+
+  /* 字體 */
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  margin: 0;
+  padding: 12px;
+  background: var(--color-bg);
+  color: var(--color-text-main);
+  min-height: 100vh;
+  /* 依據 instruction.md 第 85 點：不要整頁 user-select: none，讓使用者能選取規則與棋譜文字 */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 僅對按鈕、棋盤、骰子等互動元件禁用選取 */
+button, .cell, .disc, .diceBox, .tabBtn {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 焦點樣式 (Focus Visible Style) 提升無障礙體驗 (instruction.md 第 86 點) */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+.cell:focus-visible {
+  outline: 3px solid var(--color-selected);
+  outline-offset: 2px;
+}
+
+/* 滾動條美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* 泛用按鈕系統 */
+.btn {
+  border-radius: 10px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-main);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border-color: rgba(147, 197, 253, 0.4);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+.btn.primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.btn.purple {
+  background: linear-gradient(135deg, #9333ea, #7e22ce);
+  border-color: rgba(216, 180, 254, 0.4);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(147, 51, 234, 0.35);
+}
+.btn.purple:hover:not(:disabled) {
+  background: linear-gradient(135deg, #a855f7, #9333ea);
+}
+.btn.purple.active {
+  background: linear-gradient(135deg, #6b21a8, #581c87);
+  box-shadow: 0 0 0 2px rgba(216, 180, 254, 0.6), 0 4px 14px rgba(147, 51, 234, 0.5);
+}
+
+.btn.danger {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border-color: rgba(252, 165, 165, 0.4);
+  color: #ffffff;
+}
+
+.btn.small {
+  padding: 4px 9px;
+  font-size: 12.5px;
+  border-radius: 7px;
+}
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.iconBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* 徽章 Badge */
+.badge {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 旋轉動畫 Loader */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--color-ai);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* prefers-reduced-motion (instruction.md 第 11 點) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,528 @@
+/**
+ * ♟️ 骰子黑白棋 (Dice Othello) - 棋盤與棋子樣式 (Board & Discs Styles)
+ */
+
+.boardContainerWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+/* 棋盤 + 側邊骰子 Widget 橫向排列容器 */
+.boardWithSide {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 14px;
+  justify-content: center;
+  width: 100%;
+}
+
+/* 棋盤旁側邊骰子面板 */
+.sideDicePanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.9));
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  padding: 14px 12px;
+  min-width: 90px;
+  max-width: 110px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: var(--coord-size, 24px);
+}
+
+/* 輪到誰區塊 */
+.sideTurnBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.sideTurnIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+.sideTurnDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+.sideTurnDot.black { background: #38bdf8; color: #38bdf8; }
+.sideTurnDot.white { background: #facc15; color: #facc15; }
+
+.sideTurnLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e2e8f0;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
+.sideTurnRole {
+  font-size: 10.5px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 2px 7px;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 分隔線 */
+.sideDicePanel::after {
+  content: '';
+  display: none; /* 用 gap 控制間距即可 */
+}
+
+/* 骰子視覺區 */
+.sideDiceSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+}
+
+.sideDiceBox {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+  border-radius: 14px;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.45),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.12),
+    inset 0 2px 4px rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sideDiceBox:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5), inset 0 -2px 5px rgba(0, 0, 0, 0.12);
+}
+
+@keyframes sideDiceShake {
+  0% { transform: rotate(0deg) scale(1); }
+  20% { transform: rotate(-12deg) scale(1.1); }
+  40% { transform: rotate(10deg) scale(1.06); }
+  60% { transform: rotate(-7deg) scale(1.03); }
+  80% { transform: rotate(4deg) scale(1.01); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+.sideDiceBox.rolling {
+  animation: sideDiceShake 0.44s ease-in-out;
+}
+
+.sideDiceGrid {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  align-items: center;
+  justify-items: center;
+}
+
+.sideDiceValLabel {
+  font-size: 13px;
+  font-weight: 800;
+  color: #cbd5e1;
+  letter-spacing: 0.5px;
+  background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+}
+
+/* 擲骰按鈕 */
+.sideRollBtn {
+  appearance: none;
+  border: 1px solid rgba(96, 165, 250, 0.5);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.6), rgba(109, 40, 217, 0.5));
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 5px 0;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.18s ease;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
+  letter-spacing: 0.3px;
+}
+
+.sideRollBtn:hover {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.85), rgba(109, 40, 217, 0.75));
+  box-shadow: 0 5px 16px rgba(37, 99, 235, 0.5);
+  transform: translateY(-1px);
+}
+
+.sideRollBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.sideRollBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 方向提示 */
+.sideDirHint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  justify-content: center;
+}
+
+.sideDirItem { letter-spacing: 0.5px; }
+.sideDirItem.black-dir { color: #38bdf8; }
+.sideDirItem.white-dir { color: #facc15; }
+.sideDirDivider { color: #475569; }
+
+/* 小螢幕時 side widget 換到棋盤下方 */
+/* Override diceQuestionMark size in side dice grid */
+.sideDiceGrid .diceQuestionMark {
+  font-size: 22px;
+}
+
+@media (max-width: 600px) {
+  .boardWithSide {
+    flex-direction: column;
+    align-items: center;
+  }
+  .sideDicePanel {
+    flex-direction: row;
+    min-width: unset;
+    max-width: 100%;
+    width: min(92vw, var(--board-max-size));
+    margin-top: 0;
+    padding: 10px 14px;
+    gap: 14px;
+    align-self: center;
+    border-radius: 12px;
+  }
+  .sideTurnBlock, .sideDiceSection { flex-direction: column; }
+}
+
+.boardFrame {
+  position: relative;
+  display: inline-block;
+  padding-left: var(--coord-size);
+  padding-top: var(--coord-size);
+  margin: 0 auto;
+}
+
+/* 棋盤頂部 A~H 座標列 */
+.coordTop {
+  position: absolute;
+  left: var(--coord-size);
+  top: 0;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: min(92vw, var(--board-max-size));
+  height: var(--coord-size);
+  align-items: center;
+  justify-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.5px;
+}
+
+/* 棋盤左側 1~8 座標行 */
+.coordLeft {
+  position: absolute;
+  left: 0;
+  top: var(--coord-size);
+  display: grid;
+  grid-template-rows: repeat(8, 1fr);
+  width: var(--coord-size);
+  height: min(92vw, var(--board-max-size));
+  align-items: center;
+  justify-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+/* 8x8 自適應棋盤 */
+.board {
+  width: min(92vw, var(--board-max-size));
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: var(--board-gap);
+  background: #113621;
+  padding: 6px;
+  border-radius: 14px;
+  border: 2px solid #1e4a30;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 2px 8px rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+/* 棋盤格 Cell */
+.cell {
+  background: #166534;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  aspect-ratio: 1;
+  width: 100%;
+  height: 100%;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.cell:hover {
+  background: #15803d;
+}
+
+/* 1. 棋子實體 Disc */
+.disc {
+  width: 82%;
+  height: 82%;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.disc.black {
+  background: var(--piece-black-bg, radial-gradient(circle at 35% 30%, #475569 0%, #1e293b 50%, #0f172a 100%));
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.disc.white {
+  background: var(--piece-white-bg, radial-gradient(circle at 35% 30%, #ffffff 0%, #e2e8f0 60%, #cbd5e1 100%));
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.disc.ghost {
+  opacity: 0.55;
+  border: 2px dashed rgba(255, 255, 255, 0.6);
+  animation: pulseGhost 1.2s infinite ease-in-out;
+}
+
+@keyframes pulseGhost {
+  0%, 100% { transform: scale(0.92); opacity: 0.45; }
+  50% { transform: scale(1.0); opacity: 0.75; }
+}
+
+/* 2. 可行動棋子高亮 */
+.cell.can-act .disc {
+  box-shadow: 0 0 0 2px var(--color-selected), 0 4px 10px rgba(250, 204, 21, 0.4);
+}
+
+/* 3. 選中棋子 */
+.cell.selected {
+  background: rgba(250, 204, 21, 0.25) !important;
+}
+.cell.selected .disc {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 3px var(--color-selected), 0 6px 14px rgba(250, 204, 21, 0.6);
+}
+
+/* 4. 合法生子目標 (綠色) */
+.cell.dest-spawn {
+  background: rgba(34, 197, 94, 0.28) !important;
+}
+.cell.dest-spawn::after {
+  content: "";
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: var(--color-spawn);
+  box-shadow: 0 0 8px var(--color-spawn);
+}
+
+/* 5. 合法吃子目標 (紅色) */
+.cell.dest-capture {
+  background: rgba(239, 68, 68, 0.35) !important;
+}
+.cell.dest-capture::after {
+  content: "⚔️";
+  font-size: 15px;
+  position: absolute;
+  z-index: 2;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+/* 步數提示 Badge (特權自選模式專用) */
+.stepBadge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #86efac;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.stepBadge.capture {
+  color: #fca5a5;
+}
+
+/* 6. 最後一步 */
+.cell.lastMove {
+  box-shadow: inset 0 0 0 2px var(--color-info);
+}
+
+/* 7. 終局勢力填滿 */
+.cell.filled-territory {
+  animation: fadeInFilled 0.8s ease forwards;
+}
+@keyframes fadeInFilled {
+  from { opacity: 0.3; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 8. AI 推薦光暈 */
+.cell.ai-recommended {
+  box-shadow: 0 0 0 2px var(--color-ai), inset 0 0 10px rgba(192, 132, 252, 0.4);
+}
+.aiRankBadge {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* SVG 路徑覆蓋層 */
+.movePathSvg {
+  position: absolute;
+  left: var(--coord-size);
+  top: var(--coord-size);
+  width: min(92vw, var(--board-max-size));
+  height: min(92vw, var(--board-max-size));
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── 路徑箭頭色彩預設值（可於外觀工坊覆蓋） ── */
+:root {
+  --path-black-fill: #6366f1;
+  --path-white-fill: #f59e0b;
+  --path-ai-fill: #a78bfa;
+}
+
+/* 比分進度條 */
+.boardScoreBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(92vw, var(--board-max-size));
+  margin-top: 10px;
+  background: var(--color-panel-bg);
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.scoreSide {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.scoreNum {
+  font-size: 20px;
+  font-weight: 800;
+}
+.scoreDiffBadge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* 棋盤模式與狀態樣式 (flow.md 第 7 節) */
+.boardFrame.board-review #boardContainer {
+  border: 3px dashed #f59e0b !important;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.35) !important;
+  cursor: default !important;
+}
+
+.boardFrame.board-cpu #boardContainer {
+  cursor: not-allowed !important;
+}
+
+.boardFrame.board-paused #boardContainer {
+  cursor: not-allowed !important;
+}
+
+
+
+/* ── 左右互換（黑方在左上、白方在右下） ── */
+.coordTop.flipped, .coordLeft.flipped { direction: ltr; }
+.seatPlayers.flipped { flex-direction: row-reverse; }
+.boardScoreBar.flipped { flex-direction: row-reverse; }
+.boardScoreBar.flipped .scoreSide { flex-direction: row-reverse; }
+
+/* 名稱旁的小棋子：直接用玩家自訂的棋子外觀 */
+.pieceDot {
+  display: inline-block; width: 0.95em; height: 0.95em; border-radius: 50%;
+  vertical-align: -0.1em; margin-right: 6px; background-size: cover; background-position: center;
+  box-shadow: none;
+}
+.pieceDot.black { background: var(--piece-black-flat, #111827); border: 1px solid rgba(255, 255, 255, 0.25); }
+.pieceDot.white { background: var(--piece-white-flat, #e2e8f0); border: 1px solid rgba(0, 0, 0, 0.2); }
+
+/* ── 步數指示路徑動畫 ── */
+@keyframes dash-move { to { stroke-dashoffset: -20; } }
+.animated-path-dash { animation: dash-move 1.2s linear infinite; }
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+.pulse-start-ring { transform-box: fill-box; transform-origin: center; animation: pulse-ring 1.8s ease-in-out infinite; }
+.pulse-end-ring { transform-box: fill-box; transform-origin: center; animation: pulse-ring 1.5s ease-in-out infinite; }
+.path-waypoint-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  .animated-path-dash, .pulse-start-ring, .pulse-end-ring { animation: none; }
+}

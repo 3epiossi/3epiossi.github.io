@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🎲 誰會贏？ - Who will win?</title>
+  <meta name="description" content="誰會贏？ (Who will win?) 現代化對弈與棋譜分析平台：結合骰子隨機性、單向折線生子、純直線突擊吃子、PASS免骰特權與 Expectiminimax 四階博弈 AI。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
+
+  <!-- 模組化樣式表 -->
+  <link rel="stylesheet" href="./styles/base.css" />
+  <link rel="stylesheet" href="./styles/board.css" />
+  <link rel="stylesheet" href="./styles/panels.css" />
+  <link rel="stylesheet" href="./styles/modal.css" />
+  <link rel="stylesheet" href="./styles/themes.css" />
+  <style>
+    .langSwitcher { display: inline-flex; gap: 3px; align-items: center; }
+    .langBtn { padding: 4px 9px; font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: #94a3b8; transition: all 0.15s; }
+    .langBtn.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8; }
+    .langBtn:hover:not(.active) { background: rgba(255,255,255,0.15); color: #f8fafc; }
+  </style>
+</head>
+<body class="theme-neon">
+  <div class="app">
+    <!-- 頂部導航列 Top Bar -->
+    <header class="topBar">
+      <div class="brand">
+        <h1 data-i18n="brandName">🎲 誰會贏？</h1>
+      </div>
+
+      <!-- 核心模式切換器 (instruction.md 第 2 點：對局、分析、擺盤、規則) -->
+      <nav class="modeTabs" aria-label="遊戲模式">
+        <button class="tabBtn active" data-mode="play" data-i18n="modePlay">🎮 對局模式</button>
+        <button class="tabBtn" data-mode="rules" data-i18n="modeRules">📜 規則學院</button>
+      </nav>
+
+      <!-- 頂部捷徑控制按鈕 -->
+      <div class="navControls">
+        <button id="themeToggleBtn" class="btn small" data-i18n="btnTheme" data-i18n-title="titleTheme">🎨 主題與外觀</button>
+        <span class="navDivider" aria-hidden="true"></span>
+        <div class="langSwitcher">
+          <button class="langBtn" data-lang="zh" onclick="setLang('zh')">中</button>
+          <button class="langBtn" data-lang="en" onclick="setLang('en')">EN</button>
+          <button class="langBtn" data-lang="ja" onclick="setLang('ja')">日</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主對弈區 (Main Grid Layout) -->
+    <main class="mainGrid">
+      <!-- 左側欄：棋盤與即時比分 -->
+      <section class="boardSection">
+        <div class="boardContainerWrap">
+          <!-- 席位控制列：唯一的「誰在下」事實來源，點一下立即生效 -->
+          <div id="seatBar" class="seatBar">
+            <div class="seatPlayers">
+            <div class="seatGroup" data-side="white">
+              <div class="seatRow">
+              <span class="seatLabel" data-i18n="seatWhite">⚪ 白方</span>
+              </div>
+              <div class="seatScore">
+                <span id="scoreWhiteNum" class="scoreNum">4.5</span>
+                <span id="komiTag" class="komiTag"></span>
+              </div>
+            </div>
+            <div class="seatCenter">
+              <button id="flipBtn" class="btn small seatSwapBtn" data-i18n="btnFlip" data-i18n-title="titleFlip">🔃 左右互換</button>
+              <div id="scoreLeadBadge" class="scoreDiffBadge" data-i18n="scoreTie">平手</div>
+            </div>
+            <div class="seatGroup" data-side="black">
+              <div class="seatRow">
+              <span class="seatLabel" data-i18n="seatBlack">⚫ 黑方</span>
+              </div>
+              <div class="seatScore">
+                <span id="scoreBlackNum" class="scoreNum">1</span>
+              </div>
+            </div>
+            </div>
+            <button id="settingsBtn" class="btn small seatSettingsBtn" data-i18n="btnSettings" data-i18n-title="titleSettings">⚙️ 設定</button>
+          </div>
+
+          <!-- 棋盤 + 側邊骰子 Widget 橫向排列 -->
+          <div class="boardWithSide">
+            <div id="boardFrame" class="boardFrame">
+              <!-- 座標標記 A~H 與 1~8 -->
+              <div class="coordTop" aria-hidden="true">
+                <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span>
+              </div>
+              <div class="coordLeft" aria-hidden="true">
+                <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span>
+              </div>
+
+              <!-- SVG 行棋與攻擊射線覆蓋層 -->
+              <svg id="movePathSvg" class="movePathSvg"></svg>
+
+              <!-- 8x8 自適應棋盤 -->
+              <div id="boardContainer" class="board" role="grid" aria-label="8x8 骰子黑白棋盤"></div>
+            </div>
+
+            <!-- 棋盤旁側邊骰子 Widget：只顯示當前骰子點數 -->
+            <div id="sideDicePanel" class="sideDicePanel">
+              <div class="sideDiceSection">
+                <div class="sideDiceBox" id="sideDiceWidget">
+                  <div class="sideDiceGrid sideDiceGrid"></div>
+                </div>
+                <div id="sideDiceValLabel" class="sideDiceValLabel">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 模式 × 控制者 狀態橫幅 (flow.md 第 2 & 7 節) -->
+          <div id="statusBanner" class="statusBanner human" role="status" aria-live="polite">
+            <div class="statusLeft">
+              <span id="statusBadge" class="statusBadge">🔵</span>
+              <span id="statusText" class="statusText">👤 你 · ⚫ 黑方 · 請擲骰子</span>
+            </div>
+            <div class="statusRight">
+              <div id="statusActions" class="statusActions"></div>
+              <div class="statusControls">
+                <button id="twoPlayerBtn" class="btn small" data-i18n="btnTwoPlayer" data-i18n-title="titleTwoPlayer">👥 雙人對戰</button>
+                <button id="vsCpuBtn" class="btn small" style="display: none;"></button>
+                <button id="watchBtn" class="btn small primary" data-i18n="btnWatch">👁 CPU 對戰</button>
+                <button id="pauseResumeBtn" class="btn small" data-i18n="btnPause" style="display: none;">⏸ 暫停</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 自由擺盤工具列 (僅在 setup 模式顯示) -->
+          <div id="setupToolsBar" class="playbackBar" style="display: none; margin-top: 6px;">
+            <span style="font-size:13px; font-weight:700; color:#94a3b8;" data-i18n="setupLabel">擺盤筆刷：</span>
+            <button class="btn small brushBtn active" data-brush="toggle" data-i18n="brushToggle">🔄 輪替</button>
+            <button class="btn small brushBtn" data-brush="black" data-i18n="brushBlack">⚫ 放置黑棋</button>
+            <button class="btn small brushBtn" data-brush="white" data-i18n="brushWhite">⚪ 放置白棋</button>
+            <button class="btn small brushBtn" data-brush="empty" data-i18n="brushEmpty">🗑 清除格子</button>
+            <button id="setupContinueBtn" class="btn small primary" data-i18n="setupContinue">✅ 排定完成，接著下下去！</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 右側欄：棋譜歷程與 AI 教練 -->
+      <aside class="panelCard">
+        <!-- 隱藏 DOM 元素保持 JS 相容性 -->
+        <div id="turnDot" class="turnIndicatorDot black" style="display:none;"></div>
+        <div id="turnText" style="display:none;">輪到黑方</div>
+        <div id="turnRole" style="display:none;">👤 人類玩家</div>
+        <div id="diceContainer" style="display:none;"></div>
+
+        <!-- 2. 棋譜歷程與分支選單 (History View) -->
+        <div class="historySection">
+          <div class="historyHeader">
+            <span style="font-weight: 700; font-size: 14px;" data-i18n="historyTitle">📜 對局棋譜</span>
+            <div class="historyHeaderRight">
+              <div class="branchSelectorWrap" id="branchPickerWrap">
+                <button id="branchPickerBtn" class="branchPickerBtn" aria-haspopup="true" aria-expanded="false">
+                  <span id="branchPickerLabel" data-i18n="branchLabel">主線</span>
+                  <span class="branchPickerArrow">▾</span>
+                </button>
+                <div id="branchPickerPanel" class="branchPickerPanel" hidden>
+                  <div id="branchTreeRows" class="branchTreeRows"></div>
+                </div>
+              </div>
+              <button id="setupModeBtn" class="btn small" data-i18n="btnSetupMode">✏️ 自由排盤</button>
+              <button id="restartBtn" class="btn small danger" data-i18n="btnRestart" data-i18n-title="titleRestart">🔄 重設</button>
+            </div>
+          </div>
+
+          <!-- 歷史時間旅行控制列 (Time Machine Playback Controls) -->
+          <div class="historyPlaybackBar">
+            <button id="historyFirstBtn" class="btn small" data-i18n="historyFirst">⏮ 首步</button>
+            <button id="historyPrevBtn" class="btn small" data-i18n="historyPrev">◀ 上手</button>
+            <button id="historyNextBtn" class="btn small" data-i18n="historyNext">▶ 下手</button>
+            <button id="historyLatestBtn" class="btn small primary" data-i18n="historyLatest">⏭ 最新</button>
+          </div>
+
+          <div id="historyBox" class="historyBox" role="list"></div>
+          <div class="historyTipHint" data-i18n="historyTip">💡 提示：點擊任一步可回顧當時歷史局面。</div>
+        </div>
+
+        <!-- 3. 提示分析 (原 AI 教練 Coach View) -->
+        <div class="coachSection">
+          <div class="coachSectionBar">
+            <span class="coachSectionTitle" data-i18n="coachBarTitle">🧠 AI 教練</span>
+            <button id="hintBtn" class="btn small purple" data-i18n="btnHint">💡 提示</button>
+          </div>
+          <div id="coachContainer" class="coachCard"></div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- 開發者模式 HUD (?debug=1 自動啟動) -->
+    <div id="developerHud" class="developerHud" style="display: none;">
+      <div class="hudItem">渲染次數: <span id="hudRenders">0</span></div>
+      <div class="hudItem">當前回合: <span id="hudTurn">BLACK</span></div>
+      <div class="hudItem">骰子點數: <span id="hudDice">null</span></div>
+      <div class="hudItem">對局樹節點數: <span id="hudNodes">1</span></div>
+      <div class="hudItem">模式: <span>Developer Mode Active</span></div>
+    </div>
+  </div>
+
+  <!-- ===== 模組彈窗系統 (Modals) ===== -->
+
+  <!-- 1. 進階設定彈窗 (Settings Modal - 漸進式揭露 Progressive Disclosure) -->
+  <div id="settingsModal" class="modalBackdrop" data-modal-id="settingsModal" aria-hidden="true">
+    <div class="modalDialog" role="dialog" aria-labelledby="settingsModalTitle">
+      <div class="modalHeader">
+        <div id="settingsModalTitle" class="modalTitle" data-i18n="settingsTitle">⚙️ 對弈與演算法進階設定</div>
+        <button class="modalCloseBtn" aria-label="關閉設定">✕</button>
+      </div>
+      <div class="modalBody">
+        <div class="settingsHint" data-i18n="settingsHint">
+          💡 「黑白雙方由誰操作」已移到棋盤上方的席位列，點一下即時切換。這裡只設定 CPU 的強度與節奏。
+        </div>
+
+        <div class="settingsSide">
+          <div class="settingsSideHead">
+            <span class="settingsSideName" data-i18n="seatBlack">⚫ 黑方</span>
+            <div class="seatToggle" role="group">
+              <button class="seatBtn" data-side="black" data-owner="human" data-i18n="seatHuman">👤 我</button>
+              <button class="seatBtn" data-side="black" data-owner="cpu" data-i18n="seatCpu">🤖 CPU</button>
+            </div>
+          </div>
+          <label class="settingsSideLabel" data-i18n="algoOnly">CPU 演算法：</label>
+          <select id="settingBlackAlgo" style="width:100%;">
+            <option value="v1" data-i18n="algoV1">入門型 (v1 經典地力)</option>
+            <option value="v2" data-i18n="algoV2">戰術型 (v2 戰術進階)</option>
+            <option value="v3" data-i18n="algoV3">預判型 (v3 預期搜尋)</option>
+            <option value="v4" data-i18n="algoV4">反擊型 (v4 深度反擊)</option>
+            <option value="v5" selected data-i18n="algoV5">宗師型 (v5 戰略宗師 推薦)</option>
+          </select>
+        </div>
+
+        <div class="settingsSide">
+          <div class="settingsSideHead">
+            <span class="settingsSideName" data-i18n="seatWhite">⚪ 白方</span>
+            <div class="seatToggle" role="group">
+              <button class="seatBtn" data-side="white" data-owner="human" data-i18n="seatHuman">👤 我</button>
+              <button class="seatBtn" data-side="white" data-owner="cpu" data-i18n="seatCpu">🤖 CPU</button>
+            </div>
+          </div>
+          <label class="settingsSideLabel" data-i18n="algoOnly">CPU 演算法：</label>
+          <select id="settingWhiteAlgo" style="width:100%;">
+            <option value="v1" data-i18n="algoV1">入門型 (v1 經典地力)</option>
+            <option value="v2" data-i18n="algoV2">戰術型 (v2 戰術進階)</option>
+            <option value="v3" data-i18n="algoV3">預判型 (v3 預期搜尋)</option>
+            <option value="v4" data-i18n="algoV4">反擊型 (v4 深度反擊)</option>
+            <option value="v5" selected data-i18n="algoV5">宗師型 (v5 戰略宗師 推薦)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-weight:700; display:block; margin-bottom:6px;" data-i18n="komiLabel">⚖️ 圍棋式割目（貼目 / Komi）平衡：</label>
+          <select id="settingKomi" style="width:100%;">
+            <option value="0" data-i18n="komi0">0 目 (無貼目)</option>
+            <option value="1.5" data-i18n="komi15">+1.5 目</option>
+            <option value="3.5" selected data-i18n="komi35">+3.5 目 (450場大數據驗證黃金平衡點)</option>
+            <option value="5.5" data-i18n="komi55">+5.5 目 (圍棋標準)</option>
+            <option value="7.5" data-i18n="komi75">+7.5 目</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-weight:700; display:block; margin-bottom:6px;" data-i18n="cpuSpeedLabel">⚡ CPU 思考行棋速度：</label>
+          <select id="settingCpuSpeed" style="width:100%;">
+            <option value="150" data-i18n="speed150">極速 (150ms)</option>
+            <option value="350" data-i18n="speed350">快速 (350ms)</option>
+            <option value="600" selected data-i18n="speed600">正常 (600ms)</option>
+            <option value="1000" data-i18n="speed1000">沉思 (1000ms)</option>
+          </select>
+        </div>      </div>
+      <div class="modalFooter">
+        <button class="btn primary modalCancelBtn" data-i18n="settingsDone">完成設定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 60 秒新手互動教學彈窗 (Tutorial Modal) -->
+  <div id="tutorialModal" class="modalBackdrop" data-modal-id="tutorialModal" aria-hidden="true">
+    <div class="modalDialog" role="dialog" aria-labelledby="tutorialModalTitle">
+      <div class="modalHeader">
+        <div id="tutorialModalTitle" class="modalTitle" data-i18n="tutorialModalTitle">🎓 60 秒掌握遊戲規則！</div>
+        <button class="modalCloseBtn" aria-label="關閉教學">✕</button>
+      </div>
+      <div class="modalBody">
+        <div class="tutorialStepCard">
+          <div class="tutorialIcon">🎲</div>
+          <div>
+            <div class="tutorialHighlight" data-i18n="rule1Title">規則一：每回合擲 1 顆骰子</div>
+            <div data-i18n="rule1Text">骰出的點數 D 即為該步必須走滿的步數。黑棋只能朝左/上進攻，白棋只能朝右/下進攻。</div>
+          </div>
+        </div>
+
+        <div class="tutorialStepCard">
+          <div class="tutorialIcon">🌱</div>
+          <div>
+            <div class="tutorialHighlight" data-i18n="rule2Title">規則二：生子（增殖繁衍）</div>
+            <div data-i18n="rule2Text">選一顆己方棋子，走滿 D 步抵達空格，原棋保留並在目標格生出一顆全新棋子。中途遇到友軍可直接穿透！</div>
+          </div>
+        </div>
+
+        <div class="tutorialStepCard">
+          <div class="tutorialIcon">⚔️</div>
+          <div>
+            <div class="tutorialHighlight" data-i18n="rule3Title">規則三：吃子（純直線衝鋒）</div>
+            <div data-i18n="rule3Text">如象棋的車一樣純直線直行剛好抵達敵棋！原起點變空，移動至目標格消滅敵棋。</div>
+          </div>
+        </div>
+
+        <div class="tutorialStepCard">
+          <div class="tutorialIcon">🎁</div>
+          <div>
+            <div class="tutorialHighlight" data-i18n="rule4Title">規則四：PASS 特權與自然終局</div>
+            <div data-i18n="rule4Text">無步可走時直接 PASS 給對手，且對手享有免骰指定 1～6 步數特權！當雙方已不可能互吃時自動填滿勢力結算！</div>
+          </div>
+        </div>
+      </div>
+      <div class="modalFooter">
+        <button class="btn" onclick="window.open('./tutorial.html', '_blank')" data-i18n="tutorialFull">📜 完整規則學院</button>
+        <button class="btn primary modalCancelBtn" data-i18n="tutorialOk">我懂了，開始下棋！</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 分支管理與比對彈窗 (Branch Modal) -->
+  <div id="branchModal" class="modalBackdrop" data-modal-id="branchModal" aria-hidden="true">
+    <div class="modalDialog" role="dialog" aria-labelledby="branchModalTitle">
+      <div class="modalHeader">
+        <div id="branchModalTitle" class="modalTitle" data-i18n="branchModalTitle">對局樹</div>
+        <button class="modalCloseBtn" aria-label="關閉">✕</button>
+      </div>
+      <div class="modalBody">
+        <div id="branchTreeList" class="branchTreeRows branchModalTree"></div>
+      </div>
+      <div class="modalFooter">
+        <button class="btn modalCancelBtn" data-i18n="branchClose">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 通用確認對話框 (Confirm Modal) -->
+  <div id="confirmModal" class="modalBackdrop" data-modal-id="confirmModal" aria-hidden="true">
+    <div class="modalDialog" role="dialog" style="max-width: 420px;">
+      <div class="modalHeader">
+        <div id="confirmModalTitle" class="modalTitle" data-i18n="confirmTitle">請確認操作</div>
+      </div>
+      <div class="modalBody">
+        <div id="confirmModalMessage" data-i18n="confirmMsg">您確定要執行這項操作嗎？</div>
+      </div>
+      <div class="modalFooter">
+        <button id="confirmModalCancelBtn" class="btn" data-i18n="confirmCancel">取消</button>
+        <button id="confirmModalOkBtn" class="btn primary" data-i18n="confirmOk">確認</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 主題與棋子外觀工坊彈窗 (Theme & Skin Workshop Modal) -->
+  <div id="skinModal" class="modalBackdrop" data-modal-id="skinModal" aria-hidden="true">
+    <div class="modalDialog" role="dialog" aria-labelledby="skinModalTitle" style="max-width: 720px;">
+      <div class="modalHeader">
+        <div id="skinModalTitle" class="modalTitle" data-i18n="skinTitle">🎨 主題風格與棋子外觀工坊</div>
+        <button class="modalCloseBtn" aria-label="關閉">✕</button>
+      </div>
+      <div class="modalBody">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span data-i18n="skinSoundLabel">🔊 遊戲音效</span>
+          <button id="soundToggleBtn" class="btn small">🔊</button>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="font-weight:700; margin-bottom:6px;" data-i18n="nameLabel">🏷️ 自訂雙方名稱：</div>
+          <div style="display:flex; gap:8px;">
+            <input id="settingBlackName" type="text" maxlength="12" style="flex:1; min-width:0;" />
+            <input id="settingWhiteName" type="text" maxlength="12" style="flex:1; min-width:0;" />
+          </div>
+        </div>
+        <!-- 1. 棋盤場景主題風格 -->
+        <div class="skinThemeSection">
+          <div class="skinSectionTitle" style="margin-top: 0; margin-bottom: 8px;">
+            <span data-i18n="skinThemeSection">🏞️ 棋盤場景風格主題</span>
+          </div>
+          <div id="themePresetGroup" class="skinPresetRow">
+            <button class="skinPresetChip" data-theme="neon">
+              <span class="skinPresetDot" style="background:#38bdf8"></span>
+              <span data-i18n="themeNeon">霓虹深邃 (預設)</span>
+            </button>
+            <button class="skinPresetChip" data-theme="classic">
+              <span class="skinPresetDot" style="background:#15803d"></span>
+              <span data-i18n="themeClassic">經典翡翠</span>
+            </button>
+            <button class="skinPresetChip" data-theme="wood">
+              <span class="skinPresetDot" style="background:#b45309"></span>
+              <span data-i18n="themeWood">雅緻木紋</span>
+            </button>
+            <button class="skinPresetChip" data-theme="slate">
+              <span class="skinPresetDot" style="background:#64748b"></span>
+              <span data-i18n="themeSlate">玄武極簡</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="font-size: 13px; color: #94a3b8; margin: 4px 0 8px;" data-i18n="skinCustomHint">
+          自由客製化黑棋與白棋的外觀！可選擇高質感寶石預設、自訂專屬 3D 渲染色彩，或上傳圖片打造個性化棋子。
+        </div>
+
+        <div class="skinGrid">
+          <!-- ⚫ 黑方棋子設定 -->
+          <div class="skinSideCard">
+            <div class="skinSideHeader">
+              <span class="skinSideTitle" data-i18n="skinBlackTitle">⚫ 黑方棋子外觀</span>
+              <span id="blackSkinBadge" class="skinActiveBadge">經典黑曜</span>
+            </div>
+
+            <!-- 即時預覽格 -->
+            <div class="skinPreviewBox">
+              <div class="skinPreviewCell">
+                <div id="blackPreviewDisc" class="skinPreviewDisc"></div>
+              </div>
+              <div class="skinPreviewLabel" data-i18n="skinPreviewLabel">棋盤實際外觀預覽</div>
+            </div>
+
+            <!-- 寶石預設色 -->
+            <div class="skinSectionTitle" data-i18n="skinGemSection">💎 寶石預設風格</div>
+            <div id="blackPresetGroup" class="skinPresetRow"></div>
+
+            <!-- 自訂色彩選擇器 -->
+            <div class="skinSectionTitle" data-i18n="skinColorSection">🎨 自訂專屬 3D 色彩</div>
+            <div class="skinColorPickerRow">
+              <label class="skinColorPickerLabel">
+                <input id="blackColorInput" type="color" class="skinColorInput" value="#111827" />
+                <span id="blackColorDot" class="skinColorDot"></span>
+                <span data-i18n="skinColorHint">挑選色彩 (自動生成 3D 球體光影)</span>
+              </label>
+            </div>
+
+            <!-- 上傳自訂圖片 -->
+            <div class="skinSectionTitle" data-i18n="skinUploadSection">📷 上傳自訂圖片 / 圖案</div>
+            <div class="skinUploadBox">
+              <div class="skinUploadBtns">
+                <label class="skinFileBtn">
+                  <span data-i18n="skinUploadBtn">📁 上傳圖片</span>
+                  <input id="blackImgInput" type="file" accept="image/*" style="display:none;" />
+                </label>
+                <button id="blackClearImgBtn" class="skinClearBtn" style="display:none;" data-i18n="skinClearImg">🗑 移除圖片</button>
+                <label class="skinGlossToggle">
+                  <input id="blackGlossToggle" type="checkbox" checked />
+                  <span data-i18n="skinGlossLabel">3D 水晶高光</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⚪ 白方棋子設定 -->
+          <div class="skinSideCard">
+            <div class="skinSideHeader">
+              <span class="skinSideTitle" data-i18n="skinWhiteTitle">⚪ 白方棋子外觀</span>
+              <span id="whiteSkinBadge" class="skinActiveBadge">經典珍珠</span>
+            </div>
+
+            <!-- 即時預覽格 -->
+            <div class="skinPreviewBox">
+              <div class="skinPreviewCell">
+                <div id="whitePreviewDisc" class="skinPreviewDisc"></div>
+              </div>
+              <div class="skinPreviewLabel" data-i18n="skinPreviewLabel">棋盤實際外觀預覽</div>
+            </div>
+
+            <!-- 寶石預設色 -->
+            <div class="skinSectionTitle" data-i18n="skinGemSection">💎 寶石預設風格</div>
+            <div id="whitePresetGroup" class="skinPresetRow"></div>
+
+            <!-- 自訂色彩選擇器 -->
+            <div class="skinSectionTitle" data-i18n="skinColorSection">🎨 自訂專屬 3D 色彩</div>
+            <div class="skinColorPickerRow">
+              <label class="skinColorPickerLabel">
+                <input id="whiteColorInput" type="color" class="skinColorInput" value="#e2e8f0" />
+                <span id="whiteColorDot" class="skinColorDot"></span>
+                <span data-i18n="skinColorHint">挑選色彩 (自動生成 3D 球體光影)</span>
+              </label>
+            </div>
+
+            <!-- 上傳自訂圖片 -->
+            <div class="skinSectionTitle" data-i18n="skinUploadSection">📷 上傳自訂圖片 / 圖案</div>
+            <div class="skinUploadBox">
+              <div class="skinUploadBtns">
+                <label class="skinFileBtn">
+                  <span data-i18n="skinUploadBtn">📁 上傳圖片</span>
+                  <input id="whiteImgInput" type="file" accept="image/*" style="display:none;" />
+                </label>
+                <button id="whiteClearImgBtn" class="skinClearBtn" style="display:none;" data-i18n="skinClearImg">🗑 移除圖片</button>
+                <label class="skinGlossToggle">
+                  <input id="whiteGlossToggle" type="checkbox" checked />
+                  <span data-i18n="skinGlossLabel">3D 水晶高光</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 路徑箭頭色彩 Preset Chips -->
+        <div class="skinThemeSection" style="margin-top: 14px;">
+          <div class="skinSectionTitle" style="margin-top: 0; margin-bottom: 10px;" data-i18n="skinPathSection">🏹 移動路徑箭頭色彩</div>
+          <div id="pathStyleGroup" class="skinPresetRow" style="margin-bottom: 12px;">
+            <button class="skinPresetChip" data-path-style="step" data-i18n="pathStyleStep">🔵 步數指示（預設）</button>
+            <button class="skinPresetChip" data-path-style="brush" data-i18n="pathStyleBrush">🖌 毛筆筆觸</button>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- 黑方路徑：深色系 6 選 -->
+            <div>
+              <div style="font-size: 12px; color: #94a3b8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                <span id="blackPathColorDot" class="skinColorDot" style="background:#4f46e5; width:10px; height:10px; border-radius:50%; display:inline-block;"></span>
+                <span data-i18n="skinBlackPathLabel">⚫ 黑方路徑色彩</span>
+              </div>
+              <div id="blackPathPresetGroup" class="skinPresetRow"></div>
+            </div>
+            <!-- 白方路徑：淺色系 6 選 -->
+            <div>
+              <div style="font-size: 12px; color: #94a3b8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                <span id="whitePathColorDot" class="skinColorDot" style="background:#fbbf24; width:10px; height:10px; border-radius:50%; display:inline-block;"></span>
+                <span data-i18n="skinWhitePathLabel">⚪ 白方路徑色彩</span>
+              </div>
+              <div id="whitePathPresetGroup" class="skinPresetRow"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modalFooter" style="justify-content: space-between;">
+        <button id="skinResetDefaultBtn" class="btn small danger" data-i18n="skinReset">🔄 還原預設外觀</button>
+        <button class="btn primary modalCancelBtn" data-i18n="skinDone">完成設定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── i18n ─────────────────────────────────────────────── -->
+  <script>
+  const TAKU_TR = {
+    zh: {
+      pageTitle:'🎲 誰會贏？',
+      brandName:'🎲 誰會贏？',
+      modePlay:'🎮 對局模式', modeRules:'📜 規則學院',
+      btnTheme:'🎨 主題與外觀', btnSound:'🔊', skinSoundLabel:'🔊 遊戲音效', btnFlip:'🔃 左右互換', titleFlip:'黑白雙方位置左右互換', coachBarTitle:'🧠 AI 教練', nameLabel:'🏷️ 自訂雙方名稱（左：黑方　右：白方，留空用預設）：', skinClearImg:'🗑 移除圖片', ariaClose:'關閉', ariaModes:'遊戲模式', ariaBoard:'8x8 棋盤', ariaWhiteSeat:'白方由誰操作', ariaBlackSeat:'黑方由誰操作', tutorialFull:'📜 完整規則學院', btnTutorial:'🎓 教學',
+      btnShare:'🔗 分享', btnSettings:'⚙️ 設定', btnRestart:'🔄 重設',
+      titleTheme:'切換棋盤主題風格與客製棋子外觀', titleTutorial:'60秒新手互動教學',
+      titleShare:'匯出/分享這局棋譜', titleSettings:'進階對弈設定', titleRestart:'重新開局',
+      seatWhite:'⚪ 白方', seatBlack:'⚫ 黑方', seatHuman:'👤 我', seatCpu:'🤖 CPU',
+      scoreWhiteLabel:'⚪ 白方 (割目 +3.5)', scoreBlackLabel:'⚫ 黑方', scoreTie:'平手', algoOnly:'CPU 演算法（該方由 CPU 操作時生效）：', titleSeatWho:'點一下到設定切換「我／CPU」', komiTag:'割目 +{k}',
+      btnHint:'💡 提示', btnWatch:'👁 CPU 對戰', btnTwoPlayer:'👥 雙人對戰', titleTwoPlayer:'黑白雙方都由人類操作',
+      btnPause:'⏸ 暫停', btnSetupMode:'✏️ 自由排盤',
+      setupLabel:'擺盤筆刷：', brushToggle:'🔄 輪替', brushBlack:'⚫ 放置黑棋',
+      brushWhite:'⚪ 放置白棋', brushEmpty:'🗑 清除格子',
+      setupContinue:'✅ 排定完成，接著下下去！',
+      historyTitle:'📜 對局棋譜', branchLabel:'主線',
+      historyFirst:'⏮ 首步', historyPrev:'◀ 上手', historyNext:'▶ 下手', historyLatest:'⏭ 最新',
+      historyTip:'💡 提示：點擊任一步可回顧當時歷史局面。',
+      settingsTitle:'⚙️ 對弈與演算法進階設定',
+      settingsHint:'💡 在這裡決定黑、白雙方由「我」還是 CPU 操作，並挑選 CPU 的強度與節奏。',
+      blackAlgoLabel:'⚫ 黑方 CPU 演算法：', whiteAlgoLabel:'⚪ 白方 CPU 演算法：',
+      komiLabel:'⚖️ 圍棋式割目（貼目 / Komi）平衡：', cpuSpeedLabel:'⚡ CPU 思考行棋速度：',
+      themeSkinLabel:'🎨 主題風格與棋子外觀：', openSkinBtn:'🎨 開啟主題風格與棋子外觀工坊...',
+      settingsDone:'完成設定',
+      algoV1:'入門型 (v1 經典地力)', algoV2:'戰術型 (v2 戰術進階)',
+      algoV3:'預判型 (v3 預期搜尋)', algoV4:'反擊型 (v4 深度反擊)',
+      algoV5:'宗師型 (v5 戰略宗師 推薦)',
+      komiUnit:' 目', komi0:'0 目 (無貼目)', komi15:'+1.5 目',
+      komi35:'+3.5 目 (450場大數據驗證黃金平衡點)', komi55:'+5.5 目 (圍棋標準)', komi75:'+7.5 目',
+      speed150:'極速 (150ms)', speed350:'快速 (350ms)', speed600:'正常 (600ms)', speed1000:'沉思 (1000ms)',
+      tutorialModalTitle:'🎓 60 秒掌握遊戲規則！',
+      rule1Title:'規則一：每回合擲 1 顆骰子',
+      rule1Text:'骰出的點數 D 即為該步必須走滿的步數。黑棋只能朝左/上進攻，白棋只能朝右/下進攻。',
+      rule2Title:'規則二：生子（增殖繁衍）',
+      rule2Text:'選一顆己方棋子，走滿 D 步抵達空格，原棋保留並在目標格生出一顆全新棋子。中途遇到友軍可直接穿透！',
+      rule3Title:'規則三：吃子（純直線衝鋒）',
+      rule3Text:'如象棋的車一樣純直線直行剛好抵達敵棋！原起點變空，移動至目標格消滅敵棋。',
+      rule4Title:'規則四：PASS 特權與自然終局',
+      rule4Text:'無步可走時直接 PASS 給對手，且對手享有免骰指定 1～6 步數特權！當雙方已不可能互吃時自動填滿勢力結算！',
+      tutorialOk:'我懂了，開始下棋！',
+      branchModalTitle:'對局樹', branchClose:'關閉',
+      shareModalTitle:'🔗 分享與匯出棋譜', shareUrlLabel:'專屬棋譜分享網址：',
+      shareCopyBtn:'複製連結', exportJson:'💾 匯出 JSON 棋譜',
+      importJson:'📂 匯入 JSON 棋譜', shareClose:'關閉',
+      settlementTitle:'🏆 終局勝負裁定',
+      settleBlackCount:'⚫ 黑方子數', settleWhiteCount:'⚪ 白方子數 (含割目)', settleOk:'確定',
+      confirmTitle:'請確認操作', confirmMsg:'您確定要執行這項操作嗎？',
+      confirmCancel:'取消', confirmOk:'確認',
+      skinTitle:'🎨 主題風格與棋子外觀工坊',
+      skinThemeSection:'🏞️ 棋盤場景風格主題',
+      themeNeon:'霓虹深邃 (預設)', themeClassic:'經典翡翠', themeWood:'雅緻木紋', themeSlate:'玄武極簡',
+      skinCustomHint:'自由客製化黑棋與白棋的外觀！可選擇高質感寶石預設、自訂專屬 3D 渲染色彩，或上傳圖片打造個性化棋子。',
+      skinBlackTitle:'⚫ 黑方棋子外觀', skinWhiteTitle:'⚪ 白方棋子外觀',
+      skinPreviewLabel:'棋盤實際外觀預覽', skinGemSection:'💎 寶石預設風格',
+      skinColorSection:'🎨 自訂專屬 3D 色彩', skinColorHint:'挑選色彩 (自動生成 3D 球體光影)',
+      skinUploadSection:'📷 上傳自訂圖片 / 圖案', skinUploadBtn:'📁 上傳圖片',
+      skinGlossLabel:'3D 水晶高光', skinReset:'🔄 還原預設外觀', skinDone:'完成設定',
+      skinPathSection:'🏹 移動路徑樣式與色彩', pathStyleStep:'🔵 步數指示（預設）', skinPathCustom:'自訂', pathStyleBrush:'🖌 毛筆筆觸', skinBlackPathLabel:'⚫ 黑方路徑色彩', skinWhitePathLabel:'⚪ 白方路徑色彩',
+    },
+    en: {
+      pageTitle:'🎲 Who will win?',
+      brandName:'🎲 Who will win?',
+      modePlay:'🎮 Play', modeRules:'📜 Rules Academy',
+      btnTheme:'🎨 Themes & Skins', btnSound:'🔊', skinSoundLabel:'🔊 Sound effects', btnFlip:'🔃 Swap sides', titleFlip:'Swap the sides of Black and White', coachBarTitle:'🧠 AI Coach', nameLabel:'🏷️ Custom names (left: Black, right: White; blank = default):', skinClearImg:'🗑 Remove image', ariaClose:'Close', ariaModes:'Game mode', ariaBoard:'8x8 board', ariaWhiteSeat:'Who controls White', ariaBlackSeat:'Who controls Black', tutorialFull:'📜 Full Rules Academy', btnTutorial:'🎓 Tutorial',
+      btnShare:'🔗 Share', btnSettings:'⚙️ Settings', btnRestart:'🔄 New Game',
+      titleTheme:'Change board theme & piece skins', titleTutorial:'60-second interactive tutorial',
+      titleShare:'Export / share this game record', titleSettings:'Advanced game settings', titleRestart:'Start a new game',
+      seatWhite:'⚪ White', seatBlack:'⚫ Black', seatHuman:'👤 Me', seatCpu:'🤖 CPU',
+      scoreWhiteLabel:'⚪ White (Komi +3.5)', scoreBlackLabel:'⚫ Black', scoreTie:'Draw', algoOnly:'CPU algorithm (used when this side is CPU):', titleSeatWho:'Click to switch Me/CPU in Settings', komiTag:'Komi +{k}',
+      btnHint:'💡 Hint', btnWatch:'👁 CPU vs CPU', btnTwoPlayer:'👥 2 Players', titleTwoPlayer:'Both sides played by humans',
+      btnPause:'⏸ Pause', btnSetupMode:'✏️ Setup Board',
+      setupLabel:'Brush:', brushToggle:'🔄 Toggle', brushBlack:'⚫ Place Black',
+      brushWhite:'⚪ Place White', brushEmpty:'🗑 Clear Cell',
+      setupContinue:'✅ Done — Continue Playing!',
+      historyTitle:'📜 Move History', branchLabel:'Main Line',
+      historyFirst:'⏮ Start', historyPrev:'◀ Back', historyNext:'▶ Next', historyLatest:'⏭ Latest',
+      historyTip:'💡 Tip: Click any move to replay the board at that moment.',
+      settingsTitle:'⚙️ Advanced Settings',
+      settingsHint:'💡 Choose whether each side is played by you or the CPU, and set the CPU strength and speed.',
+      blackAlgoLabel:'⚫ Black CPU Algorithm:', whiteAlgoLabel:'⚪ White CPU Algorithm:',
+      komiLabel:'⚖️ Komi (Balance Compensation):', cpuSpeedLabel:'⚡ CPU Thinking Speed:',
+      themeSkinLabel:'🎨 Themes & Piece Skins:', openSkinBtn:'🎨 Open Themes & Skin Workshop...',
+      settingsDone:'Done',
+      algoV1:'Beginner (v1 Classic)', algoV2:'Tactical (v2 Advanced Tactics)',
+      algoV3:'Predictive (v3 Expectiminimax)', algoV4:'Counter (v4 Deep Counterplay)',
+      algoV5:'Master (v5 Strategic Master — Recommended)',
+      komiUnit:' ', komi0:'0 (No Komi)', komi15:'+1.5',
+      komi35:'+3.5 (Validated as golden balance across 450 games)', komi55:'+5.5 (Go standard)', komi75:'+7.5',
+      speed150:'Instant (150ms)', speed350:'Fast (350ms)', speed600:'Normal (600ms)', speed1000:'Slow (1000ms)',
+      tutorialModalTitle:'🎓 Learn the Rules in 60 Seconds!',
+      rule1Title:'Rule 1: Roll the Dice Each Turn',
+      rule1Text:'The dice result D is the exact number of steps you must take. Black attacks Left/Up; White attacks Right/Down.',
+      rule2Title:'Rule 2: Spawn (Multiply Your Pieces)',
+      rule2Text:'Move a piece exactly D steps to an empty cell: the original piece stays and a new piece is created at the destination. You can tunnel through friendly pieces!',
+      rule3Title:'Rule 3: Capture (Straight-Line Charge)',
+      rule3Text:'Move in a straight line and land exactly on an enemy piece — like a rook in chess. Your starting cell becomes empty and the enemy is removed.',
+      rule4Title:'Rule 4: PASS Privilege & Natural Endgame',
+      rule4Text:'If you have no legal moves, PASS to your opponent — and they get a privilege to freely choose any value 1–6 without rolling! When neither side can ever capture the other, territory is filled automatically!',
+      tutorialOk:"Got it — let's play!",
+      branchModalTitle:'Game Tree', branchClose:'Close',
+      shareModalTitle:'🔗 Share & Export', shareUrlLabel:'Sharable Game Record URL:',
+      shareCopyBtn:'Copy Link', exportJson:'💾 Export JSON',
+      importJson:'📂 Import JSON', shareClose:'Close',
+      settlementTitle:'🏆 Game Over',
+      settleBlackCount:'⚫ Black Pieces', settleWhiteCount:'⚪ White Pieces (incl. Komi)', settleOk:'OK',
+      confirmTitle:'Confirm Action', confirmMsg:'Are you sure you want to do this?',
+      confirmCancel:'Cancel', confirmOk:'Confirm',
+      skinTitle:'🎨 Themes & Piece Skin Workshop',
+      skinThemeSection:'🏞️ Board Scene Themes',
+      themeNeon:'Neon Deep (Default)', themeClassic:'Classic Jade', themeWood:'Elegant Wood', themeSlate:'Minimal Slate',
+      skinCustomHint:'Customize Black and White piece appearances! Choose from gemstone presets, pick custom 3D-rendered colors, or upload images for a personal touch.',
+      skinBlackTitle:'⚫ Black Piece Skin', skinWhiteTitle:'⚪ White Piece Skin',
+      skinPreviewLabel:'Live Board Preview', skinGemSection:'💎 Gemstone Presets',
+      skinColorSection:'🎨 Custom 3D Color', skinColorHint:'Pick a color (3D ball shading generated automatically)',
+      skinUploadSection:'📷 Upload Custom Image', skinUploadBtn:'📁 Upload Image',
+      skinGlossLabel:'3D Crystal Gloss', skinReset:'🔄 Reset to Defaults', skinDone:'Done',
+      skinPathSection:'🏹 Move Path Style & Colors', pathStyleStep:'🔵 Step markers (default)', skinPathCustom:'Custom', pathStyleBrush:'🖌 Brush stroke', skinBlackPathLabel:'⚫ Black Path Color', skinWhitePathLabel:'⚪ White Path Color',
+    },
+    ja: {
+      pageTitle:'🎲 誰が勝つ？',
+      brandName:'🎲 誰が勝つ？',
+      modePlay:'🎮 対局モード', modeRules:'📜 ルール道場',
+      btnTheme:'🎨 テーマ・外観', btnSound:'🔊', skinSoundLabel:'🔊 効果音', btnFlip:'🔃 左右入替', titleFlip:'黒白の位置を入れ替える', coachBarTitle:'🧠 AIコーチ', nameLabel:'🏷️ プレイヤー名（左：黒番、右：白番、空欄でデフォルト）：', skinClearImg:'🗑 画像を削除', ariaClose:'閉じる', ariaModes:'ゲームモード', ariaBoard:'8x8 盤面', ariaWhiteSeat:'白番の操作者', ariaBlackSeat:'黒番の操作者', tutorialFull:'📜 ルール学院', btnTutorial:'🎓 チュートリアル',
+      btnShare:'🔗 シェア', btnSettings:'⚙️ 設定', btnRestart:'🔄 リセット',
+      titleTheme:'ボードテーマ・石外観を変更', titleTutorial:'60秒インタラクティブチュートリアル',
+      titleShare:'棋譜のエクスポート・シェア', titleSettings:'詳細対局設定', titleRestart:'新しいゲームを開始',
+      seatWhite:'⚪ 白番', seatBlack:'⚫ 黒番', seatHuman:'👤 自分', seatCpu:'🤖 CPU',
+      scoreWhiteLabel:'⚪ 白（コミ +3.5）', scoreBlackLabel:'⚫ 黒', scoreTie:'引き分け', algoOnly:'CPUアルゴリズム（CPU操作時に有効）：', titleSeatWho:'クリックして設定で自分/CPUを切り替え', komiTag:'コミ +{k}',
+      btnHint:'💡 ヒント', btnWatch:'👁 CPU対局', btnTwoPlayer:'👥 二人対局', titleTwoPlayer:'両サイドとも人間が操作',
+      btnPause:'⏸ 一時停止', btnSetupMode:'✏️ 盤面設定',
+      setupLabel:'ブラシ：', brushToggle:'🔄 切り替え', brushBlack:'⚫ 黒石を置く',
+      brushWhite:'⚪ 白石を置く', brushEmpty:'🗑 マスをクリア',
+      setupContinue:'✅ 完了 — 対局を続ける！',
+      historyTitle:'📜 棋譜', branchLabel:'メインライン',
+      historyFirst:'⏮ 最初', historyPrev:'◀ 前へ', historyNext:'▶ 次へ', historyLatest:'⏭ 最新',
+      historyTip:'💡 ヒント：任意の手をクリックしてその局面に戻れます。',
+      settingsTitle:'⚙️ 詳細設定',
+      settingsHint:'💡 各サイドを自分かCPUかで選び、CPUの強度と速度を設定します。',
+      blackAlgoLabel:'⚫ 黒番 CPU アルゴリズム：', whiteAlgoLabel:'⚪ 白番 CPU アルゴリズム：',
+      komiLabel:'⚖️ コミ（ハンディキャップ補正）：', cpuSpeedLabel:'⚡ CPU 思考速度：',
+      themeSkinLabel:'🎨 テーマ・石外観：', openSkinBtn:'🎨 テーマ・石外観ワークショップを開く...',
+      settingsDone:'完了',
+      algoV1:'入門型 (v1 クラシック)', algoV2:'戦術型 (v2 高度戦術)',
+      algoV3:'予測型 (v3 期待値探索)', algoV4:'反撃型 (v4 深い反撃)',
+      algoV5:'宗師型 (v5 戦略宗師 推薦)',
+      komiUnit:' ', komi0:'0（コミなし）', komi15:'+1.5',
+      komi35:'+3.5（450局データで検証した黄金バランス）', komi55:'+5.5（囲碁標準）', komi75:'+7.5',
+      speed150:'超高速 (150ms)', speed350:'高速 (350ms)', speed600:'通常 (600ms)', speed1000:'熟考 (1000ms)',
+      tutorialModalTitle:'🎓 60秒でルールをマスター！',
+      rule1Title:'ルール1：各ターンにダイスを1個振る',
+      rule1Text:'ダイスの目Dが必ず移動しなければならない歩数です。黒石は左/上へ、白石は右/下へのみ進めます。',
+      rule2Title:'ルール2：生子（石を増やす）',
+      rule2Text:'D歩ちょうど空きマスに到達したとき：元の石はその場に残り、移動先に新たな石が生まれます。途中の味方石は通過できます！',
+      rule3Title:'ルール3：取り（直線攻撃）',
+      rule3Text:'将棋の飛車のように純粋な直線移動でちょうど敵石に到達！起点が空になり、敵石を除去して移動します。',
+      rule4Title:'ルール4：パス特権と自然終局',
+      rule4Text:'合法手がなければ相手にパス — 相手は次のターン、ダイスを振らずに1〜6の任意の目を選ぶ特権を得ます！双方が永遠に出会えなくなったとき、地が自動的に埋まって勝負が決まります！',
+      tutorialOk:'わかった、プレイしよう！',
+      branchModalTitle:'対局ツリー', branchClose:'閉じる',
+      shareModalTitle:'🔗 シェア・棋譜エクスポート', shareUrlLabel:'棋譜シェアURL：',
+      shareCopyBtn:'リンクをコピー', exportJson:'💾 JSON棋譜をエクスポート',
+      importJson:'📂 JSON棋譜をインポート', shareClose:'閉じる',
+      settlementTitle:'🏆 ゲーム終了',
+      settleBlackCount:'⚫ 黒石の数', settleWhiteCount:'⚪ 白石の数（コミ込み）', settleOk:'OK',
+      confirmTitle:'操作の確認', confirmMsg:'この操作を実行してよろしいですか？',
+      confirmCancel:'キャンセル', confirmOk:'確認',
+      skinTitle:'🎨 テーマ・石外観ワークショップ',
+      skinThemeSection:'🏞️ ボードテーマ',
+      themeNeon:'ネオンディープ（デフォルト）', themeClassic:'クラシックジェイド', themeWood:'エレガントウッド', themeSlate:'ミニマルスレート',
+      skinCustomHint:'黒石・白石の外観を自由にカスタマイズ！宝石プリセット、カスタム3Dカラー、または画像アップロードが選べます。',
+      skinBlackTitle:'⚫ 黒石の外観', skinWhiteTitle:'⚪ 白石の外観',
+      skinPreviewLabel:'ライブボードプレビュー', skinGemSection:'💎 宝石プリセット',
+      skinColorSection:'🎨 カスタム3Dカラー', skinColorHint:'色を選択（3Dボール光影を自動生成）',
+      skinUploadSection:'📷 カスタム画像をアップロード', skinUploadBtn:'📁 画像をアップロード',
+      skinGlossLabel:'3Dクリスタルグロス', skinReset:'🔄 デフォルトに戻す', skinDone:'完了',
+      skinPathSection:'🏹 移動経路のスタイルと色', pathStyleStep:'🔵 ステップ表示（デフォルト）', skinPathCustom:'カスタム', pathStyleBrush:'🖌 筆のタッチ', skinBlackPathLabel:'⚫ 黒番経路の色', skinWhitePathLabel:'⚪ 白番経路の色',
+    }
+  };
+
+  try {
+    const st = JSON.parse(localStorage.getItem('dice_othello_settings_v2') || '{}');
+    window.takuNames = { black: st.blackName || '', white: st.whiteName || '' };
+  } catch (e) { window.takuNames = { black: '', white: '' }; }
+
+  let currentLang = localStorage.getItem('takuLang') || 'zh';
+  window.currentLang = currentLang;
+
+  const SIDE_KEYS = { seatWhite:'white', seatBlack:'black', scoreWhiteLabel:'white', scoreBlackLabel:'black',
+    settleBlackCount:'black', settleWhiteCount:'white', blackAlgoLabel:'black', whiteAlgoLabel:'white' };
+  const SIDE_WORDS = { zh:{ black:['黑方'], white:['白方'] }, en:{ black:['Black'], white:['White'] }, ja:{ black:['黒番','黒'], white:['白番','白'] } };
+  function t(key) {
+    let s = (TAKU_TR[currentLang] || TAKU_TR.zh)[key] || (TAKU_TR.zh[key] || key);
+    const side = SIDE_KEYS[key], custom = side && window.takuNames && window.takuNames[side];
+    if (custom) {
+      const w = (SIDE_WORDS[currentLang] || SIDE_WORDS.zh)[side].find(x => s.includes(x));
+      if (w) s = s.replace(w, custom.replace(/</g, '&lt;'));
+    }
+    if (key === 'seatBlack' || key === 'seatWhite') {
+      s = s.replace(/^[⚫⚪]\s*/, '<span class="pieceDot ' + (key === 'seatBlack' ? 'black' : 'white') + '"></span>');
+    }
+    return s;
+  }
+  window.t = t;
+
+  function applyI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.innerHTML = t(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      el.title = t(el.dataset.i18nTitle);
+    });
+    document.querySelectorAll('.modalCloseBtn').forEach(el => el.setAttribute('aria-label', t('ariaClose')));
+    const setAria = (sel, key) => { const el = document.querySelector(sel); if (el) el.setAttribute('aria-label', t(key)); };
+    setAria('.modeTabs', 'ariaModes'); setAria('#boardContainer', 'ariaBoard');
+    document.querySelectorAll('.seatToggle').forEach((el, i) => el.setAttribute('aria-label', t(i === 0 ? 'ariaWhiteSeat' : 'ariaBlackSeat')));
+    document.title = t('pageTitle');
+    document.documentElement.lang = currentLang === 'ja' ? 'ja' : (currentLang === 'en' ? 'en' : 'zh-Hant');
+    document.querySelectorAll('.langBtn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === currentLang);
+    });
+  }
+
+  function setLang(lang) {
+    currentLang = lang;
+    window.currentLang = lang;
+    localStorage.setItem('takuLang', lang);
+    applyI18n();
+    window.dispatchEvent(new Event('langchange'));
+  }
+
+  document.addEventListener('DOMContentLoaded', applyI18n);
+  </script>
+
+  <!-- 應用主控制器模組 -->
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
