@@ -23,7 +23,7 @@ import { HistoryView } from "./ui/history-view.js";
 import { ModalManager } from "./ui/modal-manager.js";
 import { sound } from "./ui/sound.js";
 import { Storage } from "./storage/storage.js";
-import { tr, tx, pieceify, escapeHtml } from "./i18n.js";
+import { tr, tx, pieceify, escapeHtml, clampName } from "./i18n.js";
 import { findBestMoveForCPU, rankCandidateMoves } from "./ai/ai-service.js";
 import {
   SkinManager,
@@ -46,7 +46,7 @@ import {
 export class DiceOthelloApp {
   constructor() {
     this.settings = Storage.getSettings();
-    window.takuNames = { black: this.settings.blackName || "", white: this.settings.whiteName || "" };
+    window.takuNames = { black: clampName(this.settings.blackName), white: clampName(this.settings.whiteName) };
     sound.setEnabled(this.settings.soundEnabled);
     this.skinManager = new SkinManager();
 
@@ -217,7 +217,7 @@ export class DiceOthelloApp {
       label.title = tr("renameTip");
       label.addEventListener("click", () => {
         const v = window.prompt(tr("renamePrompt"), this.settings[side + "Name"] || "");
-        if (v !== null) applyName(side, v.replace(/[<>&"']/g, "").trim().slice(0, 12));
+        if (v !== null) applyName(side, clampName(v).trim());
       });
     });
     for (const side of ["black", "white"]) {
@@ -225,7 +225,15 @@ export class DiceOthelloApp {
       if (!input) continue;
       input.value = this.settings[side + "Name"] || "";
       input.placeholder = tr(side);
-      input.addEventListener("input", () => {
+      const clampInput = (e) => {
+        if (e && e.isComposing) return;
+        const clamped = clampName(input.value);
+        if (clamped !== input.value) input.value = clamped;
+      };
+      input.addEventListener("compositionend", () => { clampInput(); input.dispatchEvent(new Event("input")); });
+      input.addEventListener("input", (e) => {
+        if (e.isComposing) return;
+        clampInput(e);
         const v = input.value.trim();
         this.settings[side + "Name"] = v;
         window.takuNames = { ...window.takuNames, [side]: v };

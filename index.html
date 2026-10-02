@@ -369,8 +369,8 @@
         <div style="margin-bottom:14px;">
           <div style="font-weight:700; margin-bottom:6px;" data-i18n="nameLabel">🏷️ 自訂雙方名稱：</div>
           <div style="display:flex; gap:8px;">
-            <input id="settingBlackName" type="text" maxlength="12" style="flex:1; min-width:0;" />
-            <input id="settingWhiteName" type="text" maxlength="12" style="flex:1; min-width:0;" />
+            <input id="settingBlackName" type="text" autocomplete="off" style="flex:1; min-width:0;" />
+            <input id="settingWhiteName" type="text" autocomplete="off" style="flex:1; min-width:0;" />
           </div>
         </div>
         <!-- 1. 棋盤場景主題風格 -->
@@ -712,9 +712,22 @@
     }
   };
 
+  // 自訂名稱：顯示寬度上限 20（英數字 1、中日韓與全形字 2，即最多 20 個英文字母或 10 個中文字），並濾掉 HTML 特殊字元
+  window.takuClampName = function (s, max = 20) {
+    let out = '', w = 0;
+    for (const ch of String(s || '').replace(/[<>&"']/g, '')) {
+      const cp = ch.codePointAt(0);
+      const cw = (cp >= 0x1100 && cp <= 0x115F) || (cp >= 0x2E80 && cp <= 0xA4CF) || (cp >= 0xAC00 && cp <= 0xD7A3) ||
+        (cp >= 0xF900 && cp <= 0xFAFF) || (cp >= 0xFE30 && cp <= 0xFE6F) || (cp >= 0xFF00 && cp <= 0xFF60) ||
+        (cp >= 0xFFE0 && cp <= 0xFFE6) || cp >= 0x1F300 ? 2 : 1;
+      if (w + cw > max) break;
+      out += ch; w += cw;
+    }
+    return out;
+  };
   try {
     const st = JSON.parse(localStorage.getItem('dice_othello_settings_v2') || '{}');
-    window.takuNames = { black: st.blackName || '', white: st.whiteName || '' };
+    window.takuNames = { black: window.takuClampName(st.blackName), white: window.takuClampName(st.whiteName) };
   } catch (e) { window.takuNames = { black: '', white: '' }; }
 
   let currentLang = localStorage.getItem('takuLang') || 'zh';
