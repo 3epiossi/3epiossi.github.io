@@ -203,6 +203,11 @@ const D = {
   }
 };
 
+/** 自訂名稱：顯示寬度上限 20（英數 1、中日韓 2），並濾掉 HTML 特殊字元；實作在 index.html 的 window.takuClampName */
+export function clampName(s) {
+  return typeof window !== "undefined" && window.takuClampName ? window.takuClampName(s) : String(s || "").replace(/[<>&"']/g, "").slice(0, 10);
+}
+
 export function curLang() {
   return (typeof window !== "undefined" && window.currentLang) || "zh";
 }
@@ -210,7 +215,7 @@ export function curLang() {
 export function tr(key, params = {}) {
   const dict = D[curLang()] || D.zh;
   const names = (typeof window !== "undefined" && window.takuNames) || {};
-  const clean = (n) => String(n || "").replace(/[<>&"']/g, "");
+  const clean = (n) => clampName(n);
   const bn = clean(names.black) || dict.black, wn = clean(names.white) || dict.white;
   if (key === "black") return bn;
   if (key === "white") return wn;
