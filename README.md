@@ -1,5 +1,5 @@
 
-# 🎲 誰會贏？ (Who will win?)
+# 誰會贏？ (Who will win?)
 
 > 🎮 **線上直接遊玩**：[https://3epiossi.github.io/](https://3epiossi.github.io/)  
 > 🖥️ **本地對弈**：在專案資料夾執行 `npm start`，再用瀏覽器開啟 `http://localhost:8000`（程式以 ES 模組載入，直接雙擊 `index.html` 在多數瀏覽器會被擋下）
