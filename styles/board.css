@@ -444,8 +444,8 @@
 
 /* ── 路徑箭頭色彩預設值（可於外觀工坊覆蓋） ── */
 :root {
-  --path-black-fill: #6366f1;
-  --path-white-fill: #f59e0b;
+  --path-black-fill: #111827;
+  --path-white-fill: #e2e8f0;
   --path-ai-fill: #a78bfa;
 }
 

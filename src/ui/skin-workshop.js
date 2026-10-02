@@ -109,10 +109,10 @@ export class SkinManager {
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed && parsed.black && parsed.white) {
-            if (!parsed.pathBlack) parsed.pathBlack = "#2563eb";
-            if (!parsed.pathBlackId) parsed.pathBlackId = "sapphire";
-            if (!parsed.pathWhite) parsed.pathWhite = "#fef3c7";
-            if (!parsed.pathWhiteId) parsed.pathWhiteId = "ivory";
+            if (!parsed.pathBlack) parsed.pathBlack = "#111827";
+            if (!parsed.pathBlackId) parsed.pathBlackId = "obsidian";
+            if (!parsed.pathWhite) parsed.pathWhite = "#e2e8f0";
+            if (!parsed.pathWhiteId) parsed.pathWhiteId = "pearl";
             if (!parsed.pathStyle) parsed.pathStyle = "step";
             return parsed;
           }
@@ -141,10 +141,10 @@ export class SkinManager {
         imageData: null,
         gloss: true
       },
-      pathBlack: "#2563eb",
-      pathBlackId: "sapphire",
-      pathWhite: "#fef3c7",
-      pathWhiteId: "ivory",
+      pathBlack: "#111827",
+      pathBlackId: "obsidian",
+      pathWhite: "#e2e8f0",
+      pathWhiteId: "pearl",
       pathStyle: "step"
     };
   }
@@ -181,10 +181,10 @@ export class SkinManager {
         imageData: null,
         gloss: true
       },
-      pathBlack: "#2563eb",
-      pathBlackId: "sapphire",
-      pathWhite: "#fef3c7",
-      pathWhiteId: "ivory",
+      pathBlack: "#111827",
+      pathBlackId: "obsidian",
+      pathWhite: "#e2e8f0",
+      pathWhiteId: "pearl",
       pathStyle: "step"
     };
     this.saveConfig(def);
@@ -194,8 +194,8 @@ export class SkinManager {
   applyToDOM() {
     const blackCss = getPieceBackgroundCss(this.config.black, true);
     const whiteCss = getPieceBackgroundCss(this.config.white, false);
-    const pathBlack = this.config.pathBlack || "#2563eb";
-    const pathWhite = this.config.pathWhite || "#fef3c7";
+    const pathBlack = this.config.pathBlack || "#111827";
+    const pathWhite = this.config.pathWhite || "#e2e8f0";
     if (typeof document !== "undefined") {
       document.documentElement.style.setProperty("--piece-black-bg", blackCss);
       document.documentElement.style.setProperty("--piece-white-bg", whiteCss);
