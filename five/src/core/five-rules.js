@@ -161,11 +161,13 @@ export function fiveScores(board, weighted = true) {
  * 現在是對方的棋，之後也可能翻成自己的，所以只看「是不是同一組」：
  *   四：某個五連窗口裡有 4 顆棋（不論黑白）都是第 v 組，剩下 1 格是空的（缺口）
  *   三：某個五連窗口裡有 3 顆棋（不論黑白）都是第 v 組，剩下 2 格是空的
+ *   花五（kind 5）：某個五連窗口 5 格都是第 v 組，可是黑白混在一起（同色的話遊戲早就結束了）。
+ *     還不算贏，但只要有一方把另一色的棋全部翻過來就連成五；mixed 記著黑、白各幾顆
  * 同一條直線、同一組、棋子有重疊的窗口合併成一組（例如同一排的兩個三），
  * 這樣畫出來每一組都是一條線，不會疊在一起。
  * 那一組剩下的棋（雙方共用，每組 GROUP_SIZE 顆減掉盤上的）不夠補滿空格的窗口不算：再也不可能連成五。
  *
- * @returns {{ kind: 3|4, v: number, dir: number[], cells: number[], gaps: number[] }[]}
+ * @returns {{ kind: 3|4|5, v: number, dir: number[], cells: number[], gaps: number[], mixed?: {black:number, white:number} }[]}
  *   v：第幾組（1～4）；cells：這一組的棋（格子 r × 8 + c，沿著方向排好）；gaps：四的缺口格（補上第 v 組就連成五）
  */
 export function findThreatGroups(board) {
@@ -187,7 +189,7 @@ export function findThreatGroups(board) {
     }
     if (!mask) continue;
     // 四＝差一顆、三＝差兩顆（現行規則就是 4 顆／3 顆；規則變體的四連是 3 顆／2 顆）
-    const kind = discs.length === FIVE - 1 && empty.length === 1 ? 4 : discs.length === FIVE - 2 && empty.length === 2 ? 3 : 0;
+    const kind = discs.length === FIVE ? 5 : discs.length === FIVE - 1 && empty.length === 1 ? 4 : discs.length === FIVE - 2 && empty.length === 2 ? 3 : 0;
     if (!kind) continue;
     const [r0, c0] = cells[0], [r1, c1] = cells[1];
     const dir = [r1 - r0, c1 - c0];
@@ -226,10 +228,17 @@ export function findThreatGroups(board) {
     }
     for (const m of merged) {
       const along = (s) => (s >> 3) * m.dir[0] + (s & 7) * m.dir[1];
-      groups.push({ kind: m.kind, v: m.v, dir: m.dir, cells: [...m.cells].sort((a, b) => along(a) - along(b)), gaps: m.kind === 4 ? m.gaps : [] });
+      const g = { kind: m.kind, v: m.v, dir: m.dir, cells: [...m.cells].sort((a, b) => along(a) - along(b)), gaps: m.kind >= 4 ? m.gaps : [] }; // 花五跟同一條線的四合併時，四的缺口留著
+      if (m.kind === 5) {
+        // 花五：只畫同一組的棋（三、四併進來的也算在這條線上），數一下黑白各幾顆
+        let black = 0;
+        for (const sq of g.cells) if (board[sq >> 3][sq & 7].face === BLACK) black++;
+        g.mixed = { black, white: g.cells.length - black };
+      }
+      groups.push(g);
     }
   }
-  // 四排在前面（畫在上層、滑鼠指到時優先）
+  // 花五、四排在前面（畫在上層、滑鼠指到時優先）
   groups.sort((a, b) => b.kind - a.kind);
   return groups;
 }
@@ -238,7 +247,7 @@ export function findThreatGroups(board) {
 export function findThreats(board) {
   const fours = new Set(), threes = new Set(), gaps = new Map();
   for (const g of findThreatGroups(board)) {
-    for (const s of g.cells) (g.kind === 4 ? fours : threes).add(s);
+    if (g.kind !== 5) for (const s of g.cells) (g.kind === 4 ? fours : threes).add(s);
     for (const s of g.gaps) gaps.set(s, (gaps.get(s) || 0) | (1 << (g.v - 1)));
   }
   for (const s of fours) threes.delete(s);

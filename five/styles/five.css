@@ -353,11 +353,15 @@ html { scrollbar-gutter: stable; }
 
 /* ===== 五連威脅：每一組一條線（顏色＝共同符號），不閃爍 =====
    三：細虛線；四：粗實線延伸到缺口，缺口畫圈寫上需要的符號（輕輕呼吸）。
+   花五（同一組五連、黑白混雜）：一條細鐵鍊串起那幾顆（只畫在棋子之間，不蓋住花色）。
    棋子上靠的那個符號加底線點亮，另一個變淡。滑鼠指到某一組時，其他組變淡並顯示說明。 */
 .threatLayer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; }
 .threatLayer .tLine { stroke-linecap: round; opacity: 0.55; transition: opacity 0.15s ease; }
 .threatLayer .tLine.t3 { stroke-dasharray: 2 9; opacity: 0.75; }
 .threatLayer .tLine.t4 { opacity: 0.5; }
+.threatLayer .tMixed { filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.85)); }
+.threatLayer .t5Link { fill: none; }
+.threatLayer .t5Edge { stroke-linecap: round; }
 .threatLayer .tGap > rect:first-child { stroke-width: 2.5; stroke-dasharray: 6 4; }
 /* 缺口裡「誰下在這裡會連成五」的那顆小棋；單色棋上的字不用描邊 */
 .threatLayer .tGapText.onDisc { stroke: none; }
@@ -611,3 +615,45 @@ html { scrollbar-gutter: stable; }
 }
 @keyframes holdRing { to { stroke-dashoffset: 0; } }
 .cell.holding .disc.ghost { border-color: transparent; } /* 原本的虛線外框交給 SVG 的虛線圈 */
+
+/* 玩家卡：不能切換（看歷史／研究分支）時淡一點，點了打開選單說明原因 */
+.pcRole.locked { opacity: 0.6; }
+.roleNote { margin: 0; max-width: 220px; font-size: 12px; line-height: 1.5; color: #fcd34d; }
+
+/* ===== 手機：棋盤撐滿螢幕寬度，格線細、棋子大（像一般黑白棋 App） =====
+ * 頁面左右只留 6px，座標縮成 14px 的細條，格子之間 1px 的格線，棋子佔格子的 90%。
+ * 勝率條、選組別跟棋盤（含座標）一樣寬。 */
+@media (max-width: 600px) {
+  body { padding: 6px; }
+  :root {
+    --coord-size: 14px;
+    --board-gap: 1px;
+    --board-max-size: calc(100vw - 12px - var(--coord-size));
+    --five-full: calc(var(--board-max-size) + var(--coord-size));
+  }
+  .boardFrame { margin: 0; }
+  .board, .coordTop, .movePathSvg { width: var(--board-max-size); }
+  .coordLeft, .movePathSvg { height: var(--board-max-size); }
+  .coordTop, .coordLeft { font-size: 10px; font-weight: 600; letter-spacing: 0; }
+  .board { padding: 1px; gap: 1px; border-radius: 4px; border-width: 1px; background: #0a2814; box-shadow: none; }
+  .cell { border-radius: 0; }
+  .cell .disc { width: 90%; height: 90%; }
+  .boardWithSide { gap: 8px; }
+  .evalBar { width: var(--five-full); height: 14px; border-radius: 7px; }
+  .evalBar .evalNum { font-size: 10px; }
+  /* 選組別：一列四顆，標題拿掉（下面那行字已經說要選組別） */
+  .sideDicePanel { width: var(--five-full); padding: 8px 10px 6px; gap: 6px; }
+  .sideDicePanel .sideTurnLabel { display: none; }
+  .sideDiceSection { gap: 4px; }
+  .handWidget { grid-template-columns: repeat(4, 52px); gap: 14px; justify-content: center; }
+  .poolDisc { width: 52px; height: 52px; }
+  .sideDiceValLabel { min-height: 1.3em; font-size: 12px; }
+  .handBagLabel { font-size: 10.5px; }
+  /* 上面：標題列、玩家卡再緊一點 */
+  .app, #app { gap: 8px; }
+  .playerBar { margin-bottom: 6px; }
+  .playerBar .seatGroup, .playerBar .seatGroup.isTurn { padding: 6px 10px; }
+  .statusBanner, .statusBanner.human, .statusBanner.cpu, .statusBanner.paused, .statusBanner.review, .statusBanner.ended { min-height: 0; margin-top: 8px; padding: 6px 10px; }
+  .statusText { font-size: 12.5px; }
+  .actionBar { margin: 8px -6px 0; }
+}

@@ -1,66 +1,69 @@
 /**
- * 🏅 走法評價：一步棋值得標記，是因為它帶來了「資訊」——
- *   1. 對勝負的影響：改變了局勢（拉鋸變底定、優勢變劣勢、在優劣之間擺盪）。勝負已定時下什麼都沒資訊。
- *   2. 對人的意外程度：很明顯的一步沒有資訊；看起來是壞棋卻是唯一正解，資訊最多。
+ * 🏅 走法評價：一步棋值得標記，是因為它帶來了「資訊」——改變了局勢，而且不是一看就知道的那種。
  *
- * 勝率一律用勝率條上的勝率（校準、放大過的，由呼叫端傳 toProb 進來），下棋者角度，分五級：
+ * 勝率一律用勝率條上的勝率（校準過，由呼叫端傳 toProb 進來），下棋者角度，分五級：
  *   勝定 ≥ 90%、優勢 65～90%、拉鋸 35～65%、劣勢 10～35%、敗定 ≤ 10%
- *   這步的等級 = 下完的勝率；局面的等級 = 最佳步下完的勝率；格子的等級 = 那格配最好的那一組。
+ *   這步的等級 = 下完的勝率；局面的等級 = 最佳步下完的勝率；格子的勝率 = 那格配最好的那一組。
+ *   「原本的局勢」= 對手下上一步之前，這一方的勝率（prevP）。
+ * 各項門檻在 MARK_TUNE。
  *
- * 判斷順序（符合就停）：
- *   不標：只有一個格子可下；直接連成五（勝負已確定）；
- *         勝負已定（最佳步與這步都在勝定、或都在敗定）時不標失誤類與設陷阱
- *         （好手類照常判斷：它要求其他格子都比這步低一級，「只有這步能拿到勝定」代表勝負其實還沒定）
- *   失誤類（跟最佳步比，損失至少 5%）：
- *     ??  掉兩級以上        ?  掉一級        ?!  等級沒變但損失 ≥ 8%
- *   好手類（!! ! !?）只在勝負難料時才標。看「原本的局勢」＝對手下上一步之前，這一方的勝率：
- *     原本已經勝定（≥ 90%）→ 不標（守住或兌現本來就贏的局面，沒有資訊）
- *     原本已經敗定（≤ 10%）→ 只有起死回生才標：這步把局勢拉到拉鋸以上，而且是關鍵一手
- *     終盤（剩 7 格以內，引擎已經算到底）→ 只有逆轉才標：原本劣勢或敗定，對手翻車，這步拉到拉鋸以上
- *   失誤類：原本勝定、這步翻車掉下來，照常標；原本敗定、對手的錯也沒給到拉鋸以上的機會 → 不標（從頭到尾都是輸棋）
- *   好手類（下在最好的格子、選的組別跟最佳步一樣好）：
- *     關鍵一手 = 其他每個格子都比這步至少低一級，而且最接近的那格也差 10% 以上
- *       擋住對手下一手的五連 → 不標（棋盤上已經畫出連線，很明顯）
- *       再看多難找（difficultyOf，0～4 分：只看盤面看不出來、盤面有威脅、選哪組有差、可下格子 7 個以上）
- *         不到 2 分 → 不標（很好找）
- *         3 分以上，而且其他每個格子都差 20% 以上（只有這一步是好棋），而且不是對手上一步讓出 10% 以上之後 → !!
- *         對手上一步讓出 10% 以上（這步在懲罰對手的失誤）→ 只看盤面看不出來、而且選哪組有差，兩項都成立才標 !
- *         （原因：抓住對手的失誤），不會是 !!
- *         其他 → !
- *   !?  設陷阱：損失 < 5%，下完後對手三分之二以上的格子（至少 3 格）會讓局勢倒向你（對手掉兩級以上）；
- *       下完後自己下一手就能連成五（對手只能擋）不算
- *       （對手的最佳步是直接連成五時不算：那是對手自己的機會，不是陷阱）
+ * 不標：只有一個格子可下；直接連成五；勝負已定（最佳步與這步都在勝定、或都在敗定）時不標失誤類與 !?。
  *
- * 數值是舊規則（抽棋、v8）時校準的：3／5／6／7 級互下 80 局 3573 步，每 100 步 !! 0.7、! 1.3、!? 1.0、?! 2.1、? 3.8、?? 0.7。
- * 4 組自選（v13）重新量（tests/mark-freq.js，3～6 級互下 160 局 4921 步）：原本的門檻下 !! 2.6、! 3.3、!? 3.7（好手類多了 2.5～4 倍，
- * !! 有 63% 出現在對手上一步讓出 10% 以上之後），所以加了 PUNISH_GAP、THREAT_LINES、提高 TRAP_SHARE、排除「下完自己就能連成五」的陷阱。
- * 調整後：!! 0.9、! 3.5（其中 1.3 是抓住對手的失誤，要「看不出來」和「選哪組有差」都成立）、!? 1.2、?! 2.2、? 3.2、?? 0.6。
- * 3 級幾乎只拿到失誤類，7 級幾乎都是好手類。
- * !! 的條件原本是「其他格子都低兩級」，60 局樣本裡幾乎不出現（0.26／100 步），而且跟 ! 看不出差別（找到率 54% 對 57%）。
- * 改成「其他每格差 20% 以上」後：弱的一方（3、5 級）只找到 17%（! 是 50%），強的一方（6、7 級）仍找到 77%，
- * 找到的人最後得分 80%、沒找到的 37%——強的找得到、弱的漏掉、漏掉代價大，才配叫 !!。
+ * 失誤類（跟最佳步比；下在最佳的格子不算——現在的分析或下的當下提示顯示的最佳格，組別選得不同也一樣；
+ * 原本就敗定、這一步也沒給到拉鋸以上的機會時不標）：
+ *   ??  大漏著：掉兩級以上，而且少 80% 以上
+ *   ?   失誤：掉一級以上，而且少 45% 以上（掉兩級但沒到 80% 也標這個）
+ *   ?!  不精確：少 29% 以上
+ *
+ * 好手類（原本就勝定時不標；終盤剩 7 格以內只標 !!）：
+ *   !!  反殺：原本很差（≤ 25%），這步翻成很好（≥ 75%），而且只有這步做得到（其他格子都差 25% 以上）。
+ *       通常是對手先犯了大錯、這步把握住；不要求難找。擋對手的五連不算。
+ *   !   唯一手：下了最佳步，其他格子都差 10% 以上，局勢不比原本差（維持或更好），而且不是問應手：
+ *       只看盤面（黑白棋靜態評估排在前 20%）就看得出來、往下搜 2 層（我下、對手應）就找得到、或是去擋對手的五連，
+ *       都算是被對方逼出來的明顯應手，不標。
+ *   !?  強迫手：不一定是最佳步（最多少 12%），但下完後對手只剩一個好格子，其他格子都比它差 20% 以上
+ *       （對手至少有 3 格可下）。做出「四」逼對手擋不算（棋盤上已經畫出連線，很明顯）；對手的好選擇是直接連成五也不算。
+ *
+ * 校準（tests/mark-freq.js：3～7 級 CPU 互下 270 局 7504 步，v14 以 AI 教練的強度分析）：
+ *   每 100 步 !! 0.3、! 1.2、!? 2.3、?! 2.3、? 1.4、?? 0.7。
+ * 唯一手的「問應手」判斷用找到率比較過（tests/mark-findrate.js，在被標 ! 的局面各級實際下到那一步的比例）：
+ *   只看盤面：3／4／5／6／7 級找到 28／35／62／84／99%（弱的也常找到 → 混了明顯的應手）；
+ *   加上搜 2 層：3／4／5／6／7 級 3／3／38／65／97%（弱的找不到、強的找得到）。
  */
 
 import { flipsFor, getLegalMoves, posToCoord } from "../core/rules.js";
 import { completesFive, findThreatGroups, groupOf, GROUPS } from "../core/five-rules.js";
-import { othelloEvalV13 } from "./v13.js";
+import { othelloEvalV13, searchV13 } from "./v13.js";
 
 export const LEVEL_EDGES = [0.1, 0.35, 0.65, 0.9]; // 敗定｜劣勢｜拉鋸｜優勢｜勝定
 /** 勝率 → 等級 0（敗定）～4（勝定） */
 export const levelOf = (p) => (p >= 0.9 ? 4 : p >= 0.65 ? 3 : p >= 0.35 ? 2 : p > 0.1 ? 1 : 0);
 export const WON = 4, LOST = 0;
 export const MIN_LOSS = 0.05;      // 失誤類最少要損失這麼多（避免剛好卡在等級邊界的小差距）
-export const DUBIOUS_LOSS = 0.08;  // 等級沒變時，損失這麼多才標 ?!
+// 各種標記的門檻（分析換成 v14 之後重新定義、校準，見檔案開頭）
+export const MARK_TUNE = {
+  // 失誤類
+  dubious: 0.29,  // ?! ：損失這麼多
+  mistake: 0.45,  // ?  ：掉一級以上，而且損失這麼多（不夠就看能不能標 ?!）
+  blunder: 0.80,  // ?? ：掉兩級以上，而且損失這麼多（不夠就看能不能標 ?）
+  // !! 反殺
+  turnFrom: 0.25, // 對手下之前，這一方的勝率最多這麼多（很差）
+  turnTo: 0.75,   // 這步下完至少這麼多（很好）
+  turnGap: 0.25,  // 其他格子都比這步至少差這麼多（只有這步能反殺）
+  // ! 唯一手
+  onlyGap: 0.10,      // 其他格子都比這步至少差這麼多
+  onlyMinLevel: 2,    // 下完至少是這個等級（2 = 拉鋸）
+  onlyDifficulty: 1,  // 難度至少這麼多分（difficultyOf；「看不出來」本身就算 1 分）
+  obviousDepth: 2,    // 問應手的判斷：0 = 只看盤面（靜態評估排前 20% 就算明顯）；n = 往下搜 n 層就找得到也算明顯
+  // !? 強迫手
+  forceLoss: 0.12,    // 這步最多比最佳步少這麼多
+  forceGap: 0.20,     // 下完後對手的最佳格比次佳格好這麼多
+  forceMinSquares: 3, // 對手至少有這麼多格可下
+  forceFour: false    // 做出「四」算不算強迫手
+};
 export const BEST_EPS = 0.01;      // 跟最佳步差這麼多以內，算下了最佳步
-export const KEY_GAP = 0.10;       // 關鍵一手：最接近的格子至少差這麼多
 export const ENDGAME = 7;          // 剩這麼多格以內：不標好手類
-export const TRAP_SHARE = 2 / 3;   // 設陷阱：對手至少這個比例的格子會讓局勢倒向你
-export const TRAP_MIN = 3;         //         而且至少這麼多格
-export const PUNISH_GAP = 0.10;    // 對手上一步讓出這麼多勝率以上 → 這步是在懲罰對手的失誤，最多標 !
 export const THREAT_LINES = 3;     // 難度的「盤面有威脅」：要有「四」，或至少這麼多條連線威脅（三或四）
-export const KEY_DIFFICULTY = 2;       // 關鍵一手至少要有這麼多難度才標 !（見 difficultyOf；1 分幾乎擋不到東西，大部分局面都有一項）
-export const BRILLIANT_DIFFICULTY = 3; // !! 要這麼多難度
-export const BRILLIANT_GAP = 0.20;    // !! 其他每個格子都要差這麼多以上（只有這一步是好棋）
 
 const CORNERS = [0, 7, 56, 63];
 const X_CORNER = { 9: 0, 14: 7, 49: 56, 54: 63 };
@@ -114,15 +117,17 @@ function probsOf(scores, toProb, empties) {
  * @param {(score:number, empties:number) => number} o.toProb 分數 → 勝率條上的勝率
  * @param {{scores:{sq:number,score:number}[]}|null} [o.next] 下完之後（輪到對手）的分析，判斷「設陷阱」用；沒有就不判斷
  * @param {number|null} [o.prevP] 對手下上一步之前，這一方的勝率（勝率條上的勝率）；判斷終盤「逆轉」用
+ * @param {number|null} [o.bestAtMove] 下這步的當下，分析（提示）顯示的最佳格；下在這格就不標失誤類
+ * @param {object} [o.tune] 各種標記的門檻（測試用，預設 MARK_TUNE）
  * @returns {{ sym: string|null, why: {key:string, p:object}|null, loss:number, best:number, played:number } | null}
  */
-export function classifyMove({ scores, played, board, turn, toProb, next = null, prevP = null }) {
+export function classifyMove({ scores, played, board, turn, toProb, next = null, prevP = null, bestAtMove = null, tune = MARK_TUNE }) {
   const empties = emptiesOf(board);
   const { moves, squares, best } = probsOf(scores, toProb, empties);
   const mine = moves.find((m) => m.key === played);
   if (!mine || !best) return null;
   const loss = best.p - mine.p, Lb = levelOf(best.p), Lm = levelOf(mine.p);
-  const res = (sym, why = null) => ({ sym, why, loss, best: best.p, played: mine.p });
+  const res = (sym, why = null) => ({ sym, why, loss, best: best.p, played: mine.p, bestSq: best.sq });
   const sq = played & 63, discId = played >> 6;
 
   if (squares.length <= 1) return res(null);
@@ -137,73 +142,58 @@ export function classifyMove({ scores, played, board, turn, toProb, next = null,
 
   const nb = boardAfter(board, sq, turn, discId);
 
+  // 下在最佳的格子（現在的分析，或下的當下提示顯示的最佳格）：已經下了最佳手，組別的差別或之後分析變了，都不算失誤
+  const playedBest = sq === best.sq || sq === bestAtMove;
   // 失誤類：跟最佳步比，局勢掉了幾級
-  if (!decided && !hopeless && loss >= MIN_LOSS) {
+  if (!decided && !hopeless && !playedBest && loss >= MIN_LOSS) {
     const drop = Lb - Lm;
-    if (drop >= 1 || loss >= DUBIOUS_LOSS) {
+    const sym = drop >= 2 && loss >= tune.blunder ? "??" : drop >= 1 && loss >= tune.mistake ? "?" : loss >= tune.dubious ? "?!" : null;
+    if (sym) {
       // 最佳步：格子＋組別（存那一組的棋，顯示時才換成目前的棋子文字）
       const at = coord(best.sq), disc = best.key >> 6;
       let why;
       if (best.p >= 0.999 && makesFive(board, best.sq, disc, turn)) why = { key: "whyMissedFive", p: { at, disc } };
-      // 下在最好的那一格、只是組別選錯：講清楚是組別的問題（提示格子上的數字是「這格配最好那一組」的勝率，不然看起來像是下對了還被標）
-      else if (best.sq === sq) why = { key: "whyWrongGroup", p: { grp: disc, a: Math.round(100 * best.p), b: Math.round(100 * mine.p) } };
       else if (allowsFive(nb, turn)) why = { key: "whyAllowsFive", p: { at, disc } };
       else if (givesCorner(board, nb, turn)) why = { key: "whyGivesCorner", p: { at, disc } };
-      else if (drop >= 1) why = { key: "whyDrop", p: { from: Lb, to: Lm, at, disc } };
+      else if (sym !== "?!") why = { key: "whyDrop", p: { from: Lb, to: Lm, at, disc } };
       else why = { key: "whyLoose", p: { lvl: Lb, n: Math.round(loss * 100), at, disc } };
-      return res(drop >= 2 ? "??" : drop === 1 ? "?" : "?!", why);
+      return res(sym, why);
     }
   }
 
-  // 好手類（!! ! !?）只在「勝負難料」時才有資訊。原本的局勢 = 對手下上一步之前，這一方的勝率（不知道就用這個局面的最佳步）：
-  //   原本已經勝定 → 守住或兌現本來就贏的局面，不標
-  //   原本已經敗定 → 只有起死回生（這步把局勢拉到拉鋸以上）才標
-  //   終盤（引擎已經算到底）→ 只有對手翻車、這步把握機會逆轉（原本劣勢或敗定 → 拉鋸以上）才標
-  const comeback = levelOf(before) <= (empties <= ENDGAME ? 1 : 0) && Lm >= 2;
-  if (levelOf(before) === WON) return res(null);
-  if ((levelOf(before) === LOST || empties <= ENDGAME) && !comeback) return res(null);
+  // 好手類只在勝負難料時才有資訊。原本的局勢 = 對手下上一步之前，這一方的勝率（不知道就用這個局面的最佳步）
+  const t = tune;
+  const others = squares.filter((x) => x.sq !== sq);
+  const second = others.length ? others[0].p : 0; // 其他格子裡最好的
+  const isBest = loss < BEST_EPS && best.sq === sq;
+  const o = opp(turn);
+  const blocksFive = SYMBOLS.some((v) => completesFive(board, sq, v, o)); // 擋住對手下一手的五連：棋盤上已經畫出來了，很明顯
 
-  // 好手類：關鍵一手
-  if (loss < BEST_EPS && squares[0].sq === sq) {
-    const others = squares.slice(1);
-    const key = others.every((o) => levelOf(o.p) <= Lm - 1) && squares[0].p - others[0].p >= KEY_GAP;
-    if (key) {
-      const o = opp(turn);
-      // 擋住對手的五連：棋盤上已經畫出連線，對人來說很明顯
-      if (SYMBOLS.some((v) => completesFive(board, sq, v, o))) return res(null);
-      const corner = givesCorner(board, nb, turn);
-      const xc = X_CORNER[sq];
-      const xSquare = xc != null && !board[xc >> 3][xc & 7];
-      const d = difficultyOf({ board, turn, sq, squares, moves });
-      // 對手上一步讓出 10% 以上：這步是在懲罰對手的失誤，局面是對手送的，最多標 !（4 組自選的連線很兇，
-      // 對手一走錯常常只剩一步能抓住機會，原本有 63% 的 !! 是這種）
-      const punish = prevP != null && best.p - prevP >= PUNISH_GAP;
-      const clear = squares[0].p - others[0].p >= BRILLIANT_GAP && !punish; // 其他格子都差 20% 以上
-      if (comeback) {
-        return res(clear && d.score >= BRILLIANT_DIFFICULTY ? "!!" : "!", { key: "whyComeback", p: { from: levelOf(prevP), to: Lm } });
-      }
-      // 很好找的關鍵一手（一個難度都沒有，例如佔角、選擇很少、盤面一看就知道）不標
-      if (d.score < KEY_DIFFICULTY) return res(null);
-      if (clear && d.score >= BRILLIANT_DIFFICULTY) {
-        return res("!!", { key: corner ? "whyBrilliantCorner" : xSquare ? "whyBrilliantX" : d.hidden ? "whyBrilliantQuiet" : "whyBrilliantHard", p: { to: Lm } });
-      }
+  // !!：反殺。對手下之前自己很差，這步翻成很好，而且只有這步做得到（其他格子都差很遠）
+  if (isBest && !blocksFive && prevP != null && prevP <= t.turnFrom && mine.p >= t.turnTo && mine.p - second >= t.turnGap) {
+    return res("!!", { key: "whyTurnaround", p: { from: levelOf(prevP), to: Lm, n: Math.round(100 * (mine.p - second)) } });
+  }
+  if (levelOf(before) === WON) return res(null);   // 原本就贏定：守住或兌現，沒有資訊
+  if (empties <= ENDGAME) return res(null);        // 終盤引擎已經算到底，只標反殺
+
+  // !：唯一手。最佳步、其他格子都差很遠、局勢沒有比對手下之前差（維持或更好）；
+  // 而且不是明顯的問應手：只看盤面看得出來（黑白棋靜態評估排在前 20%）、或是去擋對手的五連，都不算
+  if (isBest && !blocksFive && mine.p - second >= t.onlyGap && Lm >= levelOf(before) && Lm >= t.onlyMinLevel) {
+    const d = difficultyOf({ board, turn, sq, squares, moves });
+    const obvious = !d.hidden || (t.obviousDepth > 0 && shallowBest(board, turn, t.obviousDepth) === sq);
+    if (!obvious && d.score >= t.onlyDifficulty) {
       const four = completesFourFor(nb, sq, turn);
-      // 抓住對手的失誤：局面是對手送的，要真的不好找才標 !——只看盤面看不出來、而且選哪組有差，兩項都成立
-      //（難度的另外兩項「盤面有威脅」「可下格子 7 個以上」在 4 組自選幾乎每步都成立，分不出難易）
-      if (punish) return d.hidden && d.discMatters ? res("!", { key: "whyPunish", p: { from: levelOf(prevP), to: Lm } }) : res(null);
-      return res("!", { key: four ? "whyOnlyFour" : "whyOnly", p: { from: levelOf(others[0].p), to: Lm } });
+      return res("!", { key: four ? "whyOnlyFour" : "whyOnly", p: { from: levelOf(second), to: Lm } });
     }
   }
 
-  // !?：設陷阱（終盤不標）。下完後自己下一手就能連成五 → 對手只能擋，不擋的格子當然都輸，那不是陷阱
-  if (!decided && !comeback && loss < MIN_LOSS && next?.scores?.length && !allowsFive(nb, opp(turn))) {
+  // !?：強迫手。不一定是最佳步（最多少 forceLoss），但下完後對手只有一個好格子，其他格子都差很遠。
+  // 做出「四」逼對手擋（棋盤上已經畫出連線，很明顯）預設不算
+  if (!decided && loss <= t.forceLoss && next?.scores?.length && (t.forceFour || !allowsFive(nb, o))) {
     const op = probsOf(next.scores, toProb, emptiesOf(nb));
-    if (op.best && op.best.p < 0.999 && op.squares.length >= 4) {
-      const L0 = levelOf(op.best.p);
-      const bad = op.squares.filter((s) => levelOf(s.p) <= L0 - 2).length;
-      if (bad >= TRAP_MIN && bad / op.squares.length >= TRAP_SHARE) {
-        return res("!?", { key: "whyTrap", p: { n: op.squares.length, k: bad } });
-      }
+    if (op.best && op.best.p < 0.999 && op.squares.length >= t.forceMinSquares) {
+      const gap = op.best.p - op.squares[1].p;
+      if (gap >= t.forceGap) return res("!?", { key: "whyForce", p: { at: coord(op.best.sq), n: Math.round(100 * gap) } });
     }
   }
   return res(null);
@@ -222,12 +212,18 @@ export function difficultyOf({ board, turn, sq, squares, moves }) {
     .sort((a, b) => b.v - a.v);
   const rank = evals.findIndex((e) => e.sq === sq) / Math.max(1, evals.length - 1);
   const hidden = rank > 0.2;
-  const gs = findThreatGroups(board);
+  const gs = findThreatGroups(board).filter((g) => g.kind < 5); // 花五很少見，不改變已經量好的標記頻率
   const threats = gs.some((g) => g.kind === 4) || gs.length >= THREAT_LINES;
   const atSq = moves.filter((m) => m.sq === sq).map((m) => m.p);
   const discMatters = atSq.length > 1 && Math.max(...atSq) - Math.min(...atSq) >= 0.02;
   const many = squares.length >= 7;
   return { score: hidden + threats + discMatters + many, hidden, threats, discMatters, many };
+}
+
+/** 淺層搜尋（v13，固定 depth 層）會選的格子：連這樣都找得到的唯一手，是被逼出來的問應手 */
+function shallowBest(board, turn, depth) {
+  const r = searchV13(board, turn, groupOf, { timeMs: 1e9, maxDepth: depth });
+  return r ? r.sq : -1;
 }
 
 /** 下完之後，經過這格有沒有替自己做出「四」（同色、同一組、再補一顆就連成五） */

@@ -39,6 +39,31 @@ function gapDisc(x, y, r, owners, ring) {
 }
 const gapTextColor = (owners) => (owners.length === 1 ? PIECE_TEXT[owners[0]] : "#fff");
 
+/**
+ * 花五的鐵鍊：只畫在相鄰兩顆棋之間的空隙（像鍊子穿在棋子後面），棋子中間的花色不會被蓋住。
+ * 每一段在本地座標沿 x 軸畫好再旋轉：扁的鍊環和側面的鍊環輪流。
+ */
+function chainSvg(pts, cell, color) {
+  const pitch = cell * 0.17, rx = cell * 0.11, ry = cell * 0.06, sw = Math.max(1.2, cell * 0.03);
+  const clear = cell * 0.3; // 離棋子中心這麼遠以內不畫（花色的範圍）
+  let out = "";
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const [ax, ay] = pts[i], [bx, by] = pts[i + 1];
+    const len = Math.hypot(bx - ax, by - ay), ang = Math.atan2(by - ay, bx - ax) * 180 / Math.PI;
+    const from = clear, to = len - clear;
+    const n = Math.max(2, Math.round((to - from) / pitch) + 1);
+    let links = "";
+    for (let k = 0; k < n; k++) {
+      const x = from + (k * (to - from)) / (n - 1);
+      links += k % 2
+        ? `<line x1="${(x - rx).toFixed(1)}" y1="0" x2="${(x + rx).toFixed(1)}" y2="0" class="t5Edge" style="stroke-width:${(sw * 1.5).toFixed(1)}"/>`
+        : `<ellipse cx="${x.toFixed(1)}" cy="0" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" class="t5Link" style="stroke-width:${sw.toFixed(1)}"/>`;
+    }
+    out += `<g transform="translate(${ax} ${ay}) rotate(${ang.toFixed(2)})" style="stroke:${color}">${links}</g>`;
+  }
+  return out;
+}
+
 /** 走法評價的原因（ai/move-quality.js 的 why）→ 目前語言的一句話；等級用名稱顯示 */
 export function markWhyText(mark) {
   if (!mark?.why) return "";
@@ -46,7 +71,6 @@ export function markWhyText(mark) {
   for (const k of ["from", "to", "lvl"]) if (typeof p[k] === "number") p[k] = tr(`lvl${p[k]}`);
   // 最佳步寫成「格子 組」，例如 E3 α（下對格子、選錯組時才看得出差在哪）
   if (p.at && p.disc != null) p.at = `${p.at} ${discLabel(p.disc)}`;
-  if (p.grp != null) p.grp = discLabel(p.grp); // 組別（存那一組的棋，顯示時才換成目前的棋子文字）
   return tr(mark.why.key, p);
 }
 
@@ -277,7 +301,8 @@ export class BoardView {
 
   /**
    * 五連威脅：每一組畫一條線穿過那幾顆棋，顏色是那組的共同符號。
-   *   三：細虛線；四：粗實線，延伸到缺口，缺口畫圈並寫上需要的符號。
+   *   三：細虛線；四：粗實線，延伸到缺口，缺口畫圈並寫上需要的符號；
+   *   花五（同一組五連、黑白混雜）：一條細鐵鍊串起那幾顆（只畫在棋子之間，不蓋住花色）。
    * focus（滑鼠所在的格子）屬於某一組時，只突顯那一組，其他變淡（不另外加文字說明，連線本身就夠清楚）。
    */
   renderThreats(groups, focus, hinted = new Set()) {
@@ -310,8 +335,14 @@ export class BoardView {
       const len = Math.hypot(x2 - x1, y2 - y1) || 1, ux = (x2 - x1) / len, uy = (y2 - y1) / len, cut = cellSize * 0.42;
       if (g.gaps.includes(ends[0])) { x1 += ux * cut; y1 += uy * cut; }
       if (g.gaps.includes(ends[ends.length - 1])) { x2 -= ux * cut; y2 -= uy * cut; }
-      const w = (g.kind === 4 ? 0.13 : 0.1) * cellSize;
-      html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="tLine t${g.kind}${faded}" style="stroke:${color};stroke-width:${w.toFixed(1)}"/>`;
+      if (g.kind === 5) {
+        // 花五：同一組五連、但黑白混在一起 → 一條鐵鍊把這幾顆串起來（被綁住了），
+        // （已經五連，只差顏色統一）
+        html += `<g class="tMixed${faded}">${chainSvg(g.cells.map(center), cellSize, color)}</g>`;
+      } else {
+        const w = (g.kind === 4 ? 0.13 : 0.1) * cellSize;
+        html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="tLine t${g.kind}${faded}" style="stroke:${color};stroke-width:${w.toFixed(1)}"/>`;
+      }
       for (const gap of g.gaps) {
         // 缺口：沿著格子邊緣（內縮一點，不跟提示最高格的外框重疊）畫連線顏色的虛線框；
         // 需要的符號平常放大在中間，提示模式下這格有勝率時改成右下角的小標籤
