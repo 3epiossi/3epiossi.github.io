@@ -40,7 +40,7 @@ const ZH = [
   section("走法標記", `<p>每一手下完，那顆棋的右上角可能出現標記，雙方的棋都會評。滑鼠移到標記上會顯示原因，例如「局勢從優勢變成拉鋸（最佳：E3 ♥）」，最佳那一步會寫出格子和組別。</p>
     <p>局勢分五級：<b>勝定</b>、<b>優勢</b>、<b>拉鋸</b>、<b>劣勢</b>、<b>敗定</b>。</p>
     ${markTable([
-      ["!!", "反殺", "原本局勢很差（勝率 25% 以下），這一步把它翻成很好（75% 以上），而且只有這一步做得到（其他格子都差 25% 以上）。"],
+      ["!!", "反殺", "連續好幾手都被壓著打（往前三個局面勝率都在 35% 以下），這一步突然翻成很好（75% 以上），而且只有這一步做得到（其他格子都差 25% 以上）。"],
       ["!", "唯一手", "最好的一步，其他格子都差一截（10% 以上），局勢沒有變差；而且不是被對方逼出來的明顯應手（只看盤面、或多想兩手就看得出來的不算）。"],
       ["!?", "強迫手", "不一定是最好的一步，但下完後對手只剩一個好格子，其他格子都差很多（20% 以上）。做出「四」逼對手擋的不算。"],
       ["?!", "不精確", "比最佳的一步少了將近三成的勝率。"],
@@ -104,7 +104,7 @@ const EN = [
   section("Move marks", `<p>After each move a mark may appear at the disc's top-right corner, for both sides. Hover it to see why, e.g. "Position went from ahead to balanced (best: E3 ♥)" — the best move names a square and a group.</p>
     <p>Positions come in five levels: <b>won</b>, <b>ahead</b>, <b>balanced</b>, <b>behind</b>, <b>lost</b>.</p>
     ${markTable([
-      ["!!", "Turnaround", "You were in bad shape (25% or less) and this move turns it into a strong position (75% or more) — and it is the only move that does (every other square is at least 25% worse)."],
+      ["!!", "Turnaround", "You had been under pressure for several moves (the last three positions all at 35% or less) and this move suddenly makes it strong (75% or more) — and it is the only move that does (every other square is at least 25% worse)."],
       ["!", "Only move", "The best move, with every other square clearly worse (10% or more), and the position does not get worse — and it is not an obvious forced reply (one you can see from the board or by looking two moves ahead)."],
       ["!?", "Forcing move", "Not necessarily the best move, but afterwards the opponent has only one good square and everything else is much worse (20% or more). Making a four that must be blocked does not count."],
       ["?!", "Inaccuracy", "Gives away nearly 30% win chance compared with the best move."],
@@ -168,7 +168,7 @@ const JA = [
   section("評価記号", `<p>各手のあと、その石の右上に記号が付くことがあります（両者の手が対象）。記号にマウスを乗せると理由が表示されます。例：「形勢が優勢から互角に（最善：E3 ♥）」。最善手はマスと組で示されます。</p>
     <p>形勢は 5 段階です：<b>勝ち確定</b>、<b>優勢</b>、<b>互角</b>、<b>劣勢</b>、<b>負け確定</b>。</p>
     ${markTable([
-      ["!!", "逆転の一手", "形勢が悪かった（勝率 25% 以下）のを、この一手で良い形勢（75% 以上）に変える。しかもそれができるのはこの手だけ（他のマスはすべて 25% 以上悪い）。"],
+      ["!!", "逆転の一手", "何手も押され続けていた（直前 3 局面の勝率がすべて 35% 以下）のを、この一手で一気に良い形勢（75% 以上）に変える。しかもそれができるのはこの手だけ（他のマスはすべて 25% 以上悪い）。"],
       ["!", "唯一手", "最善手で、他のマスはすべてはっきり悪く（10% 以上）、形勢も悪くならない。しかも相手に強いられた明らかな応手ではない（盤面を見るだけ、または 2 手先まで読めば分かる手は除く）。"],
       ["!?", "強制手", "最善とは限らないが、打ったあと相手には良いマスが 1 つしかなく、他はすべて大きく悪い（20% 以上）。四を作って止めさせる手は除く。"],
       ["?!", "緩手", "最善手より勝率を 3 割近く失った。"],

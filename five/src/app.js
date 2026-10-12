@@ -9,7 +9,7 @@ import { GameEngine, poolOf } from "./core/game-engine.js";
 import { randomXot } from "./core/xot-openings.js";
 import { BoardView, discHtmlFive, markWhyText } from "./ui/board-view.js";
 import { EvalBar, displayWinProb } from "./ui/eval-bar.js";
-import { classifyMove } from "./ai/move-quality.js";
+import { classifyMove, MARK_TUNE } from "./ai/move-quality.js";
 import { PoolView } from "./ui/hand-view.js";
 import { WinChart } from "./ui/win-chart.js";
 import { Storage } from "./storage/storage.js";
@@ -1566,12 +1566,22 @@ export class WeightedOthelloApp {
     const parent = tree.getNode(node.parentId);
     const a = parent && this.analysis.get(parent.id);
     if (!a?.scores?.length) return;
+    const toProb = (s, empties) => displayWinProb(s, empties);
     const nx = node.gameOver ? null : this.analysis.get(node.id) || null;
     const gp = parent.parentId ? tree.getNode(parent.parentId) : null;
     const ga = gp ? this.analysis.get(gp.id) : null;
-    const inputs = `${a.level}|${nx?.level ?? 0}|${ga ? 1 : 0}`;
+    // 往前幾個局面（對手下之前、再之前…）這一方的勝率：!! 反殺要求這幾個都很差
+    const winOf = (n, an) => {
+      const p = an.best >= 0.999 ? 1 : an.best <= -0.999 ? 0 : toProb(an.best, n.board.flat().filter(d => !d).length);
+      return n.turn === parent.turn ? p : 1 - p;
+    };
+    const prevWin = [];
+    for (let n = gp, i = 0; n && i < MARK_TUNE.turnWindow; n = n.parentId ? tree.getNode(n.parentId) : null, i++) {
+      const an = this.analysis.get(n.id);
+      if (an?.scores?.length) prevWin.push(winOf(n, an));
+    }
+    const inputs = `${a.level}|${nx?.level ?? 0}|${prevWin.length}`;
     if (node.markInputs === inputs) return;
-    const toProb = (s, empties) => displayWinProb(s, empties);
     // 對手下之前，這一方的勝率（上上個局面的最佳步，換成這一方的角度）
     let prevP = null;
     if (ga?.scores?.length) {
@@ -1582,7 +1592,7 @@ export class WeightedOthelloApp {
     const mark = classifyMove({
       scores: a.scores, played: node.move.discId * 64 + r * 8 + c,
       board: parent.board, turn: parent.turn, toProb,
-      next: nx?.scores?.length ? { scores: nx.scores } : null, prevP, bestAtMove: node.bestAtMove ?? null
+      next: nx?.scores?.length ? { scores: nx.scores } : null, prevP, prevWin, bestAtMove: node.bestAtMove ?? null
     });
     if (mark?.sym && a.level < COACH_LEVEL) {
       this.confirmNeed.add(parent.id); // 先不標，等上一個局面分析到第 2 級
