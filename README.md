@@ -2,7 +2,9 @@
 # 誰會贏？ (Who will win?)
 
 > 🎮 **線上直接遊玩**：[https://3epiossi.github.io/](https://3epiossi.github.io/)  
-> 🖥️ **本地對弈**：在專案資料夾執行 `npm start`，再用瀏覽器開啟 `http://localhost:8000`（程式以 ES 模組載入，直接雙擊 `index.html` 在多數瀏覽器會被擋下）
+> 🖥️ **本地對弈**：在專案資料夾執行 `npm start`，再用瀏覽器開啟 `http://localhost:8000`（程式以 ES 模組載入，直接雙擊 `index.html` 在多數瀏覽器會被擋下）。
+>
+> 🏠 **首頁是「五連黑白棋」**（`index.html`，程式在 `five/`）；「誰會贏？」在 `http://localhost:8000/whowins/index.html`，兩邊的頂端列都有按鈕可以互相切換。
 
 本專案是無外部依賴、不需建置的純前端網頁對弈系統。支援任意組合的人類／CPU 對戰（含人類 vs 人類、CPU vs CPU 觀戰）、自由排盤、對局歷程時光機與分支、**v1 至 v5** 五階演算法 CPU 與 AI 教練提示，並內建圍棋式「割目（貼目）」平衡機制，介面提供中文、English、日本語。
 
