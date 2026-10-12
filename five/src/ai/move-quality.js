@@ -16,8 +16,8 @@
  *   ?!  不精確：少 29% 以上
  *
  * 好手類（原本就勝定時不標；終盤剩 7 格以內只標 !!）：
- *   !!  反殺：原本很差（≤ 25%），這步翻成很好（≥ 75%），而且只有這步做得到（其他格子都差 25% 以上）。
- *       通常是對手先犯了大錯、這步把握住；不要求難找。擋對手的五連不算。
+ *   !!  反殺：往前連續 3 個局面（對手下之前、再之前…）勝率都很差（≤ 35%），這步翻成很好（≥ 75%），
+ *       而且只有這步做得到（其他格子都差 25% 以上）。一直被壓著打、突然被一手翻盤；不要求難找。擋對手的五連不算。
  *   !   唯一手：下了最佳步，其他格子都差 10% 以上，局勢不比原本差（維持或更好），而且不是問應手：
  *       只看盤面（黑白棋靜態評估排在前 20%）就看得出來、往下搜 2 層（我下、對手應）就找得到、或是去擋對手的五連，
  *       都算是被對方逼出來的明顯應手，不標。
@@ -25,7 +25,7 @@
  *       （對手至少有 3 格可下）。做出「四」逼對手擋不算（棋盤上已經畫出連線，很明顯）；對手的好選擇是直接連成五也不算。
  *
  * 校準（tests/mark-freq.js：3～7 級 CPU 互下 270 局 7504 步，v14 以 AI 教練的強度分析）：
- *   每 100 步 !! 0.3、! 1.2、!? 2.3、?! 2.3、? 1.4、?? 0.7。
+ *   每 100 步 !! 0.3、! 1.2、!? 2.3、?! 2.3、? 1.4、?? 0.7（反殺改成「往前連續 3 個局面都很差」之後頻率沒變，仍是 0.3）。
  * 唯一手的「問應手」判斷用找到率比較過（tests/mark-findrate.js，在被標 ! 的局面各級實際下到那一步的比例）：
  *   只看盤面：3／4／5／6／7 級找到 28／35／62／84／99%（弱的也常找到 → 混了明顯的應手）；
  *   加上搜 2 層：3／4／5／6／7 級 3／3／38／65／97%（弱的找不到、強的找得到）。
@@ -47,7 +47,8 @@ export const MARK_TUNE = {
   mistake: 0.45,  // ?  ：掉一級以上，而且損失這麼多（不夠就看能不能標 ?!）
   blunder: 0.80,  // ?? ：掉兩級以上，而且損失這麼多（不夠就看能不能標 ?）
   // !! 反殺
-  turnFrom: 0.25, // 對手下之前，這一方的勝率最多這麼多（很差）
+  turnFrom: 0.35, // 往前 turnWindow 個局面，這一方的勝率都最多這麼多（一直被壓著打）
+  turnWindow: 3,  // 往前看幾個局面（對手下之前、再之前…；每個局面都有分析才算進去，至少要有 1 個）
   turnTo: 0.75,   // 這步下完至少這麼多（很好）
   turnGap: 0.25,  // 其他格子都比這步至少差這麼多（只有這步能反殺）
   // ! 唯一手
@@ -117,11 +118,12 @@ function probsOf(scores, toProb, empties) {
  * @param {(score:number, empties:number) => number} o.toProb 分數 → 勝率條上的勝率
  * @param {{scores:{sq:number,score:number}[]}|null} [o.next] 下完之後（輪到對手）的分析，判斷「設陷阱」用；沒有就不判斷
  * @param {number|null} [o.prevP] 對手下上一步之前，這一方的勝率（勝率條上的勝率）；判斷終盤「逆轉」用
+ * @param {number[]|null} [o.prevWin] 往前最多 turnWindow 個局面（對手下之前、再之前…）這一方的勝率；!! 反殺要求這幾個都很差，沒給就只看 prevP
  * @param {number|null} [o.bestAtMove] 下這步的當下，分析（提示）顯示的最佳格；下在這格就不標失誤類
  * @param {object} [o.tune] 各種標記的門檻（測試用，預設 MARK_TUNE）
  * @returns {{ sym: string|null, why: {key:string, p:object}|null, loss:number, best:number, played:number } | null}
  */
-export function classifyMove({ scores, played, board, turn, toProb, next = null, prevP = null, bestAtMove = null, tune = MARK_TUNE }) {
+export function classifyMove({ scores, played, board, turn, toProb, next = null, prevP = null, prevWin = null, bestAtMove = null, tune = MARK_TUNE }) {
   const empties = emptiesOf(board);
   const { moves, squares, best } = probsOf(scores, toProb, empties);
   const mine = moves.find((m) => m.key === played);
@@ -169,9 +171,11 @@ export function classifyMove({ scores, played, board, turn, toProb, next = null,
   const o = opp(turn);
   const blocksFive = SYMBOLS.some((v) => completesFive(board, sq, v, o)); // 擋住對手下一手的五連：棋盤上已經畫出來了，很明顯
 
-  // !!：反殺。對手下之前自己很差，這步翻成很好，而且只有這步做得到（其他格子都差很遠）
-  if (isBest && !blocksFive && prevP != null && prevP <= t.turnFrom && mine.p >= t.turnTo && mine.p - second >= t.turnGap) {
-    return res("!!", { key: "whyTurnaround", p: { from: levelOf(prevP), to: Lm, n: Math.round(100 * (mine.p - second)) } });
+  // !!：反殺。往前幾個局面（turnWindow 個）自己都很差，這步翻成很好，而且只有這步做得到（其他格子都差很遠）
+  const win = prevWin?.length ? prevWin : prevP != null ? [prevP] : null;
+  const worst = win ? Math.max(...win) : null; // 那幾個局面裡最好的一個：連它都很差才算一直被壓著打
+  if (isBest && !blocksFive && worst != null && worst <= t.turnFrom && mine.p >= t.turnTo && mine.p - second >= t.turnGap) {
+    return res("!!", { key: "whyTurnaround", p: { from: levelOf(worst), to: Lm, k: win.length, n: Math.round(100 * (mine.p - second)) } });
   }
   if (levelOf(before) === WON) return res(null);   // 原本就贏定：守住或兌現，沒有資訊
   if (empties <= ENDGAME) return res(null);        // 終盤引擎已經算到底，只標反殺
