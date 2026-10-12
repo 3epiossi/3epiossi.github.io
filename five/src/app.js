@@ -67,6 +67,16 @@ const LEVEL_FACTORS = [1, 2, 3, 5, 8, 13]; // 各級的時間是 T 的幾倍（�
 const MAX_LEVEL = LEVEL_FACTORS.length;
 const MAX_JOB_MS = 30000;
 
+/**
+ * 手機（觸控為主）或 4 核以下的裝置：你還在想的時候，局面分析最多加深到第 4 級（5T），不一路加到第 6 級（13T）。
+ * 低階手機一直滿載會發燙、耗電，畫面也會跟著卡；第 4 級已經比 AI 教練（第 2 級）深兩級，提示的數字夠準了。
+ */
+const LOW_POWER = typeof window !== "undefined" &&
+  (window.matchMedia?.("(pointer: coarse)").matches || (navigator.hardwareConcurrency || 8) <= 4);
+const MAX_LEVEL_LOW_POWER = 4;
+/** 觸控裝置（長按下棋時震動一下） */
+const TOUCH = typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches;
+
 export class WeightedOthelloApp {
   constructor() {
     this.settings = Storage.getSettings();
@@ -96,7 +106,7 @@ export class WeightedOthelloApp {
     this.aiClient = new AiClient();
     // 局面分析（勝率條、勝率走勢、提示、走法標記共用）：一條 Worker，一次算一件事，見 scheduleAnalysis
     this.analysisClient = new AiClient();
-    this.ponderClient = new AiClient(); // 預先計算專用：CPU 選好棋、還沒落子時，先替下一個局面算
+    this.ponderClient = null;           // 預先計算專用（CPU 選好棋、還沒落子時，先替下一個局面算）；用到才開，見 ponderWorker
     this.ponder = null;                 // { board, player, pool, promise }
     this.ponderJob = null;              // 預先計算的結果正在補算新的那顆棋的節點 id
     this.analysis = new Map();      // 節點 id → { scores, best, level }（下棋者角度的勝率尺度分數；level 見 levelMs）
@@ -206,7 +216,15 @@ export class WeightedOthelloApp {
   }
 
   applyAnimationLevel() {
-    document.documentElement.dataset.anim = this.isInstant() ? "minimal" : (this.settings.animationLevel || "standard");
+    // 系統設定了「減少動態效果」（手機的無障礙設定常見）：照標準動畫設定的人改成最少動畫
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches && (this.settings.animationLevel || "standard") === "standard";
+    document.documentElement.dataset.anim = this.isInstant() || reduce ? "minimal" : (this.settings.animationLevel || "standard");
+  }
+
+  /** 預先計算的 worker：只有「人對 CPU」才用得到，第一次用到才開（少一條 worker、少約 8 MB 記憶體） */
+  ponderWorker() {
+    if (!this.ponderClient) this.ponderClient = new AiClient();
+    return this.ponderClient;
   }
 
   bindDOMEvents() {
@@ -597,7 +615,9 @@ export class WeightedOthelloApp {
   confirmTapPick(sq) {
     if (this.tapPick?.sq !== sq || !this.canHumanAct()) return;
     const disc = this.tapPickDisc();
-    if (disc != null) this.playAt(sq, disc);
+    if (disc == null) return;
+    if (TOUCH) navigator.vibrate?.(15); // 手機長按成立：輕輕震一下，不用盯著進度環
+    this.playAt(sq, disc);
   }
 
   /** 不下在選棋中的那一格 */
@@ -937,7 +957,7 @@ export class WeightedOthelloApp {
     if (findFive(nb, turn)) return; // 這步就連成五：不用算了
     const pool = poolOf(nb);
     if (!pool.length) return;
-    const promise = this.ponderClient.search({ board: nb, player: next, pool, timeMs: this.levelMs(COACH_LEVEL), multiPV: true });
+    const promise = this.ponderWorker().search({ board: nb, player: next, pool, timeMs: this.levelMs(COACH_LEVEL), multiPV: true });
     this.ponder = { board: nb, player: next, pool, promise };
   }
 
@@ -1083,13 +1103,49 @@ export class WeightedOthelloApp {
     };
     const pad = (n) => String(n).padStart(2, "0"), d = new Date();
     const name = `five-othello-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.json`;
-    const url = URL.createObjectURL(new Blob([JSON.stringify(record, null, 1)], { type: "application/json" }));
+    this.saveRecordFile(name, JSON.stringify(record, null, 1));
+    return record;
+  }
+
+  /**
+   * 存棋譜檔，依瀏覽器能做的事：
+   *   1. 有「另存新檔」視窗（電腦版 Chrome、Edge）：自己選資料夾，預設是「下載」；下次會從上次存的資料夾開始（id）
+   *   2. 手機：跳出分享選單，可以存到「檔案」、雲端硬碟或傳給別人（Discord、LINE 這類 App 內建的瀏覽器常常不能直接下載）
+   *   3. 其他：一般下載，存到瀏覽器的下載資料夾
+   * 要在點擊的當下呼叫（瀏覽器規定另存新檔視窗、分享選單都要由使用者的操作觸發）。
+   */
+  async saveRecordFile(name, text) {
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: name, startIn: "downloads", id: "five-othello-records",
+          types: [{ description: "JSON", accept: { "application/json": [".json"] } }]
+        });
+        const w = await handle.createWritable();
+        await w.write(text);
+        await w.close();
+        return "saved";
+      } catch (e) {
+        if (e?.name === "AbortError") return "cancel"; // 使用者按了取消
+        // 其他錯誤（例如被瀏覽器擋下）：改用一般下載
+      }
+    }
+    const file = typeof File === "function" ? new File([text], name, { type: "application/json" }) : null;
+    if (TOUCH && file && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: name });
+        return "shared";
+      } catch (e) {
+        if (e?.name === "AbortError") return "cancel";
+      }
+    }
+    const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
     const a = Object.assign(document.createElement("a"), { href: url, download: name });
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    return record;
+    return "downloaded";
   }
 
   blackPctOf(node) {
@@ -1437,7 +1493,8 @@ export class WeightedOthelloApp {
       }
       const thinking = this.userThinking();
       if (cur && levelOf(cur) < COACH_LEVEL && thinking) return [cur, COACH_LEVEL];
-      if (cur && thinking && levelOf(cur) < MAX_LEVEL && this.levelMs(levelOf(cur) + 1) <= MAX_JOB_MS) return [cur, levelOf(cur) + 1];
+      const maxLevel = LOW_POWER ? MAX_LEVEL_LOW_POWER : MAX_LEVEL;
+      if (cur && thinking && levelOf(cur) < maxLevel && this.levelMs(levelOf(cur) + 1) <= MAX_JOB_MS) return [cur, levelOf(cur) + 1];
       return null;
     };
     const next = pick();

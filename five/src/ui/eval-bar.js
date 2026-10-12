@@ -51,8 +51,9 @@ export class EvalBar {
   render({ blackProb, pending = false }) {
     if (!this.el) return;
     const b = Math.round(blackProb * 100), w = 100 - b;
-    // 白色區塊在上方，高度 = 白方勝率
-    if (this.white) this.white.style.height = `${w}%`;
+    // 白方勝率：電腦版是上方白色區塊的高度、手機版（橫條）是右邊白色區塊的寬度，交給 CSS（見 five.css 的 --white）。
+    // 不能直接設 style.height：手機版的橫條會被設成很矮的一條
+    this.el.style.setProperty("--white", `${w}%`);
     // 數字寫在占比較大的那一邊
     if (this.blackNum) this.blackNum.textContent = b >= w ? `${b}` : "";
     if (this.whiteNum) this.whiteNum.textContent = w > b ? `${w}` : "";

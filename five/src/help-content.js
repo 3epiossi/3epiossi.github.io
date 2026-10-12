@@ -64,7 +64,7 @@ const ZH = [
     <li><b>棋子顏色與文字顏色</b>：黑白棋子各自的寶石顏色，以及棋上文字的顏色。「還原預設外觀」可以全部改回來。</li>
   </ul>`),
   section("其他", `<ul>
-    <li><b>匯出棋譜</b>（勝率走勢右上角）：把目前這條線存成 JSON 檔，裡面有每一手的局面、走法標記和勝率。</li>
+    <li><b>匯出棋譜</b>（勝率走勢右上角）：把目前這條線存成 JSON 檔，裡面有每一手的局面、走法標記和勝率。電腦版 Chrome、Edge 可以自己選要存在哪個資料夾（預設是「下載」，下次會從上次的資料夾開始）；手機會跳出分享選單，可以存到「檔案」或雲端硬碟；其他瀏覽器存到下載資料夾。</li>
     <li><b>自動存檔</b>：對局（包括分支）會存在這個瀏覽器裡，重新整理或關掉頁面再打開，會接著上次的局面。按「新局」才會清掉。</li>
     <li><b>語言</b>：右上角可以切換中文、English、日本語。</li>
     <li>設定也會記在這台電腦的瀏覽器裡。</li>
@@ -127,7 +127,7 @@ const EN = [
     <li><b>Disc and symbol colours</b>: a gem colour for each side and the colour of the symbols on them. "Restore defaults" brings back the default look.</li>
   </ul>`),
   section("Other", `<ul>
-    <li><b>Export record</b> (top right of the chart): saves the current line as a JSON file with every position, move mark and win chance.</li>
+    <li><b>Export record</b> (top right of the chart): saves the current line as a JSON file with every position, move mark and win chance. In desktop Chrome and Edge you choose the folder (Downloads by default, and next time it starts in the folder you used last); on phones a share sheet opens so you can save to Files or a cloud drive; other browsers save to the Downloads folder.</li>
     <li><b>Auto-save</b>: the game (including branches) is kept in this browser. Reload or reopen the page and you continue where you left off. Only “New game” clears it.</li>
     <li><b>Language</b>: switch between 中文, English and 日本語 at the top right.</li>
     <li>Settings are kept in this browser too.</li>
@@ -190,7 +190,7 @@ const JA = [
     <li><b>石の色と文字の色</b>：白黒それぞれの宝石の色と、石の上の文字の色。「デフォルトに戻す」で元に戻せます。</li>
   </ul>`),
   section("その他", `<ul>
-    <li><b>棋譜を書き出す</b>（勝率の推移の右上）：今の手順を JSON ファイルに保存します。各局面・評価記号・勝率が入っています。</li>
+    <li><b>棋譜を書き出す</b>（勝率の推移の右上）：今の手順を JSON ファイルに保存します。各局面・評価記号・勝率が入っています。パソコンの Chrome・Edge では保存先のフォルダを選べます（既定は「ダウンロード」、次回は前回のフォルダから）。スマホでは共有メニューが開き、「ファイル」やクラウドに保存できます。その他のブラウザはダウンロードフォルダに保存します。</li>
     <li><b>自動保存</b>：対局（分岐を含む）はこのブラウザに保存されます。再読み込みしたりページを開き直したりしても、前回の局面から続けられます。「新規対局」を押したときだけ消えます。</li>
     <li><b>言語</b>：右上で中文・English・日本語を切り替えられます。</li>
     <li>設定もこのブラウザに保存されます。</li>
