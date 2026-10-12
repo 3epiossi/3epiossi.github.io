@@ -20,8 +20,8 @@ const DEFAULTS = {
   timeV2: true,       // 已套用「預設 0.5 秒」（見 getSettings）
   pace: "normal",
   opening: "standard", // 開局：standard（標準）／xot（隨機前幾手、雙方勝率接近，見 core/xot-openings.js）
-  blackLevel: 6, // 黑方 CPU 的難度 1～6（6 = 完整的 v13）
-  whiteLevel: 6, // 白方 CPU 的難度
+  blackLevel: 7, // 黑方 CPU 的難度 1～7（6 = 完整的 v13、7 = 完整的 v14）
+  whiteLevel: 7, // 白方 CPU 的難度
   blackName: "",
   whiteName: "",
   symbolSet: "suits",   // 棋子文字：suits（♠♥♦♣，預設）／greek（α～δ）／custom（自訂）
@@ -53,6 +53,12 @@ export const Storage = {
         if (!parsed.symbolsV2) {
           if (saved.symbolSet === "greek" || !saved.symbolSet) saved.symbolSet = "suits";
           saved.symbolsV2 = true;
+        }
+        // 第 7 級（v14）加入之前最強是第 6 級：選最強的人換成新的最強，只換這一次
+        if (!parsed.levelsV7) {
+          if (saved.blackLevel === 6) saved.blackLevel = 7;
+          if (saved.whiteLevel === 6) saved.whiteLevel = 7;
+          saved.levelsV7 = true;
         }
         // 已移除的欄位（舊版的演算法選擇與思考速度）不再保留
         for (const k of ["blackAlgo", "whiteAlgo", "aiDefaultsVersion", "cpuSpeed", "bonusLevel", "variant", "autoPickDisc"]) delete saved[k];

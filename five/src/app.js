@@ -15,7 +15,7 @@ import { WinChart } from "./ui/win-chart.js";
 import { Storage } from "./storage/storage.js";
 import { initI18n, applyI18n, setLang, curLang, tr, tx, pieceify, escapeHtml, clampName } from "./i18n.js";
 import { moveFromSquare } from "./ai/ai-service.js";
-import { clampLevel, MAX_LEVEL as MAX_CPU_LEVEL } from "./ai/levels.js";
+import { clampLevel, isTimedLevel } from "./ai/levels.js";
 import { findFive, findThreatGroups, withGapOwners, letterOf, discLabel, numberMask, groupOf, GROUP_SIZE, setSymbolSet, getSymbolSet, parseCustomSymbols } from "./core/five-rules.js";
 import { PatternFx } from "./ui/pattern-fx.js";
 import { helpGuideHtml } from "./help-content.js";
@@ -302,6 +302,11 @@ export class WeightedOthelloApp {
         e.stopPropagation();
         const pop = btn.closest(".playerCard").querySelector(".rolePop");
         closeRolePops(pop);
+        // 看歷史／研究分支時不能切換：還是打開選單，寫上為什麼（不然按了像是沒反應）
+        let note = pop.querySelector(".roleNote");
+        if (!note) { note = document.createElement("p"); note.className = "roleNote"; pop.prepend(note); }
+        note.textContent = btn.dataset.locked ? tr(btn.dataset.locked === "research" ? "roleLockedResearch" : "roleLockedReview") : "";
+        note.hidden = !btn.dataset.locked;
         pop.hidden = !pop.hidden;
         btn.setAttribute("aria-expanded", String(!pop.hidden));
       });
@@ -733,10 +738,14 @@ export class WeightedOthelloApp {
       this.goToStep(step + 1);
       return true;
     }
+    const before = this.engine.tree.getCurrentNode();
     const ok = this.engine.playMove(r, c, disc);
     if (ok) {
       const node = this.engine.tree.getCurrentNode();
       node.actor = actor;
+      // 下的當下分析（提示）顯示的最佳格：之後分析變深、最佳步換了，下在這格也不標失誤（見 move-quality.js）
+      const a = before && this.analysis.get(before.id);
+      if (a?.scores?.length) node.bestAtMove = a.scores[0].sq & 63;
       if (actor === "cpu") node.cpuLevel = clampLevel(player === BLACK ? this.settings.blackLevel : this.settings.whiteLevel);
     }
     if (ok && this.session.assist && this.session.assist.color === player) {
@@ -768,14 +777,14 @@ export class WeightedOthelloApp {
     this.cpuRequest = req;
     const thinkMs = this.settings.v6Time || 500;
     const level = clampLevel(turn === BLACK ? this.settings.blackLevel : this.settings.whiteLevel);
-    // 亮棋之前至少等：節奏的間隔扣掉亮棋時間；最高級另外至少等滿 AI 思考時間（其他級是固定層數，幾毫秒就算完，只看節奏）
+    // 亮棋之前至少等：節奏的間隔扣掉亮棋時間；第 6、7 級（按時間搜）另外至少等滿 AI 思考時間（其他級是固定層數，幾毫秒就算完，只看節奏）
     const pace = this.pace();
-    const minMs = Math.max(pace.gap - pace.pick, level === MAX_CPU_LEVEL ? thinkMs : 0);
+    const timed = isTimedLevel(level);
+    const minMs = Math.max(pace.gap - pace.pick, timed ? thinkMs : 0);
     const started = this.cpuTurnStart ?? Date.now();
-    // 最高級（按時間搜）搜尋時局面分析先停：兩條 worker 同時搜會互搶記憶體／快取，CPU 的搜尋量少約兩成。
+    // 按時間搜的等級搜尋時局面分析先停：兩條 worker 同時搜會互搶記憶體／快取，CPU 的搜尋量少約兩成。
     // 正在算的如果是勝率條的第 1 級（最多 T），先等它算完，勝率走勢才不會缺點；更深的分析直接放棄，之後再算。
     // 其他級是固定層數，同時跑不影響棋力，分析照常。
-    const timed = level === MAX_CPU_LEVEL;
     let before = Promise.resolve();
     if (timed) {
       this.cpuSearching = req; // 不排新的分析（存這次的請求：舊請求收尾時不會清掉新請求的標記）
@@ -1573,7 +1582,7 @@ export class WeightedOthelloApp {
     const mark = classifyMove({
       scores: a.scores, played: node.move.discId * 64 + r * 8 + c,
       board: parent.board, turn: parent.turn, toProb,
-      next: nx?.scores?.length ? { scores: nx.scores } : null, prevP
+      next: nx?.scores?.length ? { scores: nx.scores } : null, prevP, bestAtMove: node.bestAtMove ?? null
     });
     if (mark?.sym && a.level < COACH_LEVEL) {
       this.confirmNeed.add(parent.id); // 先不標，等上一個局面分析到第 2 級
@@ -1753,7 +1762,7 @@ export class WeightedOthelloApp {
     // 難度選單只對 CPU 有效：這一方是人類時暗掉
     for (const side of ["black", "white"]) {
       const sel = document.getElementById(side === "black" ? "settingBlackLevel" : "settingWhiteLevel");
-      if (sel) sel.disabled = ui.seats[side] !== CPU_SEAT;
+      if (sel) sel.disabled = ui.seats[side] !== CPU_SEAT || !seatsEditable || !!this.researchSeats;
     }
     // 玩家卡上的「我／CPU 幾級」；分支研究中雙方暫時都是自己下，不能切換
     document.querySelectorAll(".pcRole").forEach((btn) => {
@@ -1762,7 +1771,9 @@ export class WeightedOthelloApp {
       btn.textContent = this.researchSeats ? tr("roleResearch")
         : ui.seats[side] === CPU_SEAT ? tr("roleCpu", { n: level }) : tr("roleHuman");
       btn.classList.toggle("isCpu", !this.researchSeats && ui.seats[side] === CPU_SEAT);
-      btn.disabled = !seatsEditable || !!this.researchSeats;
+      // 不能切換時按鈕照樣可以點（打開選單說明原因），只是看起來淡一點
+      btn.dataset.locked = this.researchSeats ? "research" : !seatsEditable ? "review" : "";
+      btn.classList.toggle("locked", !!btn.dataset.locked);
     });
 
     // 6. 動作列

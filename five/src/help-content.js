@@ -11,7 +11,7 @@ const markTable = (rows) => `<table class="helpMarks">${rows.map(([s, name, text
 
 const ZH = [
   section("畫面", `<ul>
-    <li><b>玩家卡</b>（棋盤上方）：名稱、「我」或「CPU 幾級」、目前的棋子數。輪到誰，誰的卡會亮起來。點「我 ▾ / CPU ▾」可以切換由你下或交給 CPU，以及 CPU 的難度（1～6 級，越高越強）；點名稱可以改名。</li>
+    <li><b>玩家卡</b>（棋盤上方）：名稱、「我」或「CPU 幾級」、目前的棋子數。輪到誰，誰的卡會亮起來。點「我 ▾ / CPU ▾」可以切換由你下或交給 CPU，以及 CPU 的難度（1～7 級，越高越強）；點名稱可以改名。</li>
     <li><b>勝率條</b>（棋盤左邊）：白方在上、黑方在下，數字是目前局面雙方的勝率。</li>
     <li><b>選組別</b>（棋盤右邊，手機在下方）：4 組棋（雙方共用），每組左上角是還剩幾顆，用完的組別會變淡。</li>
     <li><b>狀態列</b>：現在輪到誰、該做什麼。左邊的色帶：藍＝輪到你、紫＝CPU 思考中、橘＝暫停或正在看歷史、灰＝棋局結束。</li>
@@ -28,6 +28,7 @@ const ZH = [
   section("威脅連線", `<ul>
     <li>同一條直線上出現「三」（3 顆同一組，旁邊 2 格空著）或「四」（4 顆，只剩 1 格），會畫出那一組顏色的線，「四」的線比較粗。不分黑白，因為棋子還可能被翻面（翻面只換顏色，組別不變）。</li>
     <li>「四」的缺口（再補一顆就連成五的空格）會畫虛線框，裡面的小棋表示<b>哪一方下在那裡真的能連成五</b>：白棋、黑棋，或半白半黑（雙方都可以）。雙方都連不成的缺口不畫。</li>
+    <li><b>花五</b>：5 顆同一組已經排成一直線，可是黑白混在一起，所以還不算贏。會用一條那一組顏色的鐵鍊串起來。哪一方把另一色的棋全部翻過來，就立刻連成五獲勝，要特別注意。</li>
     <li>在連線裡的棋，字會加上那一組顏色的底線。滑鼠移到某一條連線，只突顯那一條。</li>
   </ul>`),
   section("勝率與勝率走勢", `<ul>
@@ -39,25 +40,25 @@ const ZH = [
   section("走法標記", `<p>每一手下完，那顆棋的右上角可能出現標記，雙方的棋都會評。滑鼠移到標記上會顯示原因，例如「局勢從優勢變成拉鋸（最佳：E3 ♥）」，最佳那一步會寫出格子和組別。</p>
     <p>局勢分五級：<b>勝定</b>、<b>優勢</b>、<b>拉鋸</b>、<b>劣勢</b>、<b>敗定</b>。</p>
     ${markTable([
-      ["!!", "妙手", "只有這一步能守住局面（其他每個格子都差 20% 以上），而且很難找。"],
-      ["!", "好手", "只有這一步能拿到這個局勢（其他格子都差一級以上），而且不容易看出來；或是抓住對手上一步的失誤。"],
-      ["!?", "設陷阱", "差不多是最好的一步，而且下完後，對手三分之二以上的下法會讓局勢倒向你（只是逼對手擋五連的不算）。"],
-      ["?!", "不精確", "局勢等級沒變，但讓掉了不少勝率。"],
-      ["?", "失誤", "局勢掉了一級。"],
-      ["??", "大漏著", "局勢掉了兩級以上。"]
+      ["!!", "反殺", "原本局勢很差（勝率 25% 以下），這一步把它翻成很好（75% 以上），而且只有這一步做得到（其他格子都差 25% 以上）。"],
+      ["!", "唯一手", "最好的一步，其他格子都差一截（10% 以上），局勢沒有變差；而且不是被對方逼出來的明顯應手（只看盤面、或多想兩手就看得出來的不算）。"],
+      ["!?", "強迫手", "不一定是最好的一步，但下完後對手只剩一個好格子，其他格子都差很多（20% 以上）。做出「四」逼對手擋的不算。"],
+      ["?!", "不精確", "比最佳的一步少了將近三成的勝率。"],
+      ["?", "失誤", "局勢掉了一級，而且勝率少了四成半以上。"],
+      ["??", "大漏著", "局勢掉了兩級以上，而且勝率少了八成以上（例如從快贏變成快輸）。"]
     ])}
     <ul>
-      <li>不標的情況：勝負已經分出來的局面、只有一格可下、直接連成五的那一步、很好找的唯一好步。終盤（剩 7 格以內）只標「對手失手、這步把握機會逆轉」的好棋。</li>
+      <li>不標的情況：勝負已經分出來的局面、只有一格可下、直接連成五的那一步。下在最佳的格子（或下的當下提示顯示的最佳格）不會被標失誤，組別選得不同也一樣。原本已經快贏的局面不標好手；終盤（剩 7 格以內）只標反殺。</li>
       <li>標記要等更完整的分析確認，通常晚一兩秒出現；偶爾出現後又改變，是因為更準的分析到了。</li>
     </ul>`),
   section("AI 教練（提示）", `<ul>
     <li>按「💡 提示」打開。每個可下的格子會顯示「這格配最好的那一組」的勝率，最高的那格有框。</li>
     <li>滑鼠移到格子上，右邊每一組旁邊會顯示它下在這格的勝率。點某一組可以固定看那一組在各格的勝率。</li>
     <li>數字很淡表示還在算；你還在想的時候引擎會繼續往下算，算得夠深（約 3 倍思考時間）數字就會變清楚，之後也可能小幅更新。</li>
-    <li>教練的思考時間是「AI 思考時間」的兩倍，跟 6 級 CPU 差不多強。開著提示時，CPU 落子之前就會先替你算，所以通常很快出現。</li>
+    <li>教練的思考時間是「AI 思考時間」的兩倍，跟 7 級 CPU 差不多強。開著提示時，CPU 落子之前就會先替你算，所以通常很快出現。</li>
   </ul>`),
   section("設定", `<ul>
-    <li><b>AI 思考時間</b>：越長越準，但要等比較久。6 級 CPU 每步想這麼久，勝率條至少分析這麼久，AI 教練用兩倍的時間。1～5 級 CPU 不受影響。</li>
+    <li><b>AI 思考時間</b>：越長越準，但要等比較久。6、7 級 CPU 每步想這麼久，勝率條至少分析這麼久，AI 教練用兩倍的時間。1～5 級 CPU 不受影響。</li>
     <li><b>下棋節奏</b>：CPU 落子的快慢（慢／正常／快／極速），只影響看起來的速度，不影響棋力和分析。極速不播動畫和落子音效，適合快轉看結果。CPU 對下時切到別的分頁會自動暫停。</li>
     <li><b>遊戲音效</b>、<b>雙方名稱</b>、<b>棋盤主題</b>。</li>
     <li><b>棋子文字</b>：4 組各一個，預設是撲克牌的四個花色 ♠ ♥ ♦ ♣（連線顏色：♠ 金黃、♥ 血紅、♦ 水藍、♣ 葉綠），也可以換成希臘字母 α β γ δ，或自訂 4 個不同的字（中文、英文、日文都行）。</li>
@@ -74,7 +75,7 @@ const ZH = [
 
 const EN = [
   section("The screen", `<ul>
-    <li><b>Player cards</b> (above the board): name, "Me" or "CPU level", and disc count. The card of the side to move lights up. Click "Me ▾ / CPU ▾" to switch between playing yourself and letting the CPU play, and to set the CPU level (1–6, higher is stronger); click a name to rename it.</li>
+    <li><b>Player cards</b> (above the board): name, "Me" or "CPU level", and disc count. The card of the side to move lights up. Click "Me ▾ / CPU ▾" to switch between playing yourself and letting the CPU play, and to set the CPU level (1–7, higher is stronger); click a name to rename it.</li>
     <li><b>Win bar</b> (left of the board): White on top, Black at the bottom, with each side's current win chance.</li>
     <li><b>Groups</b> (right of the board, below it on phones): the 4 groups of discs both sides share; the top-left number is how many are left, and a used-up group fades out.</li>
     <li><b>Status line</b>: whose turn it is and what to do. The colour on the left: blue = your turn, purple = CPU thinking, orange = paused or viewing history, grey = game over.</li>
@@ -91,6 +92,7 @@ const EN = [
   section("Threat lines", `<ul>
     <li>A "three" (3 discs of one group with 2 empty squares) or a "four" (4 discs, 1 empty square) on a line is drawn in that group's colour; fours are thicker. Black and white are ignored because discs can still be flipped (flipping changes the colour, never the group).</li>
     <li>The gap of a four (the empty square that would complete five) gets a dashed box, and the small disc inside shows <b>which side can really make five there</b>: White, Black, or half and half (both). Gaps nobody can complete are not drawn.</li>
+    <li><b>Mixed five</b>: 5 discs of one group already stand in a line, but black and white are mixed, so nobody has won yet. It is bound by a chain in the group's colour. Whoever flips the other colour's discs in it to their own colour makes five and wins at once, so keep an eye on it.</li>
     <li>Discs in a line get an underline in the group's colour. Hover a line to highlight just that line.</li>
   </ul>`),
   section("Win chance and the chart", `<ul>
@@ -102,25 +104,25 @@ const EN = [
   section("Move marks", `<p>After each move a mark may appear at the disc's top-right corner, for both sides. Hover it to see why, e.g. "Position went from ahead to balanced (best: E3 ♥)" — the best move names a square and a group.</p>
     <p>Positions come in five levels: <b>won</b>, <b>ahead</b>, <b>balanced</b>, <b>behind</b>, <b>lost</b>.</p>
     ${markTable([
-      ["!!", "Brilliant", "The only move that holds the position (every other square is at least 20% worse), and hard to find."],
-      ["!", "Good", "The only move that reaches this level (every other square is a level worse), and not easy to see — or one that punishes the opponent's last mistake."],
-      ["!?", "Trap", "About as good as the best move, and afterwards two thirds or more of the opponent's replies turn the game your way (just forcing them to block a five doesn't count)."],
-      ["?!", "Inaccuracy", "Same level, but a fair amount of win chance given away."],
-      ["?", "Mistake", "The position drops one level."],
-      ["??", "Blunder", "The position drops two levels or more."]
+      ["!!", "Turnaround", "You were in bad shape (25% or less) and this move turns it into a strong position (75% or more) — and it is the only move that does (every other square is at least 25% worse)."],
+      ["!", "Only move", "The best move, with every other square clearly worse (10% or more), and the position does not get worse — and it is not an obvious forced reply (one you can see from the board or by looking two moves ahead)."],
+      ["!?", "Forcing move", "Not necessarily the best move, but afterwards the opponent has only one good square and everything else is much worse (20% or more). Making a four that must be blocked does not count."],
+      ["?!", "Inaccuracy", "Gives away nearly 30% win chance compared with the best move."],
+      ["?", "Mistake", "The position drops one level and loses 45% or more win chance."],
+      ["??", "Blunder", "The position drops two levels or more and loses 80% or more win chance (e.g. from nearly won to nearly lost)."]
     ])}
     <ul>
-      <li>No mark when: the game is already decided, there is only one legal square, the move makes five, or the only good move is easy to find. In the endgame (7 or fewer empty squares) only comebacks after the opponent's slip are marked as good moves.</li>
+      <li>No mark when: the game is already decided, there is only one legal square, or the move makes five. Playing the best square (or the square the hint showed as best when you moved) is never marked as a mistake, even with a different group. No good-move marks when you were already nearly winning; in the endgame (7 or fewer empty squares) only turnarounds are marked.</li>
       <li>Marks wait for a more thorough analysis, so they usually appear a second or two later; occasionally a mark changes once a more accurate analysis arrives.</li>
     </ul>`),
   section("AI coach (hints)", `<ul>
     <li>Press "💡 Hints". Each legal square shows the win chance of its best group; the best square is outlined.</li>
     <li>Hover a square to see each group's win chance there. Click a group to see that group's win chance on every square.</li>
     <li>Faint numbers are still being worked out. The engine keeps going while you think, and the numbers turn solid once it has gone deep enough (about 3× the thinking time); they may still update slightly afterwards.</li>
-    <li>The coach thinks for twice the AI thinking time, so it is about as strong as the Level 6 CPU. With hints on it starts working on your position before the CPU's move lands, so hints usually appear quickly.</li>
+    <li>The coach thinks for twice the AI thinking time, so it is about as strong as the Level 7 CPU. With hints on it starts working on your position before the CPU's move lands, so hints usually appear quickly.</li>
   </ul>`),
   section("Settings", `<ul>
-    <li><b>AI thinking time</b>: longer is more accurate but slower. The Level 6 CPU thinks this long per move, the win bar analyses at least this long, and the AI coach uses twice as long. Levels 1–5 are not affected.</li>
+    <li><b>AI thinking time</b>: longer is more accurate but slower. The Level 6 and 7 CPUs think this long per move, the win bar analyses at least this long, and the AI coach uses twice as long. Levels 1–5 are not affected.</li>
     <li><b>Game pace</b>: how quickly the CPU plays (slow / normal / fast / instant). It only changes how fast things look, not strength or analysis. Instant skips animations and stone sounds, handy for fast-forwarding. CPU vs CPU pauses itself when you switch to another tab.</li>
     <li><b>Sound</b>, <b>player names</b>, <b>board theme</b>.</li>
     <li><b>Symbols on the discs</b>: one per group: card suits ♠ ♥ ♦ ♣ by default (line colours: ♠ gold, ♥ blood red, ♦ water blue, ♣ leaf green), or Greek letters α β γ δ, or any 4 different characters of your own.</li>
@@ -137,7 +139,7 @@ const EN = [
 
 const JA = [
   section("画面", `<ul>
-    <li><b>プレイヤーカード</b>（盤の上）：名前、「自分」または「CPU のレベル」、石の数。手番の側のカードが光ります。「自分 ▾ / CPU ▾」をクリックすると、自分で打つか CPU に任せるか、CPU の強さ（1～6、高いほど強い）を切り替えられます。名前をクリックすると名前を変えられます。</li>
+    <li><b>プレイヤーカード</b>（盤の上）：名前、「自分」または「CPU のレベル」、石の数。手番の側のカードが光ります。「自分 ▾ / CPU ▾」をクリックすると、自分で打つか CPU に任せるか、CPU の強さ（1～7、高いほど強い）を切り替えられます。名前をクリックすると名前を変えられます。</li>
     <li><b>勝率バー</b>（盤の左）：白が上、黒が下で、現在の局面の両者の勝率を表示します。</li>
     <li><b>組を選ぶ</b>（盤の右、スマホでは下）：両者共通の 4 組の石。左上の数字は残り枚数で、使い切った組は薄くなります。</li>
     <li><b>ステータス行</b>：手番とやること。左の色帯：青＝あなたの番、紫＝CPU 思考中、橙＝一時停止中または履歴を表示中、灰＝対局終了。</li>
@@ -154,6 +156,7 @@ const JA = [
   section("脅威ライン", `<ul>
     <li>一直線上に「三」（同じ組の石 3 枚と空き 2 マス）や「四」（4 枚と空き 1 マス）ができると、その組の色で線を引きます。四の線は太めです。石はまだ裏返る可能性があるので（裏返しで変わるのは色だけで、組は変わりません）、白黒は区別しません。</li>
     <li>四の空き（あと 1 枚で五連になるマス）には点線の枠を描き、中の小さな石で<b>どちらがそこに打つと本当に五連になるか</b>を示します：白、黒、または半分ずつ（両方）。どちらも五連にできない空きは描きません。</li>
+    <li><b>混色の五</b>：同じ組の石 5 枚がすでに一直線に並んでいるのに、白黒が混ざっているのでまだ勝ちではありません。その組の色の鎖でつなぎます。もう一方の色の石を全部自分の色に裏返した側が、その場で五連になって勝つので要注意です。</li>
     <li>ラインに入っている石の文字には、その組の色の下線が付きます。ラインにマウスを乗せると、そのラインだけが強調されます。</li>
   </ul>`),
   section("勝率と勝率の推移", `<ul>
@@ -165,25 +168,25 @@ const JA = [
   section("評価記号", `<p>各手のあと、その石の右上に記号が付くことがあります（両者の手が対象）。記号にマウスを乗せると理由が表示されます。例：「形勢が優勢から互角に（最善：E3 ♥）」。最善手はマスと組で示されます。</p>
     <p>形勢は 5 段階です：<b>勝ち確定</b>、<b>優勢</b>、<b>互角</b>、<b>劣勢</b>、<b>負け確定</b>。</p>
     ${markTable([
-      ["!!", "妙手", "形勢を保てる唯一の手（他のマスはすべて 20% 以上悪い）で、しかも見つけにくい。"],
-      ["!", "好手", "この形勢にできる唯一の手（他のマスはすべて 1 段階以上悪い）で、見つけにくい。または相手の直前のミスを咎める手。"],
-      ["!?", "罠", "ほぼ最善で、打ったあと相手の手の 3 分の 2 以上で形勢がこちらに傾く（五連を止めさせるだけの手は除く）。"],
-      ["?!", "緩手", "形勢の段階は変わらないが、勝率をかなり失った。"],
-      ["?", "悪手", "形勢が 1 段階下がった。"],
-      ["??", "大悪手", "形勢が 2 段階以上下がった。"]
+      ["!!", "逆転の一手", "形勢が悪かった（勝率 25% 以下）のを、この一手で良い形勢（75% 以上）に変える。しかもそれができるのはこの手だけ（他のマスはすべて 25% 以上悪い）。"],
+      ["!", "唯一手", "最善手で、他のマスはすべてはっきり悪く（10% 以上）、形勢も悪くならない。しかも相手に強いられた明らかな応手ではない（盤面を見るだけ、または 2 手先まで読めば分かる手は除く）。"],
+      ["!?", "強制手", "最善とは限らないが、打ったあと相手には良いマスが 1 つしかなく、他はすべて大きく悪い（20% 以上）。四を作って止めさせる手は除く。"],
+      ["?!", "緩手", "最善手より勝率を 3 割近く失った。"],
+      ["?", "悪手", "形勢が 1 段階下がり、勝率を 4.5 割以上失った。"],
+      ["??", "大悪手", "形勢が 2 段階以上下がり、勝率を 8 割以上失った（勝ち寸前から負け寸前など）。"]
     ])}
     <ul>
-      <li>記号を付けない場合：勝敗がすでに決まっている、打てるマスが 1 つだけ、その手で五連になる、唯一の好手でも見つけやすい。終盤（空き 7 マス以内）は「相手のミスを逃さず逆転した」好手だけに付けます。</li>
+      <li>記号を付けない場合：勝敗がすでに決まっている、打てるマスが 1 つだけ、その手で五連になる。最善のマス（または打った時点でヒントが最善と示したマス）に打った手は、組が違っても悪手にはなりません。すでに勝ち寸前の局面では好手記号を付けず、終盤（空き 7 マス以内）は逆転の一手だけに付けます。</li>
       <li>記号はより詳しい分析で確認してから付くので、たいてい 1～2 秒遅れて表示されます。より正確な分析が届いて記号が変わることもあります。</li>
     </ul>`),
   section("AI コーチ（ヒント）", `<ul>
     <li>「💡 ヒント」でオン。打てるマスごとに、最善の組を打ったときの勝率を表示し、最も高いマスには枠が付きます。</li>
     <li>マスにマウスを乗せると、各組をそのマスに打ったときの勝率が表示されます。組をクリックすると、その組の各マスでの勝率を固定表示します。</li>
     <li>数字が薄いときはまだ計算中です。考えている間もエンジンは計算を続け、十分深くなると（思考時間の約 3 倍）はっきり表示されます。その後も少し更新されることがあります。</li>
-    <li>コーチは「AI の思考時間」の 2 倍で考えるので、レベル6の CPU とほぼ同じ強さです。ヒントがオンのときは CPU が打つ前からあなたの局面を計算し始めるので、たいていすぐに表示されます。</li>
+    <li>コーチは「AI の思考時間」の 2 倍で考えるので、レベル7の CPU とほぼ同じ強さです。ヒントがオンのときは CPU が打つ前からあなたの局面を計算し始めるので、たいていすぐに表示されます。</li>
   </ul>`),
   section("設定", `<ul>
-    <li><b>AI の思考時間</b>：長いほど正確ですが待ち時間も長くなります。レベル6の CPU は1手にこの時間考え、勝率バーは少なくともこの時間分析し、AI コーチは 2 倍の時間を使います。レベル1～5には影響しません。</li>
+    <li><b>AI の思考時間</b>：長いほど正確ですが待ち時間も長くなります。レベル6・7の CPU は1手にこの時間考え、勝率バーは少なくともこの時間分析し、AI コーチは 2 倍の時間を使います。レベル1～5には影響しません。</li>
     <li><b>対局のテンポ</b>：CPU が石を置く速さ（遅い／標準／速い／最速）。見た目の速さだけが変わり、強さや分析には影響しません。最速はアニメーションと着手音を省くので、早送りに便利です。CPU 同士の対局は別のタブに切り替えると自動で一時停止します。</li>
     <li><b>効果音</b>、<b>両者の名前</b>、<b>盤のテーマ</b>。</li>
     <li><b>石の文字</b>：組ごとに 1 つ、既定はトランプのマーク ♠ ♥ ♦ ♣（ラインの色：♠ 金、♥ 血の赤、♦ 水色、♣ 葉の緑）。ギリシャ文字 α β γ δ や、異なる 4 文字を自分で指定することもできます。</li>
