@@ -190,9 +190,10 @@ html { scrollbar-gutter: stable; }
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
+/* 白方佔幾 %：程式只設定 --white（見 ui/eval-bar.js），電腦版當高度、手機版當寬度 */
 .evalBar .evalWhite {
   position: absolute; left: 0; right: 0; top: 0;
-  height: 50%;
+  height: var(--white, 50%);
   background: #f1f5f9;
   transition: height 0.45s ease;
 }
@@ -209,7 +210,7 @@ html { scrollbar-gutter: stable; }
 @media (max-width: 600px) {
   /* 手機版棋盤上方改成橫條（黑方在左、白方在右） */
   .evalBar { flex: 0 0 auto; width: min(92vw, var(--board-max-size)); height: 20px; margin-top: 0; }
-  .evalBar .evalWhite { left: auto; top: 0; bottom: 0; right: 0; height: 100%; width: 50%; transition: width 0.45s ease; }
+  .evalBar .evalWhite { left: auto; top: 0; bottom: 0; right: 0; height: 100%; width: var(--white, 50%); transition: width 0.45s ease; }
   .evalBar .evalNumWhite { top: 50%; right: 6px; left: auto; transform: translateY(-50%); }
   .evalBar .evalNumBlack { top: 50%; bottom: auto; left: 6px; right: auto; transform: translateY(-50%); text-align: left; }
 }
@@ -507,6 +508,9 @@ html { scrollbar-gutter: stable; }
 /* 設定視窗的一列（標籤 + 選單） */
 .settingRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .settingRow select { font: inherit; padding: 5px 8px; border-radius: 8px; }
+
+/* 觸控：按鈕、組別、格子點兩下不會放大畫面（不用等 300 毫秒判斷是不是雙擊），點下去也不會閃一塊藍色 */
+.actBtn, .topBtn, .poolDisc, .openingChip, .seatBtn, .pcRole, .cell { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 /* 手機：頂部一行、玩家卡縮小、操作列固定在畫面底部 */
 @media (max-width: 600px) {
