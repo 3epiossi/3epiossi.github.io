@@ -556,7 +556,7 @@ export function othelloEvalV14(board, player, groupOf, params = V14_PARAMS) {
  *             depth:number, exact:boolean, nodes:number, ms:number } | null}
  *   scores：每個格子 × 每一組還有剩的組別。組別合併沒展開的組別（效果跟「切斷連線」那一組一樣）用那一組的分數
  */
-export function searchV14(board, player, groupOf, { timeMs = 1000, maxDepth = 60, multiPV = false, params = V14_PARAMS } = {}) {
+export function searchV14(board, player, groupOf, { timeMs = 1000, maxDepth = 60, multiPV = false, params = V14_PARAMS, part = null } = {}) {
   ensureWeights();
   if (!TT_K2) allocTT();
   const [pH, pL, oH, oL, a0H, a0L, a1H, a1L] = toBits(board, player, groupOf);
@@ -579,8 +579,17 @@ export function searchV14(board, player, groupOf, { timeMs = 1000, maxDepth = 60
   const n = genMoves(mH, mL, sup, live, buf);
   let order = Array.from(buf.subarray(0, n)).map(mv => ({ mv, score: SQ_ORDER[mv >> 2] }));
   order.sort((a, b) => b.score - a.score);
+  // 平行分析（multiPV）：part = [第幾份, 共幾份]。每個格子（連同它的各組）整個分給同一份，格子照靜態順序輪流分配（各份的工作量差不多）。
+  // 每個第一步都用完整窗口各自搜尋、彼此獨立，所以分給多條 worker 同時算，每一步都能多搜幾層（見 ai-client.js 的 AiPool）
+  if (part && part[1] > 1) {
+    const rank = new Map();
+    for (const o of order) if (!rank.has(o.mv >> 2)) rank.set(o.mv >> 2, rank.size);
+    order = order.filter((o) => rank.get(o.mv >> 2) % part[1] === part[0]);
+    if (!order.length) return null;
+  }
   let best = order[0].mv, bestScore = -Infinity, doneDepth = 0, exact = false;
   let done = null; // 最後一次算完的每一步分數
+  const hist = []; // 平行分析（part）：每一層算完的分數，合併時統一取大家都算完的最深一層（見 ai-client.js 的 mergeParts）
 
   const iterate = (depth, until) => {
     deadline = until;
@@ -611,6 +620,7 @@ export function searchV14(board, player, groupOf, { timeMs = 1000, maxDepth = 60
     }
     order.sort((a, b) => b.score - a.score);
     done = order.map(o => ({ mv: o.mv, score: o.score }));
+    if (part) hist.push({ depth, done });
     return { cur, curScore };
   };
 
@@ -632,9 +642,9 @@ export function searchV14(board, player, groupOf, { timeMs = 1000, maxDepth = 60
     }
   }
   // 每一格 × 每一組：沒展開的組別（不在活的窗口裡）跟「切斷連線」那一組效果一樣，用它的分數
-  const scores = [];
-  if (done) {
-    const at = new Map(done.map(x => [x.mv, x.score]));
+  const buildScores = (dn) => {
+    const out = [];
+    const at = new Map(dn.map(x => [x.mv, x.score]));
     let ml = mL, mh = mH;
     while (ml !== 0 || mh !== 0) {
       let s;
@@ -644,10 +654,18 @@ export function searchV14(board, player, groupOf, { timeMs = 1000, maxDepth = 60
       for (let g = 0; g < GROUPS; g++) {
         if (!sup[g]) continue;
         const v = at.has(s * 4 + g) ? at.get(s * 4 + g) : cut;
-        if (v != null) scores.push({ sq: s, group: g, score: v });
+        if (v != null) out.push({ sq: s, group: g, score: v });
       }
     }
-    scores.sort((a, b) => b.score - a.score);
+    out.sort((a, b) => b.score - a.score);
+    return out;
+  };
+  const scores = done ? buildScores(done) : [];
+  const res = { sq: best >> 2, group: best & 3, score: bestScore, scores, depth: doneDepth, exact, nodes, ms: Date.now() - t0 };
+  if (part) {
+    // proven：這一份已經算出勝負（找到必勝的走法就停了），不跟其他份比深度
+    res.proven = Math.abs(bestScore) > WIN / 2;
+    res.hist = hist.map(h => ({ depth: h.depth, scores: buildScores(h.done) }));
   }
-  return { sq: best >> 2, group: best & 3, score: bestScore, scores, depth: doneDepth, exact, nodes, ms: Date.now() - t0 };
+  return res;
 }

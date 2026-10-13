@@ -208,11 +208,11 @@ html { scrollbar-gutter: stable; }
 .evalBar.pending .evalWhite { opacity: 0.8; }
 [data-anim="minimal"] .evalBar .evalWhite { transition: none; }
 @media (max-width: 600px) {
-  /* 手機版棋盤上方改成橫條（黑方在左、白方在右） */
+  /* 手機版棋盤上方改成橫條（白方在左、黑方在右，跟上面的分數欄同一個順序） */
   .evalBar { flex: 0 0 auto; width: min(92vw, var(--board-max-size)); height: 20px; margin-top: 0; }
-  .evalBar .evalWhite { left: auto; top: 0; bottom: 0; right: 0; height: 100%; width: var(--white, 50%); transition: width 0.45s ease; }
-  .evalBar .evalNumWhite { top: 50%; right: 6px; left: auto; transform: translateY(-50%); }
-  .evalBar .evalNumBlack { top: 50%; bottom: auto; left: 6px; right: auto; transform: translateY(-50%); text-align: left; }
+  .evalBar .evalWhite { left: 0; top: 0; bottom: 0; right: auto; height: 100%; width: var(--white, 50%); transition: width 0.45s ease; }
+  .evalBar .evalNumWhite { top: 50%; left: 6px; right: auto; transform: translateY(-50%); text-align: left; }
+  .evalBar .evalNumBlack { top: 50%; bottom: auto; right: 6px; left: auto; transform: translateY(-50%); text-align: right; }
 }
 
 /* ===== 走法評價標記（!! ! !? ?! ? ??） ===== */
@@ -623,24 +623,29 @@ html { scrollbar-gutter: stable; }
 .pcRole.locked { opacity: 0.6; }
 .roleNote { margin: 0; max-width: 220px; font-size: 12px; line-height: 1.5; color: #fcd34d; }
 
-/* ===== 手機：棋盤撐滿螢幕寬度，格線細、棋子大（像一般黑白棋 App） =====
- * 頁面左右只留 6px，座標縮成 14px 的細條，格子之間 1px 的格線，棋子佔格子的 90%。
- * 勝率條、選組別跟棋盤（含座標）一樣寬。 */
+/* ===== 棋盤樣式：簡潔（data-board="clean"）：格線細、棋子大，像一般黑白棋 App =====
+ * 設定「棋盤樣式」可選經典／簡潔／自動（手機簡潔、電腦經典，見 app.js 的 applyBoardStyle）。
+ * 格子之間 1px 的格線、不圓角，棋子佔格子的 90%，座標縮成細條。 */
+:root[data-board="clean"] { --board-gap: 1px; --coord-size: 18px; }
+:root[data-board="clean"] .board { padding: 1px; gap: 1px; border-radius: 4px; border-width: 1px; background: #0a2814; box-shadow: none; }
+:root[data-board="clean"] .cell { border-radius: 0; }
+:root[data-board="clean"] .cell .disc { width: 90%; height: 90%; }
+:root[data-board="clean"] .coordTop, :root[data-board="clean"] .coordLeft { font-size: 11px; font-weight: 600; letter-spacing: 0; }
+
+/* ===== 手機：棋盤撐滿螢幕寬度（頁面左右只留 6px），勝率條、選組別跟棋盤（含座標）一樣寬 ===== */
+@media (max-width: 600px) {
+  :root[data-board="clean"] { --coord-size: 14px; }
+  :root[data-board="clean"] .coordTop, :root[data-board="clean"] .coordLeft { font-size: 10px; }
+}
 @media (max-width: 600px) {
   body { padding: 6px; }
   :root {
-    --coord-size: 14px;
-    --board-gap: 1px;
     --board-max-size: calc(100vw - 12px - var(--coord-size));
     --five-full: calc(var(--board-max-size) + var(--coord-size));
   }
   .boardFrame { margin: 0; }
   .board, .coordTop, .movePathSvg { width: var(--board-max-size); }
   .coordLeft, .movePathSvg { height: var(--board-max-size); }
-  .coordTop, .coordLeft { font-size: 10px; font-weight: 600; letter-spacing: 0; }
-  .board { padding: 1px; gap: 1px; border-radius: 4px; border-width: 1px; background: #0a2814; box-shadow: none; }
-  .cell { border-radius: 0; }
-  .cell .disc { width: 90%; height: 90%; }
   .boardWithSide { gap: 8px; }
   .evalBar { width: var(--five-full); height: 14px; border-radius: 7px; }
   .evalBar .evalNum { font-size: 10px; }
@@ -673,4 +678,25 @@ html { scrollbar-gutter: stable; }
   .actionBar { background: rgba(2, 6, 23, 0.98); }
   .modalBackdrop { background: rgba(0, 0, 0, 0.82); }
   .threatLayer .tMixed { filter: none; } /* 花五的鐵鍊不加陰影（SVG 濾鏡在手機上很慢） */
+}
+
+/* ===== 電腦：棋盤隨視窗放大 =====
+ * 原本棋盤固定最大 520 像素，大螢幕上只佔一小塊。現在取兩個限制中比較小的：
+ *   寬度：棋盤那一欄的寬度（container query 單位 cqw）扣掉勝率條、座標、右邊的選組別面板（--board-side-reserve）
+ *   高度：視窗高度扣掉棋盤上下的東西（頂欄、玩家卡、狀態列、按鈕列…，--board-v-reserve）
+ * 欄位也改成棋盤那一欄比較寬，並且大螢幕上整個版面可以更寬。範圍 360～860 像素（高度不夠時至少 480）。 */
+@media (min-width: 961px) {
+  :root {
+    --board-side-reserve: 200px;
+    --board-v-reserve: 348px;
+    /* 高度不夠的小螢幕：棋盤至少 480（頁面捲一下），但不超過那一欄的寬度 */
+    --board-max-size: clamp(360px, min(calc(100cqw - var(--board-side-reserve)), max(calc(100dvh - var(--board-v-reserve)), 480px)), 860px);
+  }
+  .boardSection { container-type: inline-size; }
+  .mainGrid { grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); }
+  .boardWithSide { gap: 18px; }
+  .boardWithSide .boardFrame { margin: 0; } /* 原本的 auto 邊距會把勝率條、棋盤、選組別面板拉開 */
+}
+@media (min-width: 1500px) {
+  .app, #app { max-width: min(1560px, 96vw); }
 }

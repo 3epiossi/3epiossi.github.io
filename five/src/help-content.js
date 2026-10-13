@@ -60,6 +60,7 @@ const ZH = [
   section("設定", `<ul>
     <li><b>AI 思考時間</b>：越長越準，但要等比較久。6、7 級 CPU 每步想這麼久，勝率條至少分析這麼久，AI 教練用兩倍的時間。1～5 級 CPU 不受影響。</li>
     <li><b>下棋節奏</b>：CPU 落子的快慢（慢／正常／快／極速），只影響看起來的速度，不影響棋力和分析。極速不播動畫和落子音效，適合快轉看結果。CPU 對下時切到別的分頁會自動暫停。</li>
+    <li><b>棋盤樣式</b>：<b>經典</b>是圓角的格子，<b>簡潔</b>是細格線、棋子比較大（像一般的黑白棋 App），<b>自動</b>是手機用簡潔、電腦用經典。電腦版的棋盤會隨視窗大小放大。</li>
     <li><b>遊戲音效</b>、<b>雙方名稱</b>、<b>棋盤主題</b>。</li>
     <li><b>棋子文字</b>：4 組各一個，預設是撲克牌的四個花色 ♠ ♥ ♦ ♣（連線顏色：♠ 金黃、♥ 血紅、♦ 水藍、♣ 葉綠），也可以換成希臘字母 α β γ δ，或自訂 4 個不同的字（中文、英文、日文都行）。</li>
     <li><b>棋子顏色與文字顏色</b>：黑白棋子各自的寶石顏色，以及棋上文字的顏色。「還原預設外觀」可以全部改回來。</li>
@@ -124,6 +125,7 @@ const EN = [
   section("Settings", `<ul>
     <li><b>AI thinking time</b>: longer is more accurate but slower. The Level 6 and 7 CPUs think this long per move, the win bar analyses at least this long, and the AI coach uses twice as long. Levels 1–5 are not affected.</li>
     <li><b>Game pace</b>: how quickly the CPU plays (slow / normal / fast / instant). It only changes how fast things look, not strength or analysis. Instant skips animations and stone sounds, handy for fast-forwarding. CPU vs CPU pauses itself when you switch to another tab.</li>
+    <li><b>Board style</b>: <b>Classic</b> has rounded squares; <b>Clean</b> has thin grid lines and bigger discs, like a typical Othello app; <b>Auto</b> uses Clean on phones and Classic on computers. On computers the board grows with the window.</li>
     <li><b>Sound</b>, <b>player names</b>, <b>board theme</b>.</li>
     <li><b>Symbols on the discs</b>: one per group: card suits ♠ ♥ ♦ ♣ by default (line colours: ♠ gold, ♥ blood red, ♦ water blue, ♣ leaf green), or Greek letters α β γ δ, or any 4 different characters of your own.</li>
     <li><b>Disc and symbol colours</b>: a gem colour for each side and the colour of the symbols on them. "Restore defaults" brings back the default look.</li>
@@ -188,6 +190,7 @@ const JA = [
   section("設定", `<ul>
     <li><b>AI の思考時間</b>：長いほど正確ですが待ち時間も長くなります。レベル6・7の CPU は1手にこの時間考え、勝率バーは少なくともこの時間分析し、AI コーチは 2 倍の時間を使います。レベル1～5には影響しません。</li>
     <li><b>対局のテンポ</b>：CPU が石を置く速さ（遅い／標準／速い／最速）。見た目の速さだけが変わり、強さや分析には影響しません。最速はアニメーションと着手音を省くので、早送りに便利です。CPU 同士の対局は別のタブに切り替えると自動で一時停止します。</li>
+    <li><b>盤のスタイル</b>：<b>クラシック</b>は角丸のマス、<b>シンプル</b>は細い罫線で石が大きい一般的なオセロアプリ風、<b>自動</b>はスマホはシンプル・パソコンはクラシックです。パソコンでは盤がウィンドウの大きさに合わせて大きくなります。</li>
     <li><b>効果音</b>、<b>両者の名前</b>、<b>盤のテーマ</b>。</li>
     <li><b>石の文字</b>：組ごとに 1 つ、既定はトランプのマーク ♠ ♥ ♦ ♣（ラインの色：♠ 金、♥ 血の赤、♦ 水色、♣ 葉の緑）。ギリシャ文字 α β γ δ や、異なる 4 文字を自分で指定することもできます。</li>
     <li><b>石の色と文字の色</b>：白黒それぞれの宝石の色と、石の上の文字の色。「デフォルトに戻す」で元に戻せます。</li>

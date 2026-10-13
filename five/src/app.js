@@ -21,7 +21,7 @@ import { PatternFx } from "./ui/pattern-fx.js";
 import { helpGuideHtml } from "./help-content.js";
 import { stoneSound as sound } from "./ui/stone-sound.js";
 import { resolveTextColor, textPaletteFor, normalizeFace } from "./ui/text-colors.js";
-import { AiClient } from "./ai/ai-client.js";
+import { AiClient, AiPool, analysisWorkers } from "./ai/ai-client.js";
 
 // 與原專案共用的通用模組（唯讀引用，不修改）
 import { ModalManager } from "../../src/ui/modal-manager.js";
@@ -89,6 +89,7 @@ export class WeightedOthelloApp {
     this.skinManager.config = { ...cfg, black: normalizeFace(cfg.black, true), white: normalizeFace(cfg.white, false) };
     this.skinManager.applyToDOM();
     this.applySymbolSet(this.settings.symbolSet);
+    this.applyBoardStyle();
     this.applyTextColors();
 
     const blackSeat = this.settings.blackRole || HUMAN;
@@ -106,7 +107,7 @@ export class WeightedOthelloApp {
     this.cpuRequest = null;   // v6 在 Worker 思考中的請求（局面改變時作廢）
     this.aiClient = new AiClient();
     // 局面分析（勝率條、勝率走勢、提示、走法標記共用）：一條 Worker，一次算一件事，見 scheduleAnalysis
-    this.analysisClient = new AiClient();
+    this.analysisClient = new AiPool(analysisWorkers({ lowPower: LOW_POWER })); // 電腦上好幾條 worker 一起算每一步的分數；手機一條
     this.ponderClient = null;           // 預先計算專用（CPU 選好棋、還沒落子時，先替下一個局面算）；用到才開，見 ponderWorker
     this.ponder = null;                 // { board, player, pool, promise }
     this.ponderJob = null;              // 預先計算的結果正在補算新的那顆棋的節點 id
@@ -1214,6 +1215,18 @@ export class WeightedOthelloApp {
   }
 
   /** 棋子文字（希臘字母或自訂）：換掉 4 組的字（data-symbols 給 CSS 用） */
+  /** 棋盤樣式（見 five.css 的 data-board）：auto = 手機簡潔、電腦經典；螢幕寬度改變（轉向、拉視窗）時重新判斷 */
+  applyBoardStyle() {
+    const narrow = window.matchMedia("(max-width: 600px)");
+    const set = () => {
+      const pref = ["classic", "clean"].includes(this.settings.boardStyle) ? this.settings.boardStyle : "auto";
+      document.documentElement.dataset.board = pref === "auto" ? (narrow.matches ? "clean" : "classic") : pref;
+    };
+    set();
+    if (!this._boardStyleBound) { this._boardStyleBound = true; narrow.addEventListener?.("change", set); this._applyBoardStyleNow = set; }
+    else this._applyBoardStyleNow();
+  }
+
   applySymbolSet(name) {
     setSymbolSet(name, this.settings.customSymbols);
     // 舊設定（字母、圖案）或自訂字不合格時退回希臘字母
@@ -1254,6 +1267,10 @@ export class WeightedOthelloApp {
     if (sample) sample.textContent = custom.ok ? custom.chars.join("") : "✎";
     const input = document.getElementById("customSymbolInput");
     if (input && document.activeElement !== input) input.value = this.settings.customSymbols || "";
+    const curBoard = ["classic", "clean"].includes(this.settings.boardStyle) ? this.settings.boardStyle : "auto";
+    document.querySelectorAll("#boardStyleGroup .skinPresetChip").forEach((chip) => {
+      chip.classList.toggle("active", chip.dataset.board === curBoard);
+    });
     const curSymbols = this.settings.symbolSet || "suits";
     document.querySelectorAll("#symbolSetGroup .skinPresetChip").forEach((chip) => {
       chip.classList.toggle("active", chip.dataset.symbols === curSymbols);
@@ -1316,6 +1333,16 @@ export class WeightedOthelloApp {
   bindSkinEventsOnce() {
     if (this._skinEventsBound) return;
     this._skinEventsBound = true;
+
+    // 棋盤樣式
+    document.querySelectorAll("#boardStyleGroup .skinPresetChip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        this.settings.boardStyle = chip.dataset.board;
+        Storage.saveSettings(this.settings);
+        this.applyBoardStyle();
+        this.renderSkinWorkshop();
+      });
+    });
 
     // 棋子文字：希臘字母／自訂
     const symbolMsg = (text, bad = false) => {
