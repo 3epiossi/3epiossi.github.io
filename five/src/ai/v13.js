@@ -271,14 +271,18 @@ function lineEval(pH, pL, oH, oL, a0H, a0L, a1H, a1L, sup) {
 // ===== 置換表 =====
 const TT_BITS = 19, // 52 萬格、每條 worker 約 8 MB（網頁同時開三條 worker：CPU、局面分析、預先計算）
       TT_SIZE = 1 << TT_BITS, TT_MASK = TT_SIZE - 1;
-const TT_K2 = new Int32Array(TT_SIZE), TT_DEPTH = new Int8Array(TT_SIZE).fill(-1), TT_FLAG = new Uint8Array(TT_SIZE);
-const TT_SCORE = new Float64Array(TT_SIZE), TT_MOVE = new Int16Array(TT_SIZE);
+// 置換表等到第一次搜尋才配置（約 8 MB）：只用到另一個引擎的 worker 不用背這份記憶體
+let TT_K2 = null, TT_DEPTH = null, TT_FLAG = null, TT_SCORE = null, TT_MOVE = null;
+function allocTT() {
+  TT_K2 = new Int32Array(TT_SIZE); TT_DEPTH = new Int8Array(TT_SIZE).fill(-1); TT_FLAG = new Uint8Array(TT_SIZE);
+  TT_SCORE = new Float64Array(TT_SIZE); TT_MOVE = new Int16Array(TT_SIZE);
+}
 const EXACT = 0, LOWER = 1, UPPER = 2;
 function mix(h, x) { h = Math.imul(h ^ x, 0x9e3779b1); h ^= h >>> 15; h = Math.imul(h, 0x85ebca6b); return h ^ (h >>> 13); }
 function hashOf(seed, pH, pL, oH, oL, a0H, a0L, a1H, a1L) {
   return mix(mix(mix(mix(mix(mix(mix(mix(seed, pH), pL), oH), oL), a0H), a0L), a1H), a1L);
 }
-export function clearTTV13() { TT_DEPTH.fill(-1); }
+export function clearTTV13() { TT_DEPTH?.fill(-1); }
 
 // ===== 搜尋 =====
 const ABORT = { abort: true };
@@ -443,6 +447,7 @@ export function othelloEvalV13(board, player, groupOf, params = V13_PARAMS) {
  *   scores：每個格子 × 每一組還有剩的組別。組別合併沒展開的組別（效果跟「切斷連線」那一組一樣）用那一組的分數
  */
 export function searchV13(board, player, groupOf, { timeMs = 1000, maxDepth = 60, multiPV = false, params = V13_PARAMS } = {}) {
+  if (!TT_K2) allocTT();
   const [pH, pL, oH, oL, a0H, a0L, a1H, a1L] = toBits(board, player, groupOf);
   P = { ...V13_PARAMS, ...params };
   const t0 = Date.now();

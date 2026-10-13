@@ -20,8 +20,8 @@
  *   ＋ 連線（還沒混組、還補得滿的窗口，依還差幾格給分）× lineScale。
  */
 
-import { INSTANCES, TYPES, STAGE_SIZE, W_BIAS, W_MOB, stageOf } from "./patterns.js";
-import { decodePatternWeights } from "./pattern-weights.js";
+import { INSTANCES, TYPES, STAGES, STAGE_SIZE, W_BIAS, W_MOB, stageOf } from "./patterns.js";
+import { decodePatternWeights, PATTERN_EXTRA } from "./pattern-weights.js";
 
 const N = 64, LEN = 5, GROUPS = 4, GROUP_SIZE = 16;
 export const WIN = 10000;
@@ -294,11 +294,25 @@ function computeFull(occH, occL) {
 const CORNERS = [0, 7, 56, 63], XSQ = [9, 14, 49, 54], CSQ = [[1, 8], [6, 15], [48, 57], [55, 62]];
 
 // ===== 棋型評估 =====
-let PW = null; // 分數表（STAGES × STAGE_SIZE）；第一次搜尋時才從 pattern-weights.js 解出來
+let PW = null; // 棋型分數表（Int8Array，STAGES × STAGE_SIZE，單位 1/8 顆棋子）；第一次搜尋時才從 pattern-weights.js 解出來
+let PX = null; // 每個階段的 [常數, 行動力權重]（Float64Array，單位棋子差，精確的小數）
 let PW_SET = false;
-/** 換一張棋型分數表（測試用；Float32Array）；null = 用 v13 的手寫評估 */
-export function setPatternWeights(w) { PW = w; PW_SET = true; }
-function ensureWeights() { if (!PW_SET) { PW = decodePatternWeights(); PW_SET = true; } }
+/**
+ * 換一張棋型分數表（測試用）：Float32Array（train-patterns.js 的輸出，STAGES × STAGE_SIZE）→ 量化成跟網頁一樣的格式；
+ * null = 用 v13 的手寫評估。resetPatternWeights() 換回內建的。
+ */
+export function setPatternWeights(w) {
+  PW_SET = true;
+  if (!w) { PW = null; PX = null; return; }
+  PW = new Int8Array(w.length); PX = new Float64Array(STAGES * 2);
+  for (let i = 0; i < w.length; i++) PW[i] = Math.max(-127, Math.min(127, Math.round(w[i] * 8)));
+  for (let s = 0; s < STAGES; s++) {
+    PX[s * 2] = w[s * STAGE_SIZE + W_BIAS]; PX[s * 2 + 1] = w[s * STAGE_SIZE + W_MOB];
+    PW[s * STAGE_SIZE + W_BIAS] = 0; PW[s * STAGE_SIZE + W_MOB] = 0;
+  }
+}
+export function resetPatternWeights() { PW_SET = false; PW = null; PX = null; }
+function ensureWeights() { if (!PW_SET) { PW = decodePatternWeights(); PX = Float64Array.from(PATTERN_EXTRA); PW_SET = true; } }
 const CELLS = new Uint8Array(N);
 const INST_CELLS = INSTANCES.map((x) => Int8Array.from(x.cells)), INST_OFF = Int32Array.from(INSTANCES.map((x) => TYPES[x.type].offset));
 function patternEval(pH, pL, oH, oL, mP, mO, empties) {
@@ -308,8 +322,8 @@ function patternEval(pH, pL, oH, oL, mP, mO, empties) {
   for (let x = oL; x; x &= x - 1) CELLS[31 - Math.clz32(x & -x)] = 2;
   for (let x = oH; x; x &= x - 1) CELLS[63 - Math.clz32(x & -x)] = 2;
   const [st, a] = stageOf(empties);
-  const b0 = st * STAGE_SIZE, b1 = b0 + STAGE_SIZE, mob = mP - mO;
-  let v0 = PW[b0 + W_BIAS] + PW[b0 + W_MOB] * mob, v1 = PW[b1 + W_BIAS] + PW[b1 + W_MOB] * mob;
+  const b0 = st * STAGE_SIZE, b1 = b0 + STAGE_SIZE, mob = mP - mO, x = st * 2;
+  let v0 = 0, v1 = 0;
   for (let i = 0; i < INST_CELLS.length; i++) {
     const cs = INST_CELLS[i];
     let idx = 0;
@@ -317,7 +331,7 @@ function patternEval(pH, pL, oH, oL, mP, mO, empties) {
     idx += INST_OFF[i];
     v0 += PW[b0 + idx]; v1 += PW[b1 + idx];
   }
-  return (1 - a) * v0 + a * v1;
+  return ((1 - a) * v0 + a * v1) * 0.125 + (1 - a) * (PX[x] + PX[x + 1] * mob) + a * (PX[x + 2] + PX[x + 3] * mob);
 }
 
 function othelloEval(pH, pL, oH, oL, mP, mO) {
@@ -365,14 +379,18 @@ function lineEval(pH, pL, oH, oL, a0H, a0L, a1H, a1L, sup) {
 // ===== 置換表 =====
 const TT_BITS = 19, // 52 萬格、每條 worker 約 8 MB（網頁同時開三條 worker：CPU、局面分析、預先計算）
       TT_SIZE = 1 << TT_BITS, TT_MASK = TT_SIZE - 1;
-const TT_K2 = new Int32Array(TT_SIZE), TT_DEPTH = new Int8Array(TT_SIZE).fill(-1), TT_FLAG = new Uint8Array(TT_SIZE);
-const TT_SCORE = new Float64Array(TT_SIZE), TT_MOVE = new Int16Array(TT_SIZE);
+// 置換表等到第一次搜尋才配置（約 8 MB）：只用到另一個引擎的 worker 不用背這份記憶體
+let TT_K2 = null, TT_DEPTH = null, TT_FLAG = null, TT_SCORE = null, TT_MOVE = null;
+function allocTT() {
+  TT_K2 = new Int32Array(TT_SIZE); TT_DEPTH = new Int8Array(TT_SIZE).fill(-1); TT_FLAG = new Uint8Array(TT_SIZE);
+  TT_SCORE = new Float64Array(TT_SIZE); TT_MOVE = new Int16Array(TT_SIZE);
+}
 const EXACT = 0, LOWER = 1, UPPER = 2;
 function mix(h, x) { h = Math.imul(h ^ x, 0x9e3779b1); h ^= h >>> 15; h = Math.imul(h, 0x85ebca6b); return h ^ (h >>> 13); }
 function hashOf(seed, pH, pL, oH, oL, a0H, a0L, a1H, a1L) {
   return mix(mix(mix(mix(mix(mix(mix(mix(seed, pH), pL), oH), oL), a0H), a0L), a1H), a1L);
 }
-export function clearTTV14() { TT_DEPTH.fill(-1); }
+export function clearTTV14() { TT_DEPTH?.fill(-1); }
 
 // ===== 搜尋 =====
 const ABORT = { abort: true };
@@ -540,6 +558,7 @@ export function othelloEvalV14(board, player, groupOf, params = V14_PARAMS) {
  */
 export function searchV14(board, player, groupOf, { timeMs = 1000, maxDepth = 60, multiPV = false, params = V14_PARAMS } = {}) {
   ensureWeights();
+  if (!TT_K2) allocTT();
   const [pH, pL, oH, oL, a0H, a0L, a1H, a1L] = toBits(board, player, groupOf);
   P = { ...V14_PARAMS, ...params };
   const t0 = Date.now();

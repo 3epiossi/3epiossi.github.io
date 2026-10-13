@@ -93,6 +93,7 @@ export class BoardView {
     this.swallowClick = false; // 長按成立後，放開時那一下 click 不算（不然會又換下一顆）
     this.cellElements = Array.from({ length: N }, () => Array(N).fill(null));
     this.prevKeys = Array.from({ length: N }, () => Array(N).fill(""));
+    this.cellSig = Array.from({ length: N }, () => Array(N).fill(null)); // 每格上次畫的內容（沒變就不重畫，見 render）
     this.initDOM();
   }
 
@@ -147,6 +148,9 @@ export class BoardView {
     const endHold = () => this.cancelHold();
     this.boardEl.addEventListener("pointerup", endHold);
     this.boardEl.addEventListener("pointercancel", endHold);
+    // 長按中畫面重畫（分析結果剛好到了）會把按下去的棋子換掉，放開時 pointerup 傳不到棋盤：window 也聽
+    window.addEventListener("pointerup", endHold, true);
+    window.addEventListener("pointercancel", endHold, true);
     this.boardEl.addEventListener("pointermove", (e) => {
       if (this.hold && Math.hypot(e.clientX - this.hold.x, e.clientY - this.hold.y) > 10) this.cancelHold();
     });
@@ -222,6 +226,8 @@ export class BoardView {
     const keyMask = new Map();
     for (const g of threatGroups) for (const sq of g.cells) keyMask.set(sq, (keyMask.get(sq) || 0) | (1 << (g.v - 1)));
     const lastKey = lastMove && lastMove.r != null ? `${lastMove.r},${lastMove.c}` : null;
+    // 語言、棋子文字改了，每一格都要重畫
+    const epoch = `${typeof window !== "undefined" ? window.currentLang : ""}|${getSymbolSet()}|${[1, 2, 3, 4].map(letterOf).join("")}`;
 
     for (let r = 0; r < N; r++) {
       for (let c = 0; c < N; c++) {
@@ -229,6 +235,21 @@ export class BoardView {
         const d = board[r][c];
         const key = `${r},${c}`;
         const coord = posToCoord(r, c);
+
+        // 這一格要畫的東西（跟下面實際畫的一一對應）；跟上次一樣就整格不動：
+        // 全部清掉重建，每次分析結果到都重畫 64 格，手機上要花不少時間；而且手指按著的棋子元素被換掉，按下去的事件會落空
+        const legal = legalMoves.get(key);
+        const hint = hintLabels.get(r * N + c);
+        const ghost = !!(previewGhostMove && previewGhostMove.r === r && previewGhostMove.c === c && ghostDisc && !d);
+        const sigStr = [
+          epoch,
+          d ? `${d.id}:${d.face}:${keyMask.get(r * N + c) || 0}` : "",
+          !d && legal ? (hint ? `H${hint.pct}${hint.best ? 1 : 0}` : `L${legal.five ? 1 : 0}${legal.flips.length}`) : "",
+          lastKey === key ? `M${lastMark?.sym ? `${lastMark.sym}|${markWhyText(lastMark)}` : ""}` : "",
+          ghost ? `G${ghostDisc.id}:${ghostDisc.face}:${keyMask.get(r * N + c) || 0}:${tapPick && tapPick.sq === r * N + c ? `${tapPick.i}/${tapPick.n}` : ""}` : ""
+        ].join("§");
+        if (this.cellSig[r][c] === sigStr) continue;
+        this.cellSig[r][c] = sigStr;
 
         cell.className = "cell";
         cell.innerHTML = "";
@@ -249,8 +270,6 @@ export class BoardView {
           cell.setAttribute("aria-label", tr("cellEmpty", { c: coord }));
         }
 
-        const legal = legalMoves.get(key);
-        const hint = hintLabels.get(r * N + c);
         if (legal && !d && hint) {
           // 提示模式：標出這格的勝率（取代綠點），最高的那格另外標色
           cell.classList.add("dest-spawn", "hinted");
@@ -283,7 +302,7 @@ export class BoardView {
           }
         }
 
-        if (previewGhostMove && previewGhostMove.r === r && previewGhostMove.c === c && ghostDisc && !d) {
+        if (ghost) {
           cell.classList.add("ghost-dest");
           if (tapPick && tapPick.sq === r * N + c) {
             cell.classList.add("tapPicking");
@@ -295,8 +314,20 @@ export class BoardView {
       }
     }
     // 長按進行中：這一格重畫後，進度環接著原本的進度（格子的內容剛被清掉重畫）
-    if (this.hold) this.showHoldVisual(this.cellElements[this.hold.r][this.hold.c], this.hold.ms, performance.now() - this.hold.t0);
+    if (this.hold) {
+      const hc = this.cellElements[this.hold.r][this.hold.c];
+      if (!hc.classList.contains("holding")) this.showHoldVisual(hc, this.hold.ms, performance.now() - this.hold.t0); // 這格沒被重畫就還留著原本的進度環
+    }
     this.renderThreats(threatGroups, threatFocus, new Set(hintLabels.keys()));
+  }
+
+  /**
+   * 只換「突顯哪一組連線」（滑鼠、手指指到的格子）：只重畫連線圖層，不動格子。
+   * 手指碰到格子時如果重畫格子，剛被碰到的棋子元素會被換掉，緊接著的 pointerdown 就落在已經不在頁面上的元素、
+   * 傳不到棋盤——長按就沒反應（要碰第二次才行）。
+   */
+  setThreatFocus(focus) {
+    if (this.lastThreats) this.renderThreats(this.lastThreats.groups, focus, this.lastThreats.hinted);
   }
 
   /**
@@ -316,7 +347,7 @@ export class BoardView {
     }
     const W = this.boardEl.clientWidth, H = this.boardEl.clientHeight;
     // 棋盤沒顯示出來（大小是 0）時先不畫，等視窗大小改變時再重算
-    if (!W || !H) { svg.innerHTML = ""; return; }
+    if (!W || !H) { svg.innerHTML = ""; this.threatSig = null; return; }
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     const center = (sq) => {
       const el = this.cellElements[sq >> 3][sq & 7];
@@ -361,6 +392,10 @@ export class BoardView {
         html += `<g class="tGap${faded}"><rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${cellSize * 0.12}" style="stroke:${color};fill:${color}1f"/>${label}</g>`;
       }
     });
+    // 連線沒變（大部分的重畫都是）就不重寫 SVG
+    const sig = `${W}x${H}|${html}`;
+    if (sig === this.threatSig) return;
+    this.threatSig = sig;
     svg.innerHTML = html;
   }
 }
