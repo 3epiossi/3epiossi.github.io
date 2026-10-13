@@ -99,7 +99,7 @@ const EN = [
     <li>Win chances are the engine's estimate and only a guide. While it is your turn and you are still thinking, the engine keeps analysing, so the bar, hints and move marks become more accurate.</li>
     <li>The chart shows White on top and Black at the bottom, one dot per move; moves with a mark get a larger dot in the mark's colour. Hover to see the move, its mark and the reason.</li>
     <li>Click any move to go back to it. Playing a move from a past position starts a branch (study mode: you play both sides); going back to the fork or earlier ends the branch and returns to the game.</li>
-    <li>While viewing history (or studying a branch), press "<b>Continue from here</b>": this move becomes the latest, later moves are deleted, the seats go back to your settings, and the game carries on normally.</li>
+    <li>While viewing history (or studying a branch), press "<b>Continue here</b>": this move becomes the latest, later moves are deleted, the seats go back to your settings, and the game carries on normally.</li>
   </ul>`),
   section("Move marks", `<p>After each move a mark may appear at the disc's top-right corner, for both sides. Hover it to see why, e.g. "Position went from ahead to balanced (best: E3 ♥)" — the best move names a square and a group.</p>
     <p>Positions come in five levels: <b>won</b>, <b>ahead</b>, <b>balanced</b>, <b>behind</b>, <b>lost</b>.</p>

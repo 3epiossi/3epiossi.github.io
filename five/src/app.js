@@ -45,7 +45,8 @@ import {
 const SAVE_VERSION = 2;
 
 /** 選棋：在顯示著候選的那一格按住這麼久（毫秒），就下目前顯示的那顆（見 BoardView 的長按） */
-const LONG_PRESS_MS = 500;
+// 長按多久才下子。手機上要比系統的長按（約 0.5 秒會跳出選單、取消觸控）短一點，不然常常輸給系統
+const LONG_PRESS_MS = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches ? 400 : 500;
 
 /**
  * 下棋節奏（設定「下棋節奏」）：只管看起來多快，不影響棋力與分析（那是「AI 思考時間」管的，見 levelMs）。
@@ -702,19 +703,21 @@ export class WeightedOthelloApp {
   /** 提示模式下滑鼠移到合法格子：格子畫出要下的那顆棋，池子標出每顆棋下在這格的勝率 */
   handleCellHover(r, c, isEnter, pointerType = "mouse") {
     const sq = r * 8 + c;
-    // 五連威脅：滑鼠指到某一組的棋或缺口 → 只突顯那一組
+    // 五連威脅：滑鼠指到某一組的棋或缺口 → 只突顯那一組（只重畫連線圖層，不重畫格子）
     const next = isEnter ? sq : (this.threatHoverSq === sq ? null : this.threatHoverSq);
     const focusChanged = next !== this.threatHoverSq;
     this.threatHoverSq = next;
-    if (!this.canHumanAct()) { if (focusChanged) this.renderBoard(); return; }
-    // 觸控、筆沒有真正的「移上去／移出」（手指點下、放開也會觸發）：只更新威脅連線的突顯
-    if (pointerType !== "mouse") { if (focusChanged) this.renderBoard(); return; }
+    const refocus = () => { if (focusChanged) this.boardView.setThreatFocus(this.threatHoverSq); };
+    if (!this.canHumanAct()) { refocus(); return; }
+    // 觸控、筆沒有真正的「移上去／移出」（手指點下、放開也會觸發）：只更新威脅連線的突顯，
+    // 千萬不能重畫格子（會把剛碰到的棋子換掉，長按就沒反應，見 BoardView.setThreatFocus）
+    if (pointerType !== "mouse") { refocus(); return; }
     if (!isEnter) {
       if (this.hoverSq === sq) { this.hoverSq = null; this.render(); }
-      else if (focusChanged) this.renderBoard();
+      else refocus();
       return;
     }
-    if (!this.engine.findLegalMove(r, c) || this.hoverSq === sq) { if (focusChanged) this.renderBoard(); return; }
+    if (!this.engine.findLegalMove(r, c) || this.hoverSq === sq) { refocus(); return; }
     // 移到另一個可下的格子：池子亮出這格要下的那顆，格子上預覽；威脅連線也把它算進去（見 renderBoard）
     this.hoverSq = sq;
     this.render();
@@ -1042,6 +1045,8 @@ export class WeightedOthelloApp {
   goToStep(step) {
     const line = this.engine.tree.getBranchHistory();
     if (step < 0 || step >= line.length || step === this.currentStep()) return;
+    // 連續切換局面（連點上一手、拖折線圖）時，等停下來才開始算：每換一步就啟動一次搜尋，手機會一直在算沒人要看的局面
+    this.analysisSettleUntil = performance.now() + (LOW_POWER ? 350 : 200);
     this.teardown();
     // 回到最新時若輪到 CPU，先暫停，由使用者決定何時放行
     if (step === line.length - 1 && this.session.seats[seatKey(line[step].turn)] === CPU_SEAT) this.session.paused = true;
@@ -1487,6 +1492,13 @@ export class WeightedOthelloApp {
     }
     this.updateMark(curr);
     if (this.analysisJob || this.cpuSearching) return; // CPU 搜完會再排一次
+    // 剛切換局面：等手停下來再開始算（上面已經放棄了跟現在無關的工作；預先計算的結果、已經算好的分析照常用）
+    const wait = (this.analysisSettleUntil ?? 0) - performance.now();
+    if (wait > 0) {
+      clearTimeout(this.settleTimer);
+      this.settleTimer = setTimeout(() => this.scheduleAnalysis(), wait + 5);
+      return;
+    }
     const levelOf = (n) => this.analysis.get(n.id)?.level ?? 0;
     const pick = () => {
       const cur = this.analyzable(curr) && this.ponderJob !== curr.id ? curr : null;
@@ -1495,7 +1507,10 @@ export class WeightedOthelloApp {
       // 確認排前面的話會一直被打斷重來，勝率走勢也跟著輪不到
       const todo = [...tree.getBranchHistory(), ...tree.getBranchHistory("main")].find(n => this.analyzable(n) && !this.analysis.has(n.id));
       if (todo) return [todo, 1];
-      for (const id of [...this.confirmNeed].reverse()) {
+      // CPU 對下進行中：下一步的 CPU 搜尋馬上就開始，較深的確認會被它打斷（分析 worker 要關掉重開，手機上很吃力）。
+      // 只做勝率走勢要的淺層分析，標記的確認等暫停或終局再補
+      const cpuBusy = this.ui.isCpuVsCpu && this.ui.runCpuTimer;
+      for (const id of cpuBusy ? [] : [...this.confirmNeed].reverse()) {
         const n = tree.getNode(id);
         if (!this.analyzable(n) || levelOf(n) >= COACH_LEVEL) { this.confirmNeed.delete(id); continue; }
         return [n, COACH_LEVEL];
@@ -1794,7 +1809,9 @@ export class WeightedOthelloApp {
       hintBtn.style.display = !isEnded ? "inline-flex" : "none";
       hintBtn.classList.toggle("active", this.hintOn);
       hintBtn.setAttribute("aria-pressed", String(this.hintOn));
-      hintBtn.textContent = tr(this.hintOn ? "btnHintOn" : "btnHint");
+      // 窄螢幕（手機）標籤維持短的「💡 提示」，開著與否看按鈕亮起的顏色（.active）；不然開著時文字變長、按鈕列會擠到換行
+      const narrow = window.matchMedia?.("(max-width: 600px)").matches;
+      hintBtn.textContent = tr(this.hintOn && !narrow ? "btnHintOn" : "btnHint");
     }
     // 分支研究中（自己替雙方下）不提供 CPU 對下
     const research = !!this.researchSeats;

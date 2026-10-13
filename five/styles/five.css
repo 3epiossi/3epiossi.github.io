@@ -533,8 +533,11 @@ html { scrollbar-gutter: stable; }
     background: rgba(2, 6, 23, 0.92); border-top: 1px solid var(--color-border);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   }
-  .actBtn { padding: 8px 10px; font-size: 13px; }
-  .actBtn.icon { width: 34px; }
+  /* 按鈕列永遠一排（三種語言、開著提示、看歷史時多一顆「從這裡繼續下」都一樣）：不換行、縮小間距，真的塞不下時字被壓縮而不是掉到下一排 */
+  .actionBar { flex-wrap: nowrap; gap: 4px; padding-left: 6px; padding-right: 6px; }
+  .actSep { display: none; }
+  .actBtn { padding: 8px 8px; font-size: 12.5px; min-width: 0; flex: 0 1 auto; white-space: nowrap; overflow: hidden; }
+  .actBtn.icon { width: 34px; flex: 0 0 auto; }
   #historyFirstBtn, #historyLatestBtn { display: none; }
 }
 
@@ -656,4 +659,18 @@ html { scrollbar-gutter: stable; }
   .statusBanner, .statusBanner.human, .statusBanner.cpu, .statusBanner.paused, .statusBanner.review, .statusBanner.ended { min-height: 0; margin-top: 8px; padding: 6px 10px; }
   .statusText { font-size: 12.5px; }
   .actionBar { margin: 8px -6px 0; }
+}
+
+/* ===== 手機：拿掉毛玻璃模糊與多餘的陰影 =====
+ * backdrop-filter 要在每一個畫面更新時把底下的內容重新模糊一次：頂欄、選組別面板、固定在畫面底部的按鈕列、
+ * 彈出視窗的背景都有，低階手機（Redmi 13C 這類）捲動或棋盤有動畫時就會掉格。改成不透明的底色，看起來幾乎一樣。 */
+@media (max-width: 600px), (pointer: coarse) {
+  .topBar, .fiveTop, .sideDicePanel, .actionBar, .modalBackdrop {
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  .topBar, .fiveTop { background: #0f172a; }
+  .sideDicePanel { background: #111c32; }
+  .actionBar { background: rgba(2, 6, 23, 0.98); }
+  .modalBackdrop { background: rgba(0, 0, 0, 0.82); }
+  .threatLayer .tMixed { filter: none; } /* 花五的鐵鍊不加陰影（SVG 濾鏡在手機上很慢） */
 }
