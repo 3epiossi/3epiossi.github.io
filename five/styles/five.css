@@ -623,19 +623,18 @@ html { scrollbar-gutter: stable; }
 .pcRole.locked { opacity: 0.6; }
 .roleNote { margin: 0; max-width: 220px; font-size: 12px; line-height: 1.5; color: #fcd34d; }
 
-/* ===== 棋盤樣式：簡潔（data-board="clean"）：格線細、棋子大，像一般黑白棋 App =====
- * 設定「棋盤樣式」可選經典／簡潔／自動（手機簡潔、電腦經典，見 app.js 的 applyBoardStyle）。
+/* ===== 棋盤樣式：格線細、棋子大，像一般黑白棋 App =====
  * 格子之間 1px 的格線、不圓角，棋子佔格子的 90%，座標縮成細條。 */
-:root[data-board="clean"] { --board-gap: 1px; --coord-size: 18px; }
-:root[data-board="clean"] .board { padding: 1px; gap: 1px; border-radius: 4px; border-width: 1px; background: #0a2814; box-shadow: none; }
-:root[data-board="clean"] .cell { border-radius: 0; }
-:root[data-board="clean"] .cell .disc { width: 90%; height: 90%; }
-:root[data-board="clean"] .coordTop, :root[data-board="clean"] .coordLeft { font-size: 11px; font-weight: 600; letter-spacing: 0; }
+:root { --board-gap: 1px; --coord-size: 18px; }
+:root .board { padding: 1px; gap: 1px; border-radius: 4px; border-width: 1px; background: #0a2814; box-shadow: none; }
+:root .cell { border-radius: 0; }
+:root .cell .disc { width: 90%; height: 90%; }
+:root .coordTop, :root .coordLeft { font-size: 11px; font-weight: 600; letter-spacing: 0; }
 
 /* ===== 手機：棋盤撐滿螢幕寬度（頁面左右只留 6px），勝率條、選組別跟棋盤（含座標）一樣寬 ===== */
 @media (max-width: 600px) {
-  :root[data-board="clean"] { --coord-size: 14px; }
-  :root[data-board="clean"] .coordTop, :root[data-board="clean"] .coordLeft { font-size: 10px; }
+  :root { --coord-size: 14px; }
+  :root .coordTop, :root .coordLeft { font-size: 10px; }
 }
 @media (max-width: 600px) {
   body { padding: 6px; }

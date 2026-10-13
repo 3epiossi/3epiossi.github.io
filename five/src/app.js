@@ -89,7 +89,6 @@ export class WeightedOthelloApp {
     this.skinManager.config = { ...cfg, black: normalizeFace(cfg.black, true), white: normalizeFace(cfg.white, false) };
     this.skinManager.applyToDOM();
     this.applySymbolSet(this.settings.symbolSet);
-    this.applyBoardStyle();
     this.applyTextColors();
 
     const blackSeat = this.settings.blackRole || HUMAN;
@@ -1215,18 +1214,6 @@ export class WeightedOthelloApp {
   }
 
   /** 棋子文字（希臘字母或自訂）：換掉 4 組的字（data-symbols 給 CSS 用） */
-  /** 棋盤樣式（見 five.css 的 data-board）：auto = 手機簡潔、電腦經典；螢幕寬度改變（轉向、拉視窗）時重新判斷 */
-  applyBoardStyle() {
-    const narrow = window.matchMedia("(max-width: 600px)");
-    const set = () => {
-      const pref = ["classic", "clean"].includes(this.settings.boardStyle) ? this.settings.boardStyle : "auto";
-      document.documentElement.dataset.board = pref === "auto" ? (narrow.matches ? "clean" : "classic") : pref;
-    };
-    set();
-    if (!this._boardStyleBound) { this._boardStyleBound = true; narrow.addEventListener?.("change", set); this._applyBoardStyleNow = set; }
-    else this._applyBoardStyleNow();
-  }
-
   applySymbolSet(name) {
     setSymbolSet(name, this.settings.customSymbols);
     // 舊設定（字母、圖案）或自訂字不合格時退回希臘字母
@@ -1267,10 +1254,6 @@ export class WeightedOthelloApp {
     if (sample) sample.textContent = custom.ok ? custom.chars.join("") : "✎";
     const input = document.getElementById("customSymbolInput");
     if (input && document.activeElement !== input) input.value = this.settings.customSymbols || "";
-    const curBoard = ["classic", "clean"].includes(this.settings.boardStyle) ? this.settings.boardStyle : "auto";
-    document.querySelectorAll("#boardStyleGroup .skinPresetChip").forEach((chip) => {
-      chip.classList.toggle("active", chip.dataset.board === curBoard);
-    });
     const curSymbols = this.settings.symbolSet || "suits";
     document.querySelectorAll("#symbolSetGroup .skinPresetChip").forEach((chip) => {
       chip.classList.toggle("active", chip.dataset.symbols === curSymbols);
@@ -1333,16 +1316,6 @@ export class WeightedOthelloApp {
   bindSkinEventsOnce() {
     if (this._skinEventsBound) return;
     this._skinEventsBound = true;
-
-    // 棋盤樣式
-    document.querySelectorAll("#boardStyleGroup .skinPresetChip").forEach((chip) => {
-      chip.addEventListener("click", () => {
-        this.settings.boardStyle = chip.dataset.board;
-        Storage.saveSettings(this.settings);
-        this.applyBoardStyle();
-        this.renderSkinWorkshop();
-      });
-    });
 
     // 棋子文字：希臘字母／自訂
     const symbolMsg = (text, bad = false) => {
