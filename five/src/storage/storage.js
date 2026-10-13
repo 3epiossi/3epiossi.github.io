@@ -25,6 +25,7 @@ const DEFAULTS = {
   blackName: "",
   whiteName: "",
   symbolSet: "suits",   // 棋子文字：suits（♠♥♦♣，預設）／greek（α～δ）／custom（自訂）
+  boardStyle: "auto", // 棋盤樣式："auto"（手機簡潔、電腦經典）｜"classic"｜"clean"
   symbolsV2: true,      // 已套用「撲克花色是預設」（見 getSettings）
   customSymbols: "",    // 自訂的 4 個字
   textColorBlack: "",   // 黑方棋子的文字顏色（見 src/ui/text-colors.js；空字串 = 該色系的第一個）

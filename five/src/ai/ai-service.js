@@ -31,17 +31,23 @@ export function toUnit(v, exact = false, scale = SCORE_SCALE_V14) {
  * @returns {{ bestSq:number, disc:number, scores:{sq:number, disc:number, key:number, score:number}[], depth:number, exact:boolean, nodes:number } | null}
  *   scores 由高到低；multiPV 時每一步都是精確分數，否則只有最佳步準
  */
-export function searchEngine(board, player, pool, { timeMs = 1000, multiPV = false, maxDepth, params, engine = "v14" } = {}) {
+export function searchEngine(board, player, pool, { timeMs = 1000, multiPV = false, maxDepth, params, engine = "v14", part = null } = {}) {
   if (!pool.length) return null;
   const discOf = new Map(pool.map(id => [groupOf(id), id]));
   const E = ENGINES[engine];
-  const r = E.search(board, player, groupOf, { timeMs, multiPV, ...(maxDepth != null ? { maxDepth } : {}), ...(params ? { params } : {}) });
+  const r = E.search(board, player, groupOf, { timeMs, multiPV, ...(maxDepth != null ? { maxDepth } : {}), ...(params ? { params } : {}), ...(part && engine === "v14" ? { part } : {}) });
   if (!r) return null;
   const scores = (r.scores.length ? r.scores : [{ sq: r.sq, group: r.group, score: r.score }])
     .filter(x => discOf.has(x.group))
     .map(x => { const disc = discOf.get(x.group); return { sq: x.sq, disc, key: disc * 64 + x.sq, score: toUnit(x.score, r.exact, E.scale) }; });
   const disc = discOf.get(r.group) ?? pool[0];
-  return { bestSq: r.sq, disc, scores, depth: r.depth, exact: r.exact, nodes: r.nodes };
+  const out = { bestSq: r.sq, disc, scores, depth: r.depth, exact: r.exact, nodes: r.nodes };
+  if (r.hist) { // 平行分析的一份：每一層的分數（合併時統一深度，見 ai-client.js 的 mergeParts）
+    const toScores = (list) => list.filter(x => discOf.has(x.group)).map(x => { const d = discOf.get(x.group); return { sq: x.sq, disc: d, key: d * 64 + x.sq, score: toUnit(x.score, r.exact, E.scale) }; });
+    out.proven = r.proven;
+    out.hist = r.hist.map(h => ({ depth: h.depth, scores: toScores(h.scores) }));
+  }
+  return out;
 }
 
 const N = 8;
