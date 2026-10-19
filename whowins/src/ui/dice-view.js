@@ -22,6 +22,7 @@ export class DiceView {
       <div class="sideDiceSection">
         <button type="button" class="sideDiceBox" id="sideDiceWidget" aria-live="polite"><div class="sideDiceGrid"></div></button>
         <div id="sideDiceValLabel" class="sideDiceValLabel">—</div>
+        <div id="sideDiceLuck" class="sideDiceLuck" hidden></div>
         <div class="diceOutlookTitle" id="diceOutlookTitle"></div>
         <div class="diceFaceRow" id="diceFaceRow"></div>
         <div class="diceHint" id="diceHint"></div>
@@ -29,6 +30,7 @@ export class DiceView {
     this.box = panel.querySelector("#sideDiceWidget");
     this.grid = panel.querySelector(".sideDiceGrid");
     this.valLabel = panel.querySelector("#sideDiceValLabel");
+    this.luckEl = panel.querySelector("#sideDiceLuck");
     this.title = panel.querySelector("#diceOutlookTitle");
     this.row = panel.querySelector("#diceFaceRow");
     this.hint = panel.querySelector("#diceHint");
@@ -66,13 +68,18 @@ export class DiceView {
    * @param {string} s.hint 最下面的小字
    * @param {{die:number, pct:number|null, dead:boolean}[]|null} s.outlook 骰子展望：每面走最佳步的勝率（輪到的一方角度）；null = 不顯示
    */
-  render({ value, canRoll, pickable, label, hint = "", outlook = null, outlookTitle = "" }) {
+  render({ value, canRoll, pickable, label, hint = "", outlook = null, outlookTitle = "", luck = null }) {
     this.canRoll = canRoll;
     this.drawPips(value);
     this.box.disabled = !canRoll;
     this.box.classList.toggle("canRoll", canRoll);
     this.box.title = canRoll ? tr("diceRollTip") : "";
     this.valLabel.textContent = label;
+    // 運氣：擲出的點數比六種點數的平均好多少（勝率百分點），直接放在骰子旁，不用點開
+    this.luckEl.hidden = luck == null;
+    this.luckEl.className = "sideDiceLuck" + (luck > 0.05 ? " pos" : luck < -0.05 ? " neg" : "");
+    this.luckEl.textContent = luck == null ? "" : tr("luckLabel") + " " + (luck >= 0 ? "+" : "") + luck.toFixed(1);
+    this.luckEl.title = luck == null ? "" : tr("luckTitle");
     this.hint.textContent = hint;
     this.title.textContent = outlook ? outlookTitle : "";
     const faces = outlook || [1, 2, 3, 4, 5, 6].map((d) => ({ die: d, pct: null, dead: false }));

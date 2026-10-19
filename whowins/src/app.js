@@ -897,6 +897,7 @@ export class WhoWinsApp {
     this.analysis.set(node.id, { value: res.value, perDie: res.perDie, depth: res.depth, level });
     if (level >= COACH_LEVEL) this.confirmNeed.delete(node.id);
     this.refreshMarksAround(node);
+    if (node.id === this.engine.tree.currentNodeId) this.renderDice();
   }
 
   refreshMarksAround(node) {
@@ -1193,8 +1194,19 @@ export class WhoWinsApp {
     let hint = "";
     if (!e.gameOver && pickable) hint = e.isFreePickTurn && rolled == null ? tr("diceHintFree") : tr("diceHintResearch");
     this.diceView.render({
-      value: rolled, canRoll: this.canRoll(), pickable, label, hint, outlook: null
+      value: rolled, canRoll: this.canRoll(), pickable, label, hint, outlook: null, luck: this.rolledLuck(rolled)
     });
+  }
+
+  /** 這次擲出的點數的運氣（勝率百分點）：這個點數走最佳步的勝率，減六種點數的平均；分析還沒到就回傳 null */
+  rolledLuck(die) {
+    const e = this.engine;
+    if (die == null || e.gameOver) return null;
+    const a = this.analysis.get(e.tree.currentNodeId);
+    const pd = a?.perDie?.[die - 1];
+    if (!pd) return null;
+    const pieces = piecesOf(e.board);
+    return (displayWinProb(pd.value, pieces) - displayWinProb(a.value, pieces)) * 100;
   }
 
   renderEvalBar() {

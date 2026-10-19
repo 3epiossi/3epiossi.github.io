@@ -304,6 +304,10 @@ button { font: inherit; color: inherit; }
 .handRow.multi .piecePreview.on { border-color: var(--c); box-shadow: 0 0 0 1px var(--c); }
 .handRow.multi .piecePreview:not(.on) { opacity: 0.55; }
 .handRow.multi + .turnText .turnHelp { display: none; }
+/* 手上的牆的運氣：牆名旁的小標籤 */
+.pieceLuck { display: inline-block; margin-left: 8px; padding: 0 7px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; color: var(--muted); border: 1px solid var(--line-strong); white-space: nowrap; vertical-align: 1px; font-variant-numeric: tabular-nums; }
+.pieceLuck.pos { color: var(--good); border-color: color-mix(in srgb, var(--good) 45%, transparent); }
+.pieceLuck.neg { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
 .handHint { display: block; font-size: 0.75rem; color: var(--muted); font-weight: 400; }
 .piecePreview {
   padding: 0;
