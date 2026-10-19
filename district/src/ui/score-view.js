@@ -87,14 +87,14 @@ export class ScoreView {
           </div>
           <select class="pcLevel" data-p="${p}" ${isCpu ? "" : "disabled"} aria-label="${escapeHtml(t("cpuLevel"))}" title="${escapeHtml(t("cpuLevel"))}">${AI_LEVEL_IDS.map((l) => `<option value="${l}" ${lv === l ? "selected" : ""}>${escapeHtml(t("aiLevelName", { n: l }))}</option>`).join("")}</select>
         </div>` : "";
-      // 選舉人票占比、劃區紅利、牌運：終局看開票結果，進行中看目前領先的暫時數字
+      // 選舉人票占比、劃區紅利、運氣：終局看開票結果，進行中看目前領先的暫時數字
       const sgn = (v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`;
       const seat = isOver ? s.seatShare : s.provisionalSeatShare;
       const gap = isOver ? s.seatVoteGapPct : s.provisionalSeatVoteGapPct;
       const lk = luck && luck.n[p] ? `<span class="${luck.sum[p] > 0.05 ? "pos" : luck.sum[p] < -0.05 ? "neg" : ""}" title="${escapeHtml(t("luckTitle"))}">${t("luckLabel")} ${sgn(luck.sum[p])}</span>` : "";
-      const detail = `
-          <div class="pcMeta"><span>${t("barSeat")}${isOver ? "" : t("barSeatLead")} <b>${seat.toFixed(1)}%</b></span>${lk}</div>`;
       const gapHtml = `<span class="pcGap ${gap > 1 ? "pos" : gap < -1 ? "neg" : ""}" title="${escapeHtml(t("bonusTitle"))}">${t("bonus", { v: sgn(gap) })}</span>`;
+      const detail = `
+          <div class="pcMeta">${gapHtml}${lk}</div>`;
       return `
         <div class="partyChip ${isTurn ? "isTurn" : ""} ${isWinner ? "isWinner" : ""} hasDetail" style="--c:${parties[p].color}">
           <div class="pcHead">
@@ -102,7 +102,7 @@ export class ScoreView {
             <span class="pcName">${escapeHtml(parties[p].name)}</span>
             ${head}
           </div>
-          <div class="pcVotes">${fmt(s.confirmedElectoralVotes)}<small>${t("votesUnit")}</small><span class="pcPct" title="${escapeHtml(t("barSeat"))}">${seat.toFixed(1)}%</span>${gapHtml}</div>
+          <div class="pcVotes">${fmt(s.confirmedElectoralVotes)}<small>${t("votesUnit")}</small><span class="pcPct" title="${escapeHtml(t("barSeat"))}">${seat.toFixed(1)}%</span></div>
           ${detail}
           ${pop}
         </div>`;
