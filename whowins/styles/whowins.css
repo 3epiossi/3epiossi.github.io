@@ -405,8 +405,26 @@ html { scrollbar-gutter: stable; }
 .diceOutlookTitle { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 2px; }
 .diceHint { font-size: 11px; color: #94a3b8; text-align: center; line-height: 1.35; }
 .sideDiceSection { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
+/* 手機：左邊骰子（下面是點數），右邊運氣量表；展望與提示在下面整排。
+   運氣不放在骰子下面，否則被固定在畫面底部的按鈕列蓋住 */
 @media (max-width: 600px) {
-  .sideDiceSection { gap: 4px; }
+  .sideDiceSection {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 18px; row-gap: 4px;
+    grid-template-areas: "box luck" "label luck" "title title" "row row" "hint hint";
+    align-items: center; justify-items: center;
+  }
+  #sideDiceWidget { grid-area: box; }
+  #sideDiceValLabel { grid-area: label; }
+  #sideDiceLuck { grid-area: luck; margin-top: 0; min-height: 0; width: 100%; max-width: 170px; }
+  #sideDiceLuck .luckMeter { max-width: none; font-size: 13px; gap: 6px; }
+  #sideDiceLuck .lmNum { font-size: 18px; }
+  #sideDiceLuck .lmTrack { height: 8px; }
+  #diceOutlookTitle { grid-area: title; }
+  #diceFaceRow { grid-area: row; }
+  #diceHint { grid-area: hint; }
+}
+@media (max-width: 600px) {
+  .sideDiceSection { row-gap: 4px; }
   .diceFaceRow { grid-template-columns: repeat(6, 1fr); }
   .diceFace { flex-direction: column; justify-content: flex-end; height: 58px; padding: 2px 0 3px; gap: 2px; }
   .diceFace .olBar { left: 3px; right: 3px; top: auto; bottom: 0; width: auto; height: var(--ol, 0%); border-radius: 3px 3px 0 0; }
