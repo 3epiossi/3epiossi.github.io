@@ -250,3 +250,20 @@ lang-select { display: inline-block; }
   .actionBar .actBtn { min-width: 0; padding: 6px 6px 5px; font-size: 11px; }
   .actionBar .actBtn.icon { width: 32px; padding: 10px 0; }
 }
+
+/* ------------------------------------------------------------------ */
+/* 運氣量表（shared/luck-meter.js）：數值加一條從中間向左右長的短條 */
+/* ------------------------------------------------------------------ */
+
+.luckMeter { display: flex; flex-direction: column; gap: 4px; width: 100%; max-width: 132px; font-size: 12px; line-height: 1.2; color: #94a3b8; }
+.luckMeter.pending { opacity: 0.55; }
+.lmHead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.lmLabel { font-weight: 600; letter-spacing: 0.04em; }
+.lmNum { min-width: 3.4em; text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; font-size: 13px; color: #cbd5e1; }
+.lmTrack { position: relative; height: 6px; border-radius: 999px; background: rgba(148, 163, 184, 0.2); }
+.lmTrack::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1.5px; margin-left: -0.75px; background: rgba(226, 232, 240, 0.55); }
+.lmFill { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: #94a3b8; transition: width 0.25s ease; }
+.luckMeter.pos .lmFill { background: #4ade80; }
+.luckMeter.neg .lmFill { background: #f87171; }
+.luckMeter.pos .lmNum { color: #4ade80; }
+.luckMeter.neg .lmNum { color: #f87171; }

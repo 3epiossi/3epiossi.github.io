@@ -660,7 +660,17 @@ export class WhoWinsApp {
         if (e.legalMoves().length === 0) { this.cpuRequest = null; return; }
       }
       // 2. 搜尋。按時間搜的等級搜尋時，局面分析先停（兩條 worker 搶資源會讓 CPU 的搜尋量變少）
-      if (timed) { this.cpuSearching = req; this.cancelAnalysisJob(); }
+      if (timed) {
+        // 搜尋時局面分析會停，所以先把這個局面的第 1 級分析算完（約 0.5 秒，算在節奏的間隔裡），
+        // 輪到 CPU 時勝率條和運氣才會跟著更新，不會只有人類的回合有
+        const node = e.tree.getCurrentNode();
+        if (this.analyzable(node) && !this.analysis.has(nodeId)) {
+          if (this.analysisJob?.nodeId !== nodeId) { this.cancelAnalysisJob(); this.runAnalysis(node, 1); }
+          await this.analysisJob?.promise;
+          if (stale()) return;
+        }
+        this.cpuSearching = req; this.cancelAnalysisJob();
+      }
       const res = await this.aiClient.play({
         board: cloneBoard(e.board), turn, die: free ? null : e.diceValue, level,
         opts: { free, komi: e.komi, timeMs: this.thinkMs() }
