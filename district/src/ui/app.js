@@ -7,7 +7,7 @@
 
 import { GameEngine } from "../core/game-engine.js";
 import { AIPlayer } from "../ai/ai-player.js";
-import { luckOfTurnAsync } from "../ai/luck.js";
+import { luckOfTurnAsync, luckOfPieceGen } from "../ai/luck.js";
 import { BoardView } from "./board-view.js";
 import { PoolView } from "./pool-view.js";
 import { ScoreView } from "./score-view.js";
@@ -270,6 +270,7 @@ export class DistrictApp {
     this.boardView.render();
     this.poolView.render();
     this._scheduleLuck();
+    this._schedulePieceLuck();
     this._scheduleSave();
   }
 
@@ -328,6 +329,28 @@ export class DistrictApp {
   }
 
   /** 背景算每一步的牌運（一次一步，算完才重畫側欄）；換局或換分支時作廢重來 */
+  /** 手上選中的那塊牆的運氣（目前局面）：背景算，算完重畫手牌卡；換步或換牆就重算 */
+  _schedulePieceLuck() {
+    const e = this.engine;
+    const piece = e && !e.isGameOver ? e.candidatePool[this.poolView.selectedIndex ?? 0] : null;
+    if (!piece) { this.poolView.pieceLuck = undefined; return; }
+    const key = `${e.tree.currentNodeId}|${piece.shape.id}`;
+    if (this._pieceLuckKey === key) return;
+    this._pieceLuckKey = key;
+    this.poolView.pieceLuck = undefined;
+    const total = e.getAnalyticsReport().totalElectoralVotes || 1;
+    const it = luckOfPieceGen(e, piece.shape);
+    (async () => {
+      let r = it.next();
+      while (!r.done) { await new Promise((resolve) => setTimeout(resolve, 0)); r = it.next(); }
+      return r.value;
+    })().then((v) => {
+      if (this._pieceLuckKey !== key || this.engine !== e) return;
+      this.poolView.pieceLuck = v == null ? null : (v / total) * 100;
+      this.poolView.render();
+    }).catch(() => {});
+  }
+
   _scheduleLuck() {
     if (this._luckBusy || !this.engine) return;
     const engine = this.engine;

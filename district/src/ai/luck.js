@@ -84,6 +84,28 @@ export function* luckOfTurn(engine, parentNode, ctx = engine._luckCtx || (engine
   return got - expected;
 }
 
+/**
+ * 手上這塊牆的運氣（目前局面）：它在這個局面最好能做到的結果，減去隨機抽一塊的平均。定義同每回合的手氣（期望選舉人票差）。
+ * 生成器：每算完一種形狀讓出一次。
+ */
+export function* luckOfPieceGen(engine, shape, ctx = engine._luckCtx || (engine._luckCtx = makeContext(engine))) {
+  const player = engine.currentPlayer;
+  const board = engine.boardState;
+  const counts = new Map();
+  for (const p of [...engine.candidatePool, ...engine.wallBag]) counts.set(p.shape.id, { shape: p.shape, n: (counts.get(p.shape.id)?.n || 0) + 1 });
+  if (!counts.has(shape.id)) return null;
+  const baseline = scoreOf(ctx, board, player);
+  const best = new Map();
+  for (const [id, { shape: s }] of counts) {
+    best.set(id, bestForShape(ctx, board, s, player, baseline));
+    yield;
+  }
+  const total = [...counts.values()].reduce((a, c) => a + c.n, 0);
+  const ids = [...counts.keys()];
+  const expected = expectedMax(ids.map((id) => best.get(id)), ids.map((id) => counts.get(id).n / total), 1);
+  return best.get(shape.id) - expected;
+}
+
 /** 非同步版：每段讓出一次主執行緒，畫面不會卡住 */
 export async function luckOfTurnAsync(engine, parentNode) {
   const it = luckOfTurn(engine, parentNode);
