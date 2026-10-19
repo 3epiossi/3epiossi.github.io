@@ -370,7 +370,7 @@ button { font: inherit; color: inherit; }
 .secHead { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; font-size: 0.74rem; color: var(--muted); }
 .secTitle { font-size: 0.85rem; font-weight: 800; color: var(--text); }
 .histList { display: flex; flex-direction: column; gap: 2px; }
-.histRow.empty { min-height: 31px; }
+.histRow.empty { min-height: 52px; }
 .histRow.start .histWhat { grid-column: 2 / -1; color: var(--muted); }
 .histRow.past { opacity: 0.6; }
 
@@ -647,10 +647,14 @@ input[type="range"] { accent-color: var(--primary); }
 .histRow { cursor: pointer; }
 .histRow.future { opacity: 0.45; }
 .histRow.now { background: var(--surface-2); box-shadow: inset 2px 0 0 var(--c); }
-.histRow { grid-template-columns: 24px 48px 1fr auto; }
-.histLuck { font-size: 0.72rem; font-variant-numeric: tabular-nums; color: var(--muted); }
-.histLuck.pos { color: var(--good); }
-.histLuck.neg { color: var(--bad); }
+/* 兩行：第一行手數、黨、這一手做了什麼；第二行這一手的運氣與到這一手為止的累計。固定高度，三列上下不會跳動 */
+.histRow { grid-template-columns: 24px 48px 1fr; gap: 2px 8px; min-height: 52px; align-content: center; }
+.histRow .histLuck { grid-column: 2 / -1; }
+.histLuck { font-size: 0.72rem; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.histLuck b { font-weight: 700; }
+.histLuck .pos { color: var(--good); }
+.histLuck .neg { color: var(--bad); }
+.histLuckSum { margin-left: 8px; }
 @media (hover: none) { .histKeys { display: none; } }
 
 /* 選區編號的浮動說明 */
@@ -671,32 +675,21 @@ input[type="range"] { accent-color: var(--primary); }
 .ctRow b { text-align: right; font-weight: 700; }
 .ctVal { text-align: right; font-size: 0.7rem; color: var(--faint); }
 
-/* 終局：開票結果細項放在計分卡上 */
-.partyChip.hasDetail { display: flex; flex-direction: column; gap: 4px; }
-.pcGap { margin-left: auto; font-size: 0.68rem; font-weight: 700; color: var(--muted); align-self: center; }
+/* 計分卡：票數在左、選舉人票百分比在右 */
 .pcVotes { display: flex; align-items: baseline; }
-.pcGap.pos, .pcMeta .pos { color: var(--good); }
-.pcGap.neg, .pcMeta .neg { color: var(--bad); }
 .pcBars { display: flex; flex-direction: column; gap: 3px; margin-top: 2px; }
 .pcBar { height: 6px; border-radius: 999px; background: var(--c); min-width: 2px; }
-.pcMeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; font-size: 0.68rem; color: var(--muted); }
-/* 標籤可以換行（英文「Electoral votes (incl. leading)」在手機上放不下），數字不拆開 */
-.pcMeta span { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 4px; }
-.pcMeta b { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* 行動卡與開票結果卡同高：從選舉進到開票、再悔棋回來，右欄不會跳動 */
 .turnCard, .resultCard { height: 284px; }
 .resultCard { justify-content: space-between; }
 
-/* 計分卡：票數旁邊是選舉人票百分比，下一行才是劃區紅利與運氣（手機只留前者，見下方） */
+/* 計分卡：票數旁邊是選舉人票百分比 */
 .pcPct { margin-left: auto; font-size: 1.05rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
 
-/* 手機：計分卡只留黨名、玩家／電腦、票數與百分比；
-   行動卡固定在畫面底部（同五連黑白棋、誰會贏的按鈕列），目前的牆塊形狀與按鈕不用捲動就看得到 */
+/* 手機：行動卡固定在畫面底部（同五連黑白棋、誰會贏的按鈕列），目前的牆塊形狀與按鈕不用捲動就看得到 */
 @media (max-width: 600px) {
-  .partyChip .pcMeta { display: none; }
   .pcPct { font-size: 0.95rem; }
-  .partyChip.hasDetail { gap: 2px; }
 
   .districtApp { padding-bottom: calc(190px + env(safe-area-inset-bottom)); }
   .actionSlot { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; }

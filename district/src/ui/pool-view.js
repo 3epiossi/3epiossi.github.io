@@ -371,7 +371,10 @@ export class PoolView {
         ? t("histPlace", { shape: h.piece?.shape ? shapeName(h.piece.shape.id) : t("histWall") })
         : t("histDiscard", { shape: h.discarded?.shape ? shapeName(h.discarded.shape.id) : "" });
       const lk = node.luck;
-      const luckCell = lk == null ? "<span></span>" : `<span class="histLuck ${lk > 0.05 ? "pos" : lk < -0.05 ? "neg" : ""}" title="${t("luckTitle")}">${t("luckLabel")} ${lk >= 0 ? "+" : ""}${lk.toFixed(1)}</span>`;
+      const total = this._luckTotalAt(line, i, h.player);
+      const sgn = (v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`;
+      const tone = (v) => (v > 0.05 ? "pos" : v < -0.05 ? "neg" : "");
+      const luckCell = lk == null ? "<span></span>" : `<span class="histLuck" title="${t("luckTitle")}">${t("luckLabel")} <b class="${tone(lk)}">${sgn(lk)}</b><span class="histLuckSum">${t("luckTotal")} <b class="${tone(total)}">${sgn(total)}</b></span></span>`;
       return `<div class="histRow ${h.action} ${cls}" data-step="${i}" data-wall="${h.action === "place" ? h.wallId : ""}" style="--c:${party.color}"><span class="histTurn">${i}</span><span class="histParty">${escapeHtml(party.name)}</span><span class="histWhat">${what}</span>${luckCell}</div>`;
     };
     return `${head}${this._chartHtml()}<div class="histList">${row(step - 1)}${row(step)}${row(step + 1)}</div>`;
@@ -410,20 +413,14 @@ export class PoolView {
     return b ? b.forkStepIdx : 0;
   }
 
-  /** 各黨到目前這一步為止的牌運加總（占總選舉人票的百分點） */
-  _luckByParty() {
-    const n = this.parties.length;
-    const sum = Array(n).fill(0), cnt = Array(n).fill(0);
-    let pending = false;
-    const line = this.engine.lineNodes();
-    for (let i = 1; i <= this.engine.currentStep && i < line.length; i++) {
+  /** 這一手為止、同一個黨的運氣加總（占總選舉人票的百分點）；還沒算出來的手略過 */
+  _luckTotalAt(line, upto, player) {
+    let sum = 0;
+    for (let i = 1; i <= upto && i < line.length; i++) {
       const node = line[i];
-      if (node.luck === undefined) { pending = true; continue; }
-      if (node.luck === null) continue;
-      sum[node.entry.player] += node.luck;
-      cnt[node.entry.player]++;
+      if (node.entry.player === player && typeof node.luck === "number") sum += node.luck;
     }
-    return { sum, n: cnt, pending };
+    return sum;
   }
 
   /** 戰況走勢圖：每黨的預期選舉人票占比隨手數變化；在分支上時，主線變暗、分支從分岔點接出去 */

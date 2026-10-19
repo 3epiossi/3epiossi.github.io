@@ -323,8 +323,7 @@ export class DistrictApp {
     this.scoreView.render(this.engine, this.playerTypes, {
       levels: this.settings.parties.map((p) => p.level),
       onLevel: (p, level) => this._setPartyLevel(p, level),
-      onSeat: (p, owner) => this._setSeat(p, owner),
-      luck: this.poolView._luckByParty()
+      onSeat: (p, owner) => this._setSeat(p, owner)
     });
   }
 

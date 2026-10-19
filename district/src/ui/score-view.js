@@ -26,7 +26,7 @@ export class ScoreView {
   /**
    * options.levels：各政黨的電腦強度；options.onLevel(p, level)：使用者改強度時呼叫
    */
-  render(engine, playerTypes, { levels = [], onLevel = null, onSeat = null, luck = null } = {}) {
+  render(engine, playerTypes, { levels = [], onLevel = null, onSeat = null } = {}) {
     const report = engine.getAnalyticsReport();
     const parties = engine.parties;
     const total = report.totalElectoralVotes || 1;
@@ -87,23 +87,16 @@ export class ScoreView {
           </div>
           <select class="pcLevel" data-p="${p}" ${isCpu ? "" : "disabled"} aria-label="${escapeHtml(t("cpuLevel"))}" title="${escapeHtml(t("cpuLevel"))}">${AI_LEVEL_IDS.map((l) => `<option value="${l}" ${lv === l ? "selected" : ""}>${escapeHtml(t("aiLevelName", { n: l }))}</option>`).join("")}</select>
         </div>` : "";
-      // 選舉人票占比、劃區紅利、運氣：終局看開票結果，進行中看目前領先的暫時數字
-      const sgn = (v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}`;
+      // 選舉人票占比：終局看開票結果，進行中看目前領先的暫時數字（劃區紅利看紀錄的走勢圖，運氣看紀錄的每一步）
       const seat = isOver ? s.seatShare : s.provisionalSeatShare;
-      const gap = isOver ? s.seatVoteGapPct : s.provisionalSeatVoteGapPct;
-      const lk = luck && luck.n[p] ? `<span class="${luck.sum[p] > 0.05 ? "pos" : luck.sum[p] < -0.05 ? "neg" : ""}" title="${escapeHtml(t("luckTitle"))}">${t("luckLabel")} ${sgn(luck.sum[p])}</span>` : "";
-      const gapHtml = `<span class="pcGap ${gap > 1 ? "pos" : gap < -1 ? "neg" : ""}" title="${escapeHtml(t("bonusTitle"))}">${t("bonus", { v: sgn(gap) })}</span>`;
-      const detail = `
-          <div class="pcMeta">${gapHtml}${lk}</div>`;
       return `
-        <div class="partyChip ${isTurn ? "isTurn" : ""} ${isWinner ? "isWinner" : ""} hasDetail" style="--c:${parties[p].color}">
+        <div class="partyChip ${isTurn ? "isTurn" : ""} ${isWinner ? "isWinner" : ""}" style="--c:${parties[p].color}">
           <div class="pcHead">
             <span class="pcDot"></span>
             <span class="pcName">${escapeHtml(parties[p].name)}</span>
             ${head}
           </div>
           <div class="pcVotes">${fmt(s.confirmedElectoralVotes)}<small>${t("votesUnit")}</small><span class="pcPct" title="${escapeHtml(t("barSeat"))}">${seat.toFixed(1)}%</span></div>
-          ${detail}
           ${pop}
         </div>`;
     }).join("");
