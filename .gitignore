@@ -63,3 +63,9 @@ workspace_dump*.txt
 # ==========================================
 .claude/
 dist/
+
+# 本地測試資料與第三方引擎（不在網頁中使用）
+five/tests/results/
+whowins/tests/results/
+rapfi/
+zebra/

@@ -1,0 +1,70 @@
+/* 五連黑白棋規則學院：迷你棋盤與組別選擇列 */
+
+.playStage { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+.boardSlot { width: min(100%, 500px); }
+
+.mb {
+  display: grid;
+  grid-template-columns: 18px repeat(8, 1fr);
+  grid-template-rows: 18px repeat(8, 1fr);
+  gap: 0;
+  padding: 8px 8px 8px 4px;
+  border-radius: 16px;
+  background: #0d1f2d;
+  border: 1px solid var(--line);
+}
+.mbLabel { display: grid; place-items: center; font-size: 11px; color: var(--faint); user-select: none; }
+.mbCell {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #14532d;
+  background-image: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.12));
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.mbCell:nth-child(even) { filter: none; }
+.mbCell:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 1; }
+.mbCell.hint::after {
+  content: ""; width: 24%; height: 24%; border-radius: 50%; background: rgba(163, 230, 53, 0.85);
+  box-shadow: 0 0 8px rgba(163, 230, 53, 0.7);
+}
+.mbCell.last { box-shadow: inset 0 0 0 2px #fde047; }
+.mbCell.flipped .disc { animation: flipPop 0.4s ease-out; }
+.mbCell.gap { box-shadow: inset 0 0 0 2px #fbbf24; background: rgba(251, 191, 36, 0.22); border-style: dashed; }
+.mbCell.glow { box-shadow: inset 0 0 0 3px #fbbf24, 0 0 14px rgba(251, 191, 36, 0.7); z-index: 1; }
+@keyframes flipPop { 0% { transform: scale(0.6) rotateY(180deg); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .mbCell.flipped .disc { animation: none; } }
+
+.disc {
+  width: 82%; aspect-ratio: 1; border-radius: 50%;
+  display: grid; place-items: center; position: relative;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5), inset 0 -3px 5px rgba(0, 0, 0, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.22);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.disc.b { background: radial-gradient(circle at 35% 30%, #3b4252, #0b0f14 70%); color: #f8fafc; }
+.disc.w { background: radial-gradient(circle at 35% 30%, #ffffff, #cbd5e1 75%); color: #111827; }
+.disc i { font-style: normal; font-weight: 800; font-size: clamp(14px, 3.4vw, 26px); line-height: 1; }
+.disc u { position: absolute; left: 28%; right: 28%; bottom: 17%; height: 3px; border-radius: 2px; background: var(--g); text-decoration: none; }
+.disc.dim { opacity: 0.22; }
+.disc.focus { transform: scale(1.08); box-shadow: 0 0 0 3px var(--g), 0 0 12px var(--g); }
+
+.pickerWrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.pickerLabel { font-size: 0.8rem; color: var(--muted); }
+.pickerSlot { display: flex; gap: 8px; }
+.gp {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; padding: 8px 10px 6px;
+  border-radius: 12px; border: 2px solid var(--line-strong); background: var(--surface-2); cursor: pointer;
+}
+.gp:hover:not(:disabled) { background: var(--surface-3); }
+.gp.on { border-color: var(--g); box-shadow: 0 0 0 2px color-mix(in srgb, var(--g) 25%, transparent); }
+.gp:disabled { opacity: 0.35; cursor: not-allowed; }
+.gp:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.gpSym { font-size: 1.5rem; line-height: 1; color: var(--g); font-weight: 800; }
+.gpCount { font-size: 0.72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.quiz { display: flex; flex-direction: column; align-items: center; gap: 10px; min-height: 76px; }
+.quizQ { font-size: 0.95rem; }
+.quizBtns { display: flex; gap: 10px; }

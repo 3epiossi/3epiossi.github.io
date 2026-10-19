@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1120" />
+  <title>傑利蠑螈 — 選區劃分博弈桌遊</title>
+  <meta name="description" content="傑利蠑螈：2～6 個政黨的傑利蠑螈選區劃分博弈。政黨名稱、顏色、數量與棋盤形狀都能自訂，甚至可以上傳國家地圖當棋盤。" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" />
+  <link rel="stylesheet" href="./styles/district.css" />
+  <link rel="stylesheet" href="../shared/ui.css" />
+</head>
+<body>
+  <div class="districtApp">
+    <header class="topbar">
+      <h1 class="brand"><game-switcher current="district"></game-switcher></h1>
+      <div class="topActions">
+        <button id="rulesBtn" class="btn btnGhost" type="button"></button>
+        <button id="setupBtn" class="btn btnPrimary" type="button"></button>
+        <lang-select></lang-select>
+      </div>
+    </header>
+
+    <main class="stage">
+      <section class="boardArea">
+        <div id="scoreboard" class="scoreboard"></div>
+        <div id="boardContainer" class="boardContainer"></div>
+      </section>
+      <aside id="panel" class="panel"></aside>
+    </main>
+
+    <div id="setupDialog" class="sheet" aria-hidden="true"></div>
+  </div>
+
+  <script type="module" src="../shared/game-switcher.js"></script>
+  <script type="module" src="../shared/tabs.js"></script>
+  <script type="module" src="../shared/lang-select.js"></script>
+  <script type="module" src="./src/ui/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+/* 劃區爭霸規則學院：棋盤舞台與手牌列（棋盤本身沿用 ../styles/district.css） */
+
+.dStage { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+.dScore { width: 100%; max-width: 520px; margin: 0; }
+.dBoard { width: 100%; max-width: 520px; }
+.dBoard .boardSvgWrapper { max-width: 100%; }
+.dHand { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; min-height: 74px; }
+.dPiece {
+  width: 66px; height: 66px; display: grid; place-items: center; padding: 0;
+  border-radius: 12px; border: 1px solid var(--line); background: #0a0f1c; cursor: pointer; opacity: 0.55;
+}
+.dPiece.on { opacity: 1; border-color: #e63946; box-shadow: 0 0 0 1px #e63946; }
+.dPiece .shapeSvg { width: 54px; height: 54px; }
+.dHandNote { font-size: 0.8rem; color: var(--muted); }
+
+/* 計分列在學院裡不需要太大 */
+.dScore .partyChips { gap: 8px; }
+.lessonText .goalHint { color: var(--accent); }
+.feedback ul { margin: 6px 0 0; padding-left: 18px; }
+.feedback li + li { margin-top: 2px; }

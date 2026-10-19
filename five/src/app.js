@@ -7,9 +7,9 @@ import { BLACK, WHITE, EMPTY, MOVE_TYPE } from "./core/constants.js";
 import { applyMoveToBoard, posToCoord } from "./core/rules.js";
 import { GameEngine, poolOf } from "./core/game-engine.js";
 import { randomXot } from "./core/xot-openings.js";
-import { BoardView, discHtmlFive, markWhyText } from "./ui/board-view.js";
+import { BoardView, discHtmlFive, markWhyText, MARK_CLASS } from "./ui/board-view.js";
 import { EvalBar, displayWinProb } from "./ui/eval-bar.js";
-import { classifyMove, MARK_TUNE } from "./ai/move-quality.js";
+import { classifyMove, MARK_TUNE, moveAccuracy } from "./ai/move-quality.js";
 import { PoolView } from "./ui/hand-view.js";
 import { WinChart } from "./ui/win-chart.js";
 import { Storage } from "./storage/storage.js";
@@ -19,6 +19,7 @@ import { clampLevel, isTimedLevel } from "./ai/levels.js";
 import { findFive, findThreatGroups, withGapOwners, letterOf, discLabel, numberMask, groupOf, GROUP_SIZE, setSymbolSet, getSymbolSet, parseCustomSymbols } from "./core/five-rules.js";
 import { PatternFx } from "./ui/pattern-fx.js";
 import { helpGuideHtml } from "./help-content.js";
+import { openHelp } from "../../shared/help.js";
 import { stoneSound as sound } from "./ui/stone-sound.js";
 import { resolveTextColor, textPaletteFor, normalizeFace } from "./ui/text-colors.js";
 import { AiClient, AiPool, analysisWorkers } from "./ai/ai-client.js";
@@ -40,6 +41,8 @@ import {
   createSession,
   deriveUiState
 } from "../../src/core/control-state.js";
+
+const MARK_ORDER = ["!!", "!", "!?", "?!", "?", "??"];
 
 /** 存檔格式：1 = 舊規則（抽棋、每顆兩個字），2 = 4 組自選。版本不同的存檔不讀，開新局 */
 const SAVE_VERSION = 2;
@@ -272,7 +275,6 @@ export class WeightedOthelloApp {
 
     window.addEventListener("langchange", () => {
       this.renderTutorialLegend();
-      this.renderHelpGuide();
       for (const side of ["black", "white"]) {
         const input = document.getElementById(side === "black" ? "settingBlackName" : "settingWhiteName");
         if (input) input.placeholder = tr(side);
@@ -284,8 +286,7 @@ export class WeightedOthelloApp {
       if (document.getElementById("skinModal")?.classList.contains("open")) this.renderSkinWorkshop();
     });
 
-    document.getElementById("rulesBtn")?.addEventListener("click", () => this.openTutorialModal(this.helpTab || "rules"));
-    document.querySelectorAll(".helpTab").forEach((btn) => btn.addEventListener("click", () => this.showHelpTab(btn.dataset.tab)));
+    document.getElementById("rulesBtn")?.addEventListener("click", () => this.openTutorialModal());
     document.getElementById("exportBtn")?.addEventListener("click", () => this.exportRecord());
     document.getElementById("themeToggleBtn")?.addEventListener("click", () => this.openSkinModal());
     document.getElementById("langSelect")?.addEventListener("change", (e) => setLang(e.target.value));
@@ -1054,6 +1055,62 @@ export class WeightedOthelloApp {
     this.sync(); // 分支消失、回到主線時，sync 會換回進入研究前的席位
   }
 
+  /**
+   * 終局總結：雙方的準確度（每一手跟最佳步的勝率損失換算後的平均）、可一鍵跳過去的 ?? 與 !!。
+   * 分析還沒算完的手不算，顯示進度。
+   */
+  summaryData() {
+    const line = this.engine.tree.getBranchHistory();
+    const last = line[line.length - 1];
+    if (!last.gameOver) return null;
+    const stats = { black: { acc: 0, n: 0 }, white: { acc: 0, n: 0 } };
+    const marks = { black: {}, white: {} };
+    const jumps = [];
+    let analyzed = 0, total = 0;
+    for (let i = 1; i < line.length; i++) {
+      const node = line[i], prev = line[i - 1];
+      if (node.move?.type !== MOVE_TYPE.PLACE || node.actor === "xot") continue;
+      total++;
+      if (!node.mark) continue;
+      analyzed++;
+      const s = stats[prev.turn === BLACK ? "black" : "white"];
+      s.acc += moveAccuracy(node.mark.loss * 100); s.n++;
+      if (node.mark.sym) { const m = marks[prev.turn === BLACK ? "black" : "white"]; m[node.mark.sym] = (m[node.mark.sym] || 0) + 1; }
+      if (node.mark.sym === "??" || node.mark.sym === "!!") jumps.push({ step: node.stepIdx, sym: node.mark.sym });
+    }
+    return { stats, jumps, marks, analyzed, total, settlement: last.settlementData };
+  }
+
+  renderSummary() {
+    const box = document.getElementById("summaryBox");
+    if (!box) return;
+    const d = this.summaryData();
+    if (!d) { box.hidden = true; return; }
+    box.hidden = false;
+    const s = d.settlement;
+    const fmt1 = (x) => (Math.round(x * 10) / 10).toFixed(1);
+    const head = s.winner === BLACK
+      ? tr("summaryWin", { winner: tr("black") })
+      : s.winner === WHITE ? tr("summaryWin", { winner: tr("white") }) : tr("summaryDraw");
+    const how = s.winner === 0 ? "" : tr(s.byFive ? "summaryByFive" : "summaryByCount");
+    const row = (key, sd) => {
+      const st = d.stats[sd];
+      const mk = MARK_ORDER.filter((sym) => d.marks[sd][sym]).map((sym) => `<span class="mvMark ${MARK_CLASS[sym]}">${escapeHtml(sym)} ${d.marks[sd][sym]}</span>`).join("") || "-";
+      return `<tr><td>${escapeHtml(tr(key))}</td><td>${st.n ? fmt1(st.acc / st.n) : "-"}</td><td class="summaryMarks">${mk}</td></tr>`;
+    };
+    const jumps = d.jumps.map((j) => `<button type="button" data-step="${j.step}" class="summaryJumpBtn ${j.sym === "!!" ? "good" : "bad"}" title="${escapeHtml(tr("summaryJumpTip", { n: j.step }))}">${escapeHtml(j.sym)} ${j.step}</button>`).join("");
+    box.innerHTML = `
+      <div class="summaryHead">${escapeHtml(tr("summaryTitle"))}</div>
+      <div>${escapeHtml(head)}${how ? `（${escapeHtml(how)}）` : ""}　<span class="summaryScore">${escapeHtml(tr("summaryCount", { b: s.totalBlack, w: s.totalWhite }))}</span></div>
+      <table class="summaryTable">
+        <tr><th></th><th>${escapeHtml(tr("summaryAcc"))}</th><th>${escapeHtml(tr("summaryMarks"))}</th></tr>
+        ${row("black", "black")}${row("white", "white")}
+      </table>
+      ${jumps ? `<div class="summaryJump">${jumps}</div>` : ""}
+      <div class="summaryNote">${escapeHtml(d.analyzed < d.total ? tr("summaryProgress", { a: d.analyzed, t: d.total }) : tr("summaryNote"))}</div>`;
+    box.querySelectorAll(".summaryJump button").forEach((b) => b.addEventListener("click", () => this.goToStep(Number(b.dataset.step))));
+  }
+
   /** 折線圖的資料：主線、分支（從分岔點起）、每一手黑方的（校準）勝率與評價 */
   chartData() {
     const tree = this.engine.tree;
@@ -1179,28 +1236,10 @@ export class WeightedOthelloApp {
     return 100 * (node.turn === BLACK ? p : 1 - p);
   }
 
-  /** 「說明」視窗：規則／使用說明兩個分頁（第一次來的人先看規則） */
+  /** 「規則」視窗（三個遊戲共用，見 shared/help.js）；使用說明放在「操作」分頁的摺疊區 */
   openTutorialModal(tab = "rules") {
-    this.renderHelpGuide();
-    this.showHelpTab(tab);
-    ModalManager.open("tutorialModal");
+    openHelp({ gameId: "five", tab, guide: (lang) => helpGuideHtml(lang === "zh" ? "zh" : lang) });
     Storage.setOnboardingSeen();
-  }
-
-  showHelpTab(tab) {
-    this.helpTab = tab === "guide" ? "guide" : "rules";
-    document.querySelectorAll(".helpTab").forEach((b) => {
-      const on = b.dataset.tab === this.helpTab;
-      b.classList.toggle("active", on);
-      b.setAttribute("aria-selected", String(on));
-    });
-    document.querySelectorAll(".helpPanel").forEach((p) => { p.hidden = p.dataset.panel !== this.helpTab; });
-    document.querySelector("#tutorialModal .modalBody")?.scrollTo?.(0, 0);
-  }
-
-  renderHelpGuide() {
-    const el = document.getElementById("helpGuide");
-    if (el) el.innerHTML = helpGuideHtml(curLang());
   }
 
   // ===== 棋子外觀工坊 =====
@@ -1773,6 +1812,7 @@ export class WeightedOthelloApp {
     this.renderEvalBar();
     this.winChart.render(this.chartData());
     this.renderPlaybackButtons();
+    this.renderSummary();
 
     // 5. 席位列
     const seatCurrentKey = seatKey(state.currentTurn);

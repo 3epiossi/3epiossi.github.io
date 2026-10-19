@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { VIEW, CTRL, HUMAN, CPU_SEAT, seatKey, createSession, deriveUiState } from "../src/core/control-state.js";
-import { BLACK, WHITE } from "../src/core/constants.js";
+import { VIEW, CTRL, HUMAN, CPU_SEAT, seatKey, createSession, deriveUiState } from "../whowins/src/core/control-state.js";
+import { BLACK, WHITE } from "../whowins/src/core/constants.js";
 
 test("seatKey maps turn colour to seat name", () => {
   assert.equal(seatKey(BLACK), "black");

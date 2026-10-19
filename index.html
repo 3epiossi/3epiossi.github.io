@@ -20,22 +20,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Noto+Sans+TC:wght@900&family=Noto+Sans+JP:wght@900&display=swap" />
   <link rel="stylesheet" href="./five/styles/five.css" />
+  <link rel="stylesheet" href="./shared/ui.css" />
 </head>
 <body class="theme-neon">
   <div class="app">
     <!-- 頂部列：標題、規則、設定、語言 -->
     <header class="topBar fiveTop">
       <div class="brand">
-        <h1 data-i18n="brandName">五連黑白棋</h1>
+        <h1><game-switcher current="five"></game-switcher></h1>
       </div>
       <div class="topActions">
         <button id="rulesBtn" class="topBtn" data-i18n="btnRules">規則</button>
         <button id="themeToggleBtn" class="topBtn" data-i18n="btnSettingsTop">設定</button>
-        <select id="langSelect" class="langSelect" aria-label="Language">
-          <option value="zh">中文</option>
-          <option value="en">English</option>
-          <option value="ja">日本語</option>
-        </select>
+        <lang-select></lang-select>
       </div>
     </header>
 
@@ -90,14 +87,15 @@
             </div>
           </div>
 
-          <!-- 棋盤 + 勝率條 + 選組別 -->
+          <!-- 勝率條：白方在左、黑方在右，放在計分版下面 -->
+          <div id="evalBar" class="evalBar" role="img">
+            <div class="evalWhite"></div>
+            <span class="evalNum evalNumWhite"></span>
+            <span class="evalNum evalNumBlack"></span>
+          </div>
+
+          <!-- 棋盤 + 選組別 -->
           <div class="boardWithSide">
-            <!-- 勝率條：黑方在下、白方在上 -->
-            <div id="evalBar" class="evalBar" role="img">
-              <div class="evalWhite"></div>
-              <span class="evalNum evalNumWhite"></span>
-              <span class="evalNum evalNumBlack"></span>
-            </div>
             <div id="boardFrame" class="boardFrame">
               <div class="coordTop" aria-hidden="true">
                 <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span>
@@ -145,12 +143,10 @@
       <aside class="panelCard chartCard">
         <div class="chartHead"><span data-i18n="historyTitle">勝率走勢</span><span class="chartHeadRight"><button id="exportBtn" class="chartExport" data-i18n="btnExport" data-i18n-title="tipExport">匯出棋譜</button><span class="chartHelp" data-i18n-title="historyTip" aria-hidden="true">?</span></span></div>
         <div id="historyBox" class="historyBox winChartBox"></div>
+        <div id="summaryBox" class="summaryCard" hidden></div>
       </aside>
     </main>
 
-    <footer class="siteFooter">
-      <a id="diceLink" href="./whowins/index.html" data-i18n="btnDice" data-i18n-title="titleDice">誰會贏？</a>
-    </footer>
 
     <!-- 開發者模式 HUD (?debug=1 自動啟動) -->
     <div id="developerHud" class="developerHud" style="display: none;">
@@ -162,47 +158,6 @@
   </div>
 
   <!-- ===== 模組彈窗系統 (Modals) ===== -->
-
-  <!-- 2. 新手規則彈窗 -->
-  <div id="tutorialModal" class="modalBackdrop" data-modal-id="tutorialModal" aria-hidden="true">
-    <div class="modalDialog" role="dialog" aria-labelledby="tutorialModalTitle">
-      <div class="modalHeader">
-        <div id="tutorialModalTitle" class="modalTitle" data-i18n="helpTitle">說明</div>
-        <button class="modalCloseBtn" aria-label="關閉教學">✕</button>
-      </div>
-      <div class="helpTabs" role="tablist">
-        <button class="helpTab active" data-tab="rules" role="tab" data-i18n="helpTabRules">規則</button>
-        <button class="helpTab" data-tab="guide" role="tab" data-i18n="helpTabGuide">使用說明</button>
-      </div>
-      <div class="modalBody">
-        <div class="helpPanel" data-panel="rules">
-        <div class="tutorialHighlight helpRulesLead" data-i18n="tutorialModalTitle">60 秒掌握五連黑白棋！</div>
-        <div class="tutorialStepCard">
-          <div class="tutorialIcon">🎴</div>
-          <div>
-            <div class="tutorialHighlight" data-i18n="rule2Title"></div>
-            <div data-i18n="rule2Text"></div>
-          </div>
-        </div>
-        <div class="tutorialStepCard">
-          <div class="tutorialIcon">🎯</div>
-          <div>
-            <div class="tutorialHighlight" data-i18n="rule6Title"></div>
-            <div data-i18n="rule6Text"></div>
-            <div class="legendRow">
-              <div id="legendFiveDiscs" style="display:contents"></div>
-              <div class="legendNote" id="legendFiveNote"></div>
-            </div>
-          </div>
-        </div>
-        </div>
-        <div class="helpPanel helpGuide" data-panel="guide" id="helpGuide" hidden></div>
-      </div>
-      <div class="modalFooter">
-        <button class="btn primary modalCancelBtn" data-i18n="tutorialOk">我懂了，開始下棋！</button>
-      </div>
-    </div>
-  </div>
 
   <!-- 4. 通用確認對話框 -->
   <div id="confirmModal" class="modalBackdrop" data-modal-id="confirmModal" aria-hidden="true">
@@ -242,14 +197,20 @@
     </div>
   </div>
 
-  <!-- 7. 主題與棋子外觀工坊彈窗 (Theme & Skin Workshop Modal) -->
+  <!-- 設定視窗（三個遊戲同一種外觀：對局、外觀、一般三個分頁） -->
   <div id="skinModal" class="modalBackdrop" data-modal-id="skinModal" aria-hidden="true">
     <div class="modalDialog" role="dialog" aria-labelledby="skinModalTitle" style="max-width: 720px;">
       <div class="modalHeader">
-        <div id="skinModalTitle" class="modalTitle" data-i18n="skinTitle">🎨 主題風格與棋子外觀工坊</div>
+        <div id="skinModalTitle" class="modalTitle" data-i18n="skinTitle">設定</div>
         <button class="modalCloseBtn" aria-label="關閉">✕</button>
       </div>
+      <div class="uiTabs" role="tablist">
+        <button type="button" role="tab" class="uiTab on" data-tab="play" aria-selected="true" data-i18n="tabPlay">對局</button>
+        <button type="button" role="tab" class="uiTab" data-tab="look" aria-selected="false" data-i18n="tabLook">外觀</button>
+        <button type="button" role="tab" class="uiTab" data-tab="general" aria-selected="false" data-i18n="tabGeneral">一般</button>
+      </div>
       <div class="modalBody">
+        <div class="uiPanel" data-panel="play">
         <div class="settingRow">
           <label for="settingV6Time" data-i18n="v6TimeLabel">AI 思考時間</label>
           <select id="settingV6Time">
@@ -270,17 +231,8 @@
           </select>
         </div>
         <div class="settingsHint" style="margin:-6px 0 12px;" data-i18n="paceNote">CPU 落子的快慢，只影響看起來的速度，不影響棋力和分析。</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <span data-i18n="skinSoundLabel">🔊 遊戲音效</span>
-          <button id="soundToggleBtn" class="btn small">🔊</button>
         </div>
-        <div style="margin-bottom:14px;">
-          <div style="font-weight:700; margin-bottom:6px;" data-i18n="nameLabel">🏷️ 自訂雙方名稱：</div>
-          <div style="display:flex; gap:8px;">
-            <input id="settingBlackName" type="text" autocomplete="off" style="flex:1; min-width:0;" />
-            <input id="settingWhiteName" type="text" autocomplete="off" style="flex:1; min-width:0;" />
-          </div>
-        </div>
+        <div class="uiPanel" data-panel="look" hidden>
         <!-- 1. 棋盤場景主題風格 -->
         <div class="skinThemeSection">
           <div class="skinSectionTitle" style="margin-top: 0; margin-bottom: 8px;">
@@ -376,14 +328,32 @@
             <div id="whiteTextColorGroup" class="skinPresetRow"></div>
           </div>
         </div>
+        </div>
+          <div><button id="skinResetDefaultBtn" class="btn small danger" data-i18n="skinReset">還原預設外觀</button></div>
+        </div>
+        <div class="uiPanel" data-panel="general" hidden>
+        <div class="settingRow">
+          <label for="soundToggleBtn" data-i18n="skinSoundLabel">音效</label>
+          <button id="soundToggleBtn" class="btn small">🔊</button>
+        </div>
+        <div class="uiSection" style="margin-top:14px;">
+          <div class="uiLabel" style="margin-bottom:8px;"><strong data-i18n="nameLabel">自訂雙方名稱</strong></div>
+          <div style="display:flex; gap:8px;">
+            <input id="settingBlackName" type="text" autocomplete="off" style="flex:1; min-width:0;" />
+            <input id="settingWhiteName" type="text" autocomplete="off" style="flex:1; min-width:0;" />
+          </div>
+        </div>
+        </div>
       </div>
-      <div class="modalFooter" style="justify-content: space-between;">
-        <button id="skinResetDefaultBtn" class="btn small danger" data-i18n="skinReset">🔄 還原預設外觀</button>
-        <button class="btn primary modalCancelBtn" data-i18n="skinDone">完成設定</button>
+      <div class="modalFooter">
+        <button class="btn primary modalCancelBtn" data-i18n="skinDone">完成</button>
       </div>
     </div>
   </div>
 
+  <script type="module" src="./shared/game-switcher.js"></script>
+  <script type="module" src="./shared/tabs.js"></script>
+  <script type="module" src="./shared/lang-select.js"></script>
   <script type="module" src="./five/src/app.js"></script>
 </body>
 </html>

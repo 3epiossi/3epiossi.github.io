@@ -1,0 +1,133 @@
+/* 規則學院共用樣式（五連黑白棋、劃區爭霸） */
+
+:root {
+  --bg: #0a0f1c;
+  --surface: #111827;
+  --surface-2: #172032;
+  --surface-3: #1e293b;
+  --line: rgba(148, 163, 184, 0.16);
+  --line-strong: rgba(148, 163, 184, 0.3);
+  --text: #e8edf6;
+  --muted: #8b97ad;
+  --faint: #5d6a82;
+  --accent: #7dd3fc;
+  --good: #4ade80;
+  --warn: #fbbf24;
+  --bad: #f87171;
+}
+
+* { box-sizing: border-box; }
+html { color-scheme: dark; }
+body {
+  margin: 0;
+  font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button, a { font: inherit; color: inherit; }
+kbd { font-family: inherit; font-size: 0.85em; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--surface-2); }
+
+.acadApp { max-width: 1240px; margin: 0 auto; padding: 0 20px 40px; }
+.acadTop { display: flex; align-items: center; gap: 12px; height: 64px; }
+.acadTop .brand { margin: 0; font-size: 1.15rem; font-weight: 900; }
+.acadTop .spacer { flex: 1; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 38px; padding: 0 16px; border-radius: 9px;
+  border: 1px solid var(--line-strong); background: var(--surface-2);
+  font-size: 0.9rem; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s;
+}
+.btn:hover:not(:disabled) { background: var(--surface-3); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.primary { background: #f1f5f9; color: #0b1120; border-color: #f1f5f9; }
+.btn.primary:hover:not(:disabled) { background: #fff; }
+.btn:focus-visible, .acadStep:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.acadHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding: 8px 0 18px; }
+.acadTitle h1 { margin: 0; font-size: 1.6rem; }
+.acadTitle p { margin: 4px 0 0; color: var(--muted); font-size: 0.92rem; max-width: 620px; }
+.acadProgress { display: flex; align-items: center; gap: 12px; min-width: 200px; }
+.acadBar { flex: 1; height: 7px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.acadBar i { display: block; height: 100%; width: 0; background: var(--good); transition: width 0.3s; }
+.acadCount { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.acadBody { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 24px; align-items: start; }
+.acadNav { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.acadNav ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.acadStep {
+  width: 100%; display: flex; gap: 10px; align-items: flex-start; text-align: left;
+  padding: 9px 10px; border-radius: 10px; border: 1px solid transparent; background: transparent; cursor: pointer;
+}
+.acadStep:hover { background: var(--surface-2); }
+.acadStep.on { background: var(--surface-2); border-color: var(--line-strong); }
+.acadDot {
+  flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%;
+  border: 1.5px solid var(--line-strong); font-size: 0.78rem; font-weight: 700; color: var(--muted);
+}
+.acadStep.on .acadDot { border-color: var(--accent); color: var(--accent); }
+.acadStep.done .acadDot { background: var(--good); border-color: var(--good); color: #052e16; }
+.acadStepText { display: flex; flex-direction: column; min-width: 0; }
+.acadStepText b { font-size: 0.9rem; font-weight: 600; }
+.acadStepText small { color: var(--muted); font-size: 0.75rem; line-height: 1.35; }
+.acadReset { align-self: flex-start; border: none; background: none; color: var(--faint); font-size: 0.78rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 4px 10px; }
+.acadReset:hover { color: var(--muted); }
+
+.acadLesson, .acadNav { min-width: 0; }
+.lessonHead { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.lessonHead h2 { margin: 0; font-size: 1.3rem; }
+.lessonNo { font-size: 0.8rem; color: var(--accent); font-weight: 700; letter-spacing: 0.05em; }
+
+.lessonGrid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+.lessonStage { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; }
+.stageBoard { width: 100%; display: flex; justify-content: center; min-width: 0; }
+.stageActions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.stageActions:empty { display: none; }
+
+.lessonSide { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 16px; }
+.lessonText { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; font-size: 0.93rem; color: #cfd6e4; }
+.lessonText p { margin: 0 0 10px; }
+.lessonText p:last-child { margin-bottom: 0; }
+.lessonText b, .lessonText strong { color: var(--text); }
+.lessonText ul { margin: 0 0 10px; padding-left: 20px; }
+.lessonText li + li { margin-top: 4px; }
+.lessonText .note { color: var(--muted); font-size: 0.85rem; }
+
+.goalList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.goalList li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; padding: 10px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.goalList:empty { display: none; }
+.goalMark { flex: none; width: 18px; height: 18px; margin-top: 2px; border-radius: 50%; border: 2px solid var(--line-strong); position: relative; }
+.goalList li.on { border-color: rgba(74, 222, 128, 0.45); color: #cdeed8; }
+.goalList li.on .goalMark { background: var(--good); border-color: var(--good); }
+.goalList li.on .goalMark::after { content: ""; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid #052e16; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+.feedback { min-height: 0; font-size: 0.9rem; border-radius: 10px; }
+.feedback.info, .feedback.ok, .feedback.warn, .feedback.bad { padding: 10px 12px; border: 1px solid var(--line-strong); }
+.feedback.ok { border-color: rgba(74, 222, 128, 0.5); background: rgba(74, 222, 128, 0.08); color: #cdeed8; }
+.feedback.warn { border-color: rgba(251, 191, 36, 0.5); background: rgba(251, 191, 36, 0.08); color: #fde68a; }
+.feedback.bad { border-color: rgba(248, 113, 113, 0.5); background: rgba(248, 113, 113, 0.08); color: #fecaca; }
+.feedback.info { background: var(--surface); }
+
+.lessonFoot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); }
+.lessonDone { color: var(--good); font-size: 0.88rem; font-weight: 600; }
+
+@media (max-width: 980px) {
+  .acadBody { grid-template-columns: 1fr; gap: 14px; }
+  .acadNav { position: static; }
+  .acadNav ol { flex-direction: row; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; }
+  .acadNav li { flex: none; width: 190px; scroll-snap-align: start; }
+  .acadStepText small { display: none; }
+  .lessonGrid { grid-template-columns: 1fr; }
+  .lessonSide { position: static; }
+}
+@media (max-width: 600px) {
+  .acadApp { padding: 0 12px 28px; }
+  .acadTop { gap: 8px; }
+  .acadTop .brand { min-width: 0; flex: 0 1 auto; }
+  .acadTop .btn { padding: 0 10px; font-size: 0.8rem; }
+  .acadTop .uiLangSelect { max-width: 78px; padding-right: 20px; }
+  .lessonText { padding: 14px; }
+}

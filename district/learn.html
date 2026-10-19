@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a0f1c" />
+  <title>傑利蠑螈 規則學院</title>
+  <meta name="description" content="傑利蠑螈規則學院：用 7 個互動小關卡學會放牆切選區、贏者全拿、集中與打散、確定當選與均分，最後和電腦打一局。" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" />
+  <link rel="stylesheet" href="./styles/district.css" />
+  <link rel="stylesheet" href="../shared/academy.css" />
+  <link rel="stylesheet" href="../shared/ui.css" />
+  <link rel="stylesheet" href="./learn/learn.css" />
+</head>
+<body>
+  <div class="acadApp">
+    <header class="acadTop">
+      <h2 class="brand"><game-switcher current="district"></game-switcher></h2>
+      <span class="spacer"></span>
+      <lang-select></lang-select>
+      <a class="btn" href="./index.html" data-academy-home>回到遊戲</a>
+    </header>
+    <main id="academy"></main>
+  </div>
+  <script type="module" src="../shared/game-switcher.js"></script>
+  <script type="module" src="../shared/lang-select.js"></script>
+  <script type="module">
+    import { startAcademy } from "../shared/academy.js";
+    import { lessons } from "./learn/lessons.js";
+    import { t } from "./learn/i18n.js";
+    startAcademy({
+      id: "district",
+      t,
+      playHref: "./index.html",
+      lessons,
+      root: document.getElementById("academy")
+    });
+  </script>
+</body>
+</html>

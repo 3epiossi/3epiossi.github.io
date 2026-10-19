@@ -243,3 +243,12 @@ function completesFourFor(nb, sq, turn) {
   }
   return false;
 }
+
+/**
+ * 單步準確度（0～100）：損失（勝率百分點）換算。公式與 whowins/src/engine/move-quality.js 的 moveAccuracy 相同，
+ * 讓兩個遊戲的終局總結用同一把尺。
+ */
+export function moveAccuracy(lossPct) {
+  const a = 103.1668 * Math.exp(-0.04354 * lossPct) - 3.1669;
+  return Math.max(0, Math.min(100, a));
+}

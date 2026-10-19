@@ -11,8 +11,8 @@ import {
   opp,
   posToCoord,
   coordToPos
-} from "../src/core/rules.js";
-import { BLACK, WHITE, EMPTY, MOVE_TYPE } from "../src/core/constants.js";
+} from "../whowins/src/core/rules.js";
+import { BLACK, WHITE, EMPTY, MOVE_TYPE } from "../whowins/src/core/constants.js";
 
 test("opp returns correct opposite player", () => {
   assert.equal(opp(BLACK), WHITE);
