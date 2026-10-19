@@ -82,12 +82,12 @@ export const DEFAULT_RULES = {
   popContrast: "normal",
   partyClustering: "normal",
   compensation: 1,
-  aiLevel: 3
+  aiLevel: 4
 };
 
 /** 電腦強度的級數與預設（各級的參數在 ai/ai-player.js 的 AI_LEVELS，相鄰兩級勝率的量測數據寫在那裡） */
 export const AI_LEVEL_IDS = [1, 2, 3, 4];
-export const DEFAULT_AI_LEVEL = 3;
+export const DEFAULT_AI_LEVEL = 4;
 const LEGACY_AI_LEVEL = { easy: 2, normal: 3, hard: 4 };
 
 /** 把舊存檔的 easy / normal / hard 或任何不合法的值換成 1～4 級 */
