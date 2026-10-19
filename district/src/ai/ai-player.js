@@ -290,6 +290,16 @@ export const AI_LEVELS = {
   4: { topK: 1, oppShapes: 0, oppSamples: 0, randomTop: 1, rollouts: 10, rolloutTop: 8, passMargin: 0.05 }
 };
 
+/**
+ * 有地方放卻想放棄時的複查：前 PASS_CHECK_TOP 名候選與「放棄」各模擬 PASS_CHECK_ROLLOUTS 次，
+ * 放棄要比最好的落子多 PASS_CHECK_MARGIN（佔總選舉人票的比例）才放棄。
+ * 平常的判斷（第 4 級每個候選只模擬 10 次、第 2、3 級只看靜態分數）雜訊大，會在還有空間、甚至落後時放棄，
+ * 復盤時提示卻要放牆；放棄錯一步常常整盤輸掉，所以放棄前多花一點時間。
+ */
+const PASS_CHECK_TOP = 12;
+const PASS_CHECK_ROLLOUTS = 40;
+const PASS_CHECK_MARGIN = 0.03;
+
 export class AIPlayer {
   /**
    * @param {number} playerId
@@ -416,7 +426,7 @@ export class AIPlayer {
       // 放棄只在「明顯比最好的落子更好」時才選：模擬 10 次的雜訊會讓放棄在開局莫名勝出，雙方都放棄一輪就提早終局
       let bi = 0;
       for (let i = 1; i < top.length; i++) if (scores[i] > scores[bi]) bi = i;
-      if (scores[top.length] > scores[bi] + (level.passMargin ?? 0)) return { action: "pass" };
+      if (scores[top.length] > scores[bi] + (level.passMargin ?? 0)) return yield* this._confirmPass(engine, candidateMoves);
       const pick = top[bi];
       return { action: "place", poolIndex: pick.poolIndex, vr: pick.vr, vc: pick.vc, score: scores[bi] };
     }
@@ -533,6 +543,20 @@ export class AIPlayer {
       };
     }
 
-    return { action: "pass" };
+    return yield* this._confirmPass(engine, candidateMoves);
+  }
+
+  /** 想放棄但還有合法位置：用較多的模擬複查一次（見 PASS_CHECK_*），放棄沒有明顯比較好就改下最好的一手 */
+  *_confirmPass(engine, candidateMoves) {
+    const top = candidateMoves.slice(0, PASS_CHECK_TOP);
+    const poolShapes = engine.candidatePool.map((p) => p.shape);
+    const moves = top.map((m) => ({ board: m.clonedBoard, poolAfter: poolShapes.filter((_, i) => i !== m.poolIndex), passes: 0 }));
+    moves.push({ board: engine.boardState, poolAfter: poolShapes.slice(1), passes: engine.consecutivePasses + 1 });
+    const scores = yield* evaluateMovesByRolloutGen(engine, this.playerId, moves, PASS_CHECK_ROLLOUTS);
+    let bi = 0;
+    for (let i = 1; i < top.length; i++) if (scores[i] > scores[bi]) bi = i;
+    if (scores[top.length] > scores[bi] + PASS_CHECK_MARGIN) return { action: "pass" };
+    const pick = top[bi];
+    return { action: "place", poolIndex: pick.poolIndex, vr: pick.vr, vc: pick.vc, score: scores[bi] };
   }
 }

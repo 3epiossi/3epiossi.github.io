@@ -161,7 +161,11 @@ export class BoardView {
   /** 是否允許目前使用者放牆（電腦回合時關閉） */
   setInteractive(interactive) {
     this.interactive = Boolean(interactive);
-    if (!this.interactive) this.hoverPos = null;
+    if (!this.interactive) {
+      this.hoverPos = null;
+      // 觸控沒有「移開」事件：點過的格子（選民資訊）在換電腦下時要自己收掉，不然會一直留在棋盤上
+      if (this.lastPointerType === "touch") this.hoverCell = null;
+    }
     this.renderOverlay();
   }
 

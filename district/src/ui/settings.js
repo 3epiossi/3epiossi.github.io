@@ -30,8 +30,8 @@ export function classicSizeFor(numParties) {
 export function defaultSettings() {
   return {
     parties: DEFAULT_PARTY_PRESETS.slice(0, 2).map((p, i) => ({ ...p, type: i === 0 ? "human" : "cpu", level: DEFAULT_AI_LEVEL })),
-    shapeId: "taiwan",
-    boardSize: 24,
+    shapeId: "square",
+    boardSize: 10,
     customMask: null,
     rules: normalizeRules(null),
     seed: null

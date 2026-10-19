@@ -102,7 +102,7 @@ export class ScoreView {
             <span class="pcName">${escapeHtml(parties[p].name)}</span>
             ${head}
           </div>
-          <div class="pcVotes">${fmt(s.confirmedElectoralVotes)}<small>${t("votesUnit")}</small>${gapHtml}</div>
+          <div class="pcVotes">${fmt(s.confirmedElectoralVotes)}<small>${t("votesUnit")}</small><span class="pcPct" title="${escapeHtml(t("barSeat"))}">${seat.toFixed(1)}%</span>${gapHtml}</div>
           ${detail}
           ${pop}
         </div>`;

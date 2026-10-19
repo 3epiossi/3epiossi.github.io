@@ -685,3 +685,50 @@ input[type="range"] { accent-color: var(--primary); }
 /* 行動卡與開票結果卡同高：從選舉進到開票、再悔棋回來，右欄不會跳動 */
 .turnCard, .resultCard { height: 284px; }
 .resultCard { justify-content: space-between; }
+
+/* 計分卡上的選舉人票百分比：只有手機顯示（電腦版在下一行「選舉人票（含領先）」） */
+.pcPct { display: none; }
+
+/* 手機：計分卡只留黨名、玩家／電腦、票數與百分比；
+   行動卡固定在畫面底部（同五連黑白棋、誰會贏的按鈕列），目前的牆塊形狀與按鈕不用捲動就看得到 */
+@media (max-width: 600px) {
+  .pcGap, .partyChip .pcMeta { display: none; }
+  .pcPct { display: inline; margin-left: auto; font-size: 0.95rem; font-weight: 700; color: var(--text); }
+  .partyChip.hasDetail { gap: 2px; }
+
+  .districtApp { padding-bottom: calc(190px + env(safe-area-inset-bottom)); }
+  .actionSlot { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; }
+  .turnCard, .resultCard {
+    height: auto;
+    border-radius: 16px 16px 0 0; border-left: 0; border-right: 0; border-bottom: 0;
+    padding: 8px 12px calc(4px + env(safe-area-inset-bottom));
+    box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.5);
+  }
+  .turnCard {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "hand top pass" "hand text pass" "tools tools tools";
+    column-gap: 10px; row-gap: 2px; align-items: center;
+  }
+  .turnBody { display: contents; }
+  .handRow { grid-area: hand; }
+  .turnTop { grid-area: top; min-width: 0; gap: 6px; }
+  .turnText { grid-area: text; align-self: start; }
+  .mainActions { grid-area: pass; }
+  .toolRow { grid-area: tools; margin-top: 4px; }
+  .turnName { font-size: 0.95rem; }
+  .turnMeta { font-size: 0.7rem; }
+  .piecePreview { width: 64px; height: 64px; }
+  .shapeSvg { width: 56px; height: 56px; }
+  .handRow.multi .piecePreview { width: 50px; height: 50px; }
+  .handRow.multi .shapeSvg { width: 42px; height: 42px; }
+  .pieceName { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .handHint { display: none; }
+  .turnHelp { font-size: 0.74rem; min-height: 0; -webkit-line-clamp: 2; }
+  .mainActions .btn { flex: none; max-width: 124px; height: 40px; padding: 0 10px; gap: 6px; font-size: 0.82rem; white-space: nowrap; }
+  .toolBtn { padding: 5px 0 4px; }
+
+  .resultCard { gap: 4px; }
+  .resultTitle { font-size: 1.15rem; }
+  .resultNote, .resEg { font-size: 0.74rem; }
+}
