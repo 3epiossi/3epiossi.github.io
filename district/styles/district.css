@@ -232,6 +232,8 @@ button { font: inherit; color: inherit; }
   border: 1px solid var(--line);
   touch-action: manipulation;
 }
+/* 對比模式：左右拖動由程式處理，上下滑動仍然捲動頁面（手機上不然拖動會被瀏覽器當成捲動而取消） */
+.boardSvg.isCompare { touch-action: pan-y; cursor: ew-resize; }
 .boardSvg text { font-family: "Noto Sans TC", sans-serif; }
 
 .boardLegend {
@@ -686,14 +688,14 @@ input[type="range"] { accent-color: var(--primary); }
 .turnCard, .resultCard { height: 284px; }
 .resultCard { justify-content: space-between; }
 
-/* 計分卡上的選舉人票百分比：只有手機顯示（電腦版在下一行「選舉人票（含領先）」） */
-.pcPct { display: none; }
+/* 計分卡：票數旁邊是選舉人票百分比，下一行才是劃區紅利與運氣（手機只留前者，見下方） */
+.pcPct { margin-left: auto; font-size: 1.05rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* 手機：計分卡只留黨名、玩家／電腦、票數與百分比；
    行動卡固定在畫面底部（同五連黑白棋、誰會贏的按鈕列），目前的牆塊形狀與按鈕不用捲動就看得到 */
 @media (max-width: 600px) {
-  .pcGap, .partyChip .pcMeta { display: none; }
-  .pcPct { display: inline; margin-left: auto; font-size: 0.95rem; font-weight: 700; color: var(--text); }
+  .partyChip .pcMeta { display: none; }
+  .pcPct { font-size: 0.95rem; }
   .partyChip.hasDetail { gap: 2px; }
 
   .districtApp { padding-bottom: calc(190px + env(safe-area-inset-bottom)); }

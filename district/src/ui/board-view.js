@@ -129,6 +129,7 @@ export class BoardView {
     this.boardSize = engine.boardSize;
     this.numPlayers = engine.numPlayers;
     this.compareMode = false;
+    this.svg.classList.remove("isCompare");
     this.compareRatio = 0.5;
     this.isDraggingDivider = false;
     this.highlightRegionId = null;
@@ -146,6 +147,7 @@ export class BoardView {
   /** 進入對比時線在最左邊（先看劃區後的結果）；拖動後的位置保留 */
   setCompareMode(enabled, ratio = 0) {
     this.compareMode = !!enabled;
+    this.svg.classList.toggle("isCompare", this.compareMode);
     if (ratio !== undefined) {
       this.compareRatio = Math.max(0, Math.min(1, ratio));
     }
@@ -851,12 +853,20 @@ export class BoardView {
     return g;
   }
 
-  _updateDividerPos(clientX) {
+  /** 游標位置換成棋盤座標（只算水平） */
+  _dividerXAt(clientX) {
     const rect = this.svg.getBoundingClientRect();
-    if (!rect.width) return;
+    if (!rect.width) return null;
     const v = this._visibleBox();
-    const rawX = (clientX - rect.left) * (v.w / rect.width) + v.x;
-    const x = Math.max(v.x, Math.min(v.x + v.w, rawX));
+    return (clientX - rect.left) * (v.w / rect.width) + v.x;
+  }
+
+  /** 線跟著手指／游標移動：位置 = 開始拖動時的線位置 + 手指移動的距離（所以點一下不會動，也不會跳） */
+  _updateDividerPos(clientX) {
+    const rawX = this._dividerXAt(clientX);
+    if (rawX === null) return;
+    const v = this._visibleBox();
+    const x = Math.max(v.x, Math.min(v.x + v.w, rawX + (this._dragOffset || 0)));
     this.compareRatio = (x - v.x) / v.w;
     const set = (sel, attrs) => {
       const el = this.svg.querySelector(sel);
@@ -1109,8 +1119,12 @@ export class BoardView {
   _onPointerDown(e) {
     this.lastPointerType = e.pointerType || "mouse";
     if (this.compareMode) {
+      // 只有拖動（或滑動）才會移動線，點一下不動
+      const startX = this._dividerXAt(e.clientX);
+      if (startX === null) return;
+      const v = this._visibleBox();
+      this._dragOffset = v.x + v.w * this.compareRatio - startX;
       this.isDraggingDivider = true;
-      this._updateDividerPos(e.clientX);
       try { this.svg.setPointerCapture(e.pointerId); } catch (_) {}
     }
   }
