@@ -9,6 +9,7 @@ import { ICONS } from "./icons.js";
 import { escapeHtml } from "./score-view.js";
 import { t, fmtNum, shapeName } from "../i18n.js";
 import { shareOfNode } from "../ai/luck.js";
+import { luckMeterHtml } from "../../../shared/luck-meter.js";
 
 function isCoarsePointer() {
   return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
@@ -197,7 +198,8 @@ export class PoolView {
             ${hand.length ? hand.map((p, i) => `<button type="button" class="piecePreview ${i === this.selectedIndex ? "on" : ""}" data-piece="${i}" ${isCpu || hand.length < 2 ? "tabindex=\"-1\"" : ""} title="${shapeName(p.shape.id)}">${this._shapeSvg(p.shape, party.color)}</button>`).join("") : `<div class="piecePreview"></div>`}
           </div>
           <div class="turnText">
-            <div class="pieceName">${piece ? shapeName(piece.shape.id) : t("noWall")}${piece ? this._pieceLuckHtml() : ""}${hand.length > 1 ? `<span class="handHint">${t("fromPool", { n: hand.length })}</span>` : ""}</div>
+            <div class="pieceName">${piece ? shapeName(piece.shape.id) : t("noWall")}${hand.length > 1 ? `<span class="handHint">${t("fromPool", { n: hand.length })}</span>` : ""}</div>
+            ${piece ? this._pieceLuckHtml() : ""}
             <div class="turnHelp ${review || inBranch ? "isReview" : ""}">${help}</div>
           </div>
         </div>
@@ -407,12 +409,9 @@ export class PoolView {
       <div class="dLegend"><span><i class="secured"></i>${t("legSecured")}</span><span><i class="lead"></i>${t("legLead")}</span><span><i class="split"></i>${t("legSplit")}</span></div>`;
   }
 
-  /** 手上選中的牆的運氣：放在牆名旁邊（正數綠、負數紅），算完前不顯示 */
+  /** 手上選中的牆的運氣量表：放在牆名下面，算完前是空的量表（尺寸固定） */
   _pieceLuckHtml() {
-    const v = this.pieceLuck;
-    if (v == null) return "";
-    const cls = v > 0.05 ? "pos" : v < -0.05 ? "neg" : "";
-    return `<span class="pieceLuck ${cls}" title="${t("luckTitle")}">${t("luckLabel")} ${v >= 0 ? "+" : ""}${v.toFixed(1)}</span>`;
+    return `<div class="pieceLuckRow">${luckMeterHtml(this.pieceLuck, { label: t("luckLabel"), title: t("luckTitle") })}</div>`;
   }
 
   /** 目前正在看的分支從第幾手起（主線回傳 0） */

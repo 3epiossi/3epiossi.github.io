@@ -4,6 +4,7 @@
  */
 
 import { tr } from "../i18n.js";
+import { luckMeterHtml } from "../../../shared/luck-meter.js";
 
 const PIPS = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
 
@@ -22,7 +23,7 @@ export class DiceView {
       <div class="sideDiceSection">
         <button type="button" class="sideDiceBox" id="sideDiceWidget" aria-live="polite"><div class="sideDiceGrid"></div></button>
         <div id="sideDiceValLabel" class="sideDiceValLabel">—</div>
-        <div id="sideDiceLuck" class="sideDiceLuck" hidden></div>
+        <div id="sideDiceLuck" class="sideDiceLuck"></div>
         <div class="diceOutlookTitle" id="diceOutlookTitle"></div>
         <div class="diceFaceRow" id="diceFaceRow"></div>
         <div class="diceHint" id="diceHint"></div>
@@ -75,11 +76,8 @@ export class DiceView {
     this.box.classList.toggle("canRoll", canRoll);
     this.box.title = canRoll ? tr("diceRollTip") : "";
     this.valLabel.textContent = label;
-    // 運氣：擲出的點數比六種點數的平均好多少（勝率百分點），直接放在骰子旁，不用點開
-    this.luckEl.hidden = luck == null;
-    this.luckEl.className = "sideDiceLuck" + (luck > 0.05 ? " pos" : luck < -0.05 ? " neg" : "");
-    this.luckEl.textContent = luck == null ? "" : tr("luckLabel") + " " + (luck >= 0 ? "+" : "") + luck.toFixed(1);
-    this.luckEl.title = luck == null ? "" : tr("luckTitle");
+    // 運氣量表：擲出的點數比六種點數的平均好多少（勝率百分點）。永遠顯示（還沒算出來是空的量表），骰子的框不會忽大忽小
+    this.luckEl.innerHTML = luckMeterHtml(luck, { label: tr("luckLabel"), title: tr("luckTitle") });
     this.hint.textContent = hint;
     this.title.textContent = outlook ? outlookTitle : "";
     const faces = outlook || [1, 2, 3, 4, 5, 6].map((d) => ({ die: d, pct: null, dead: false }));
