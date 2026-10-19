@@ -177,43 +177,35 @@ html { scrollbar-gutter: stable; }
 .patternGlow.active.t-five { box-shadow: inset 0 0 0 3px #f97316, 0 0 22px 6px rgba(249, 115, 22, 0.75); background: rgba(249, 115, 22, 0.2); }
 .patternToast.t-five { background: linear-gradient(90deg, #f97316, #facc15); font-size: 18px; }
 
-/* ===== 勝率條（棋盤左側） ===== */
+/* ===== 勝率條（計分版下面的橫條：白方在左、黑方在右） ===== */
 .evalBar {
   position: relative;
-  flex: 0 0 22px;
-  width: 22px;
-  height: min(92vw, var(--board-max-size));
-  margin-top: var(--coord-size, 24px);
-  border-radius: 6px;
+  width: 100%;
+  height: 16px;
+  margin-top: 8px;
+  border-radius: 8px;
   overflow: hidden;
   background: #262421;                       /* 黑方的那一半 */
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
-/* 白方佔幾 %：程式只設定 --white（見 ui/eval-bar.js），電腦版當高度、手機版當寬度 */
+/* 白方佔幾 %：程式只設定 --white（見 ui/eval-bar.js） */
 .evalBar .evalWhite {
-  position: absolute; left: 0; right: 0; top: 0;
-  height: var(--white, 50%);
+  position: absolute; left: 0; top: 0; bottom: 0; right: auto;
+  width: var(--white, 50%);
+  height: 100%;
   background: #f1f5f9;
-  transition: height 0.45s ease;
+  transition: width 0.45s ease;
 }
 .evalBar .evalNum {
-  position: absolute; left: 0; right: 0;
-  text-align: center;
+  position: absolute; top: 50%; transform: translateY(-50%);
   font-size: 11px; font-weight: 800; line-height: 1;
   pointer-events: none;
 }
-.evalBar .evalNumWhite { top: 4px; color: #1e293b; }
-.evalBar .evalNumBlack { bottom: 4px; color: #e2e8f0; }
+.evalBar .evalNumWhite { left: 6px; right: auto; color: #1e293b; text-align: left; }
+.evalBar .evalNumBlack { right: 6px; left: auto; color: #e2e8f0; text-align: right; }
 .evalBar.pending .evalWhite { opacity: 0.8; }
 [data-anim="minimal"] .evalBar .evalWhite { transition: none; }
-@media (max-width: 600px) {
-  /* 手機版棋盤上方改成橫條（白方在左、黑方在右，跟上面的分數欄同一個順序） */
-  .evalBar { flex: 0 0 auto; width: min(92vw, var(--board-max-size)); height: 20px; margin-top: 0; }
-  .evalBar .evalWhite { left: 0; top: 0; bottom: 0; right: auto; height: 100%; width: var(--white, 50%); transition: width 0.45s ease; }
-  .evalBar .evalNumWhite { top: 50%; left: 6px; right: auto; transform: translateY(-50%); text-align: left; }
-  .evalBar .evalNumBlack { top: 50%; bottom: auto; right: 6px; left: auto; transform: translateY(-50%); text-align: right; }
-}
 
 /* ===== 走法評價標記（!! ! !? ?! ? ??） ===== */
 .moveMark {
@@ -646,8 +638,6 @@ html { scrollbar-gutter: stable; }
   .board, .coordTop, .movePathSvg { width: var(--board-max-size); }
   .coordLeft, .movePathSvg { height: var(--board-max-size); }
   .boardWithSide { gap: 8px; }
-  .evalBar { width: var(--five-full); height: 14px; border-radius: 7px; }
-  .evalBar .evalNum { font-size: 10px; }
   /* 選組別：一列四顆，標題拿掉（下面那行字已經說要選組別） */
   .sideDicePanel { width: var(--five-full); padding: 8px 10px 6px; gap: 6px; }
   .sideDicePanel .sideTurnLabel { display: none; }
@@ -699,3 +689,20 @@ html { scrollbar-gutter: stable; }
 @media (min-width: 1500px) {
   .app, #app { max-width: min(1560px, 96vw); }
 }
+
+/* ===== 終局總結（狀態列下面） ===== */
+.summaryCard { display: flex; flex-direction: column; gap: 10px; font-size: 13px; padding: 12px 14px; border-radius: 12px; background: var(--color-panel-bg, #111827); border: 1px solid var(--color-border, rgba(148, 163, 184, 0.16)); }
+.summaryCard[hidden] { display: none; }
+.summaryTable { width: 100%; border-collapse: collapse; }
+.summaryTable th, .summaryTable td { padding: 5px 8px; text-align: center; border-bottom: 1px solid rgba(148, 163, 184, 0.16); }
+.summaryTable th:first-child, .summaryTable td:first-child { text-align: left; }
+.summaryTable th { color: #94a3b8; font-weight: 600; }
+.summaryHead { font-weight: 800; font-size: 15px; }
+.summaryScore { color: #94a3b8; }
+.summaryTable .summaryMarks { text-align: left; }
+.summaryTable .summaryMarks .mvMark { margin: 0 4px 3px 0; }
+.summaryJump { display: flex; flex-wrap: wrap; gap: 6px; }
+.summaryJumpBtn { padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.3); background: transparent; font: inherit; font-size: 12px; font-weight: 700; color: inherit; cursor: pointer; }
+.summaryJumpBtn.good { color: #1baca6; border-color: #1baca6; }
+.summaryJumpBtn.bad { color: #dc2626; border-color: #dc2626; }
+.summaryNote { font-size: 12px; color: #94a3b8; line-height: 1.5; }

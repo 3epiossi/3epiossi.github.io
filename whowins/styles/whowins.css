@@ -1,0 +1,445 @@
+/**
+ * 誰會贏？ 專屬樣式（疊在共用的 styles/ 與 shared/ui.css 之上）。
+ * 版面與五連黑白棋同一套（頂部列、玩家卡、勝率條、操作列、勝率走勢），多了骰子面板與骰子展望。
+ */
+
+/* 讓棋盤格內的字級跟著格子大小縮放 */
+.cell { container-type: size; }
+
+/* 頁面變長變短時捲軸出現或消失，整頁寬度會變 → 先預留捲軸的位置 */
+html { scrollbar-gutter: stable; }
+/* 兩欄的寬度只照比例分，不受右欄內容（說明文字、圖表）的最小寬度影響 */
+.mainGrid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); }
+@media (max-width: 960px) { .mainGrid { grid-template-columns: minmax(0, 1fr); } }
+/* 窄螢幕：把棋盤縮到扣掉座標欄與外距後的可用寬度，避免右側被裁切 */
+@media (max-width: 520px) {
+  :root { --board-max-size: calc(100vw - var(--coord-size) - 40px); }
+}
+
+/* ===== 勝率條（計分版下面的橫條：白方在左、黑方在右） ===== */
+.evalBar {
+  position: relative;
+  width: 100%;
+  height: 16px;
+  margin-top: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #262421;                       /* 黑方的那一半 */
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+/* 白方佔幾 %：程式只設定 --white（見 ui/eval-bar.js） */
+.evalBar .evalWhite {
+  position: absolute; left: 0; top: 0; bottom: 0; right: auto;
+  width: var(--white, 50%);
+  height: 100%;
+  background: #f1f5f9;
+  transition: width 0.45s ease;
+}
+.evalBar .evalNum {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  font-size: 11px; font-weight: 800; line-height: 1;
+  pointer-events: none;
+}
+.evalBar .evalNumWhite { left: 6px; right: auto; color: #1e293b; text-align: left; }
+.evalBar .evalNumBlack { right: 6px; left: auto; color: #e2e8f0; text-align: right; }
+.evalBar.pending .evalWhite { opacity: 0.8; }
+[data-anim="minimal"] .evalBar .evalWhite { transition: none; }
+
+/* ===== 走法評價標記（!! ! !? ?! ? ??） ===== */
+.moveMark {
+  position: absolute; top: -5px; right: -5px; z-index: 6;
+  min-width: 20px; height: 20px; padding: 0 3px; box-sizing: border-box;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 900; line-height: 1; color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55), 0 0 0 1.5px rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+}
+.moveMark.mk-brilliant { background: #1baca6; }
+.moveMark.mk-good { background: #22a06b; }
+.moveMark.mk-interesting { background: #4f8cdb; }
+.moveMark.mk-dubious { background: #ca8a04; }
+.moveMark.mk-mistake { background: #f59e0b; }
+.moveMark.mk-blunder { background: #dc2626; }
+.mvMark { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 9px; font-size: 11px; font-weight: 900; color: #fff; }
+.mvMark.mk-brilliant { background: #1baca6; }
+.mvMark.mk-good { background: #22a06b; }
+.mvMark.mk-interesting { background: #4f8cdb; }
+.mvMark.mk-dubious { background: #ca8a04; }
+.mvMark.mk-mistake { background: #f59e0b; }
+.mvMark.mk-blunder { background: #dc2626; }
+
+
+/* 格子上畫著預覽的棋時，不再畫可落子的綠點（兩個擠在一起很醜） */
+.cell.ghost-dest::after { display: none; }
+
+/* 設定視窗：每一方的難度選單放在「我／CPU」切換旁邊 */
+.settingsSideHead { flex-wrap: wrap; }
+.settingsSideCtrls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.levelSelect { max-width: 190px; }
+.levelSelect:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ===== 勝率折線圖（取代棋譜清單）：深灰底、虛線格線、每一手一個點 ===== */
+.historyBox.winChartBox { height: auto; max-height: none; overflow: visible; padding: 6px 4px; background: #1f1f22; border-radius: 10px; }
+.winChartWrap { position: relative; }
+.winChart { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; cursor: pointer; }
+/* 上半部白方佔優：深灰底蒙上一層白；下半部黑方佔優：黑底 */
+.winChart .wcWhiteHalf { fill: #3b3b42; }
+.winChart .wcBlackHalf { fill: #0c0c0e; }
+.winChart .wcFrame { fill: none; stroke: rgba(255, 255, 255, 0.35); stroke-width: 1; }
+.winChart .wcSide { font-size: 11px; font-weight: 700; opacity: 0.75; pointer-events: none; }
+.winChart .wcSide.white { fill: #f1f5f9; }
+.winChart .wcSide.black { fill: #94a3b8; }
+.winChart .wcGrid { stroke: rgba(255, 255, 255, 0.22); stroke-width: 1; stroke-dasharray: 4 4; }
+.winChart .wcMid { stroke: rgba(255, 255, 255, 0.55); stroke-width: 1.2; }
+.winChart .wcLabel { fill: #d4d4d8; font-size: 11px; }
+.winChart .wcFuture { fill: rgba(0, 0, 0, 0.45); }
+.winChart .wcMain path { fill: none; stroke: #ec7f8a; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.winChart .wcMain .wcDot { fill: #ec7f8a; }
+.winChart .wcMain.dim { opacity: 0.38; }
+.winChart .wcBranch path { fill: none; stroke: #c084fc; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.winChart .wcBranch .wcDot { fill: #c084fc; }
+.winChart .wcMarkDot { stroke: #18181b; stroke-width: 1.2; }
+.winChart .wcCurrent { stroke: rgba(212, 212, 216, 0.75); stroke-width: 2; }
+.winChart .wcCurrent.inBranch { stroke: #a855f7; stroke-width: 2.5; }
+.winChart .wcHover { stroke: rgba(255, 255, 255, 0.5); stroke-width: 1; stroke-dasharray: 3 3; }
+.winChartTip {
+  position: absolute; z-index: 20; pointer-events: none;
+  max-width: 220px; padding: 6px 9px; border-radius: 8px;
+  font-size: 12px; line-height: 1.45; color: #e2e8f0;
+  background: rgba(24, 24, 27, 0.96); border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.winChartTip .wcTipPct { color: #a1a1aa; margin-top: 2px; }
+
+/* ===== 提示模式：格子標勝率、池子標每顆棋在滑鼠所在格子的勝率 ===== */
+.cell.hinted::after { display: none; }
+.cell .disc { flex: none; }
+.cell .hintPct {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22cqw; font-weight: 800; color: #fde047;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+.cell.hintBest .hintPct { color: #67e8f9; }
+.cell.hintBest { box-shadow: inset 0 0 0 2px rgba(103, 232, 249, 0.7); }
+.cell.ghost-dest .hintPct { display: none; }
+.poolPct {
+  position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; font-weight: 800; line-height: 1;
+  padding: 2px 4px; border-radius: 6px;
+  color: #0f172a; background: #fde047;
+  pointer-events: none; white-space: nowrap;
+}
+#hintBtn.active { box-shadow: 0 0 0 2px #facc15, 0 0 12px rgba(250, 204, 21, 0.45); }
+
+/* ===================================================================
+ * 版面：頂部列、玩家卡、狀態一行、操作列、右欄只放勝率走勢
+ * 只覆寫本遊戲；styles/ 底下的共用樣式「誰會贏？」也在用，不動它
+ * =================================================================== */
+[hidden] { display: none !important; }
+.app { gap: 12px; }
+
+/* 頂部列：標題在左，規則／設定／語言在右，手機也只佔一行 */
+.gameTop { padding: 8px 16px; flex-wrap: nowrap; }
+.gameTop .brand h1 { font-size: 19px; white-space: nowrap; }
+.topActions { display: flex; align-items: center; gap: 6px; }
+.topBtn, .langSelect {
+  font: inherit; font-size: 13px; font-weight: 600; color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 8px; padding: 6px 12px; cursor: pointer; white-space: nowrap;
+}
+.topBtn:hover, .langSelect:hover { background: rgba(255, 255, 255, 0.12); color: #f8fafc; }
+.langSelect { padding: 6px 8px; }
+.langSelect option { color: #0f172a; }
+
+/* 玩家卡：兩張並排，名稱＋我/CPU 在左、分數在右；輪到誰誰亮 */
+.playerBar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; width: 100%; }
+.boardContainerWrap > .statusBanner, .boardContainerWrap > .actionBar { width: 100%; }
+.playerBar .seatGroup {
+  flex-direction: row; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 12px; min-width: 0;
+  background: var(--color-panel-bg); border: 1px solid var(--color-border);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.playerBar .seatGroup.isTurn {
+  padding: 10px 14px; background: var(--color-panel-bg);
+  border-color: rgba(56, 189, 248, 0.8); box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5), 0 0 16px rgba(56, 189, 248, 0.18);
+}
+.pcInfo { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.playerBar .seatLabel { font-size: 16px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.pcRole {
+  font: inherit; font-size: 12px; font-weight: 700; color: #93c5fd;
+  background: rgba(59, 130, 246, 0.14); border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 999px; padding: 2px 10px; cursor: pointer; white-space: nowrap;
+}
+.pcRole.isCpu { color: #d8b4fe; background: rgba(147, 51, 234, 0.16); border-color: rgba(168, 85, 247, 0.4); }
+.pcRole:hover:not(:disabled) { filter: brightness(1.25); }
+.pcRole:disabled { cursor: default; opacity: 0.65; }
+.playerBar .scoreNum { font-size: 28px; font-weight: 800; line-height: 1; }
+/* 點「我／CPU」打開的小選單 */
+.rolePop {
+  position: absolute; top: calc(100% + 6px); left: 8px; z-index: 40;
+  display: flex; flex-direction: column; gap: 8px; padding: 10px;
+  background: #0f172a; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+.rolePop .levelSelect { font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 8px; }
+.rolePop .levelSelect:disabled { opacity: 0.45; }
+
+/* 狀態：一行字，左邊一條色帶表示狀態（你下／CPU 思考／暫停／檢視歷史／結束） */
+.statusBanner, .statusBanner.human, .statusBanner.cpu, .statusBanner.paused, .statusBanner.review, .statusBanner.ended {
+  min-height: 44px; margin-top: 10px; padding: 8px 14px; border-radius: 10px;
+  background: rgba(15, 23, 42, 0.55); border: 1px solid var(--color-border); border-left: 4px solid #3b82f6;
+  box-shadow: none; justify-content: flex-start;
+}
+.statusBanner.cpu { border-left-color: #a855f7; }
+.statusBanner.paused { border-left-color: #f59e0b; }
+.statusBanner.review { border-left-color: #f97316; }
+.statusBanner.ended { border-left-color: #94a3b8; }
+.statusText { font-size: 13.5px; font-weight: 600; color: #e2e8f0; line-height: 1.45; }
+
+/* 操作列 */
+.actionBar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.actBtn {
+  font: inherit; font-size: 13.5px; font-weight: 700; color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 9px; padding: 8px 14px; cursor: pointer; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+.actBtn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
+.actBtn:disabled { opacity: 0.35; cursor: default; }
+.actBtn.icon { width: 38px; padding: 8px 0; }
+.actBtn.primary { background: #2563eb; border-color: #3b82f6; color: #fff; }
+.actBtn.primary:hover:not(:disabled) { background: #1d4ed8; }
+#hintBtn.active { background: rgba(168, 85, 247, 0.28); border-color: #a855f7; color: #f3e8ff; }
+.actSep { width: 1px; height: 22px; background: rgba(148, 163, 184, 0.25); margin: 0 2px; }
+
+/* 右欄：勝率走勢 */
+.chartCard { gap: 10px; }
+.winChartTip .wcTipWhy { font-size: 12px; color: #cbd5e1; margin-top: 2px; }
+.chartHead { display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 14px; }
+.chartHeadRight { display: inline-flex; align-items: center; gap: 8px; }
+.chartExport {
+  font: inherit; font-size: 12px; font-weight: 600; color: #cbd5e1; cursor: pointer;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 7px; padding: 3px 9px;
+}
+.chartExport:hover { background: rgba(255, 255, 255, 0.12); color: #f8fafc; }
+.chartHelp {
+  width: 18px; height: 18px; border-radius: 50%; font-size: 11px; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center; cursor: help;
+  color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+/* 頁尾 */
+.siteFooter { text-align: center; padding: 4px 0 16px; font-size: 12.5px; }
+.siteFooter a { color: #94a3b8; text-decoration: none; }
+.siteFooter a:hover { color: #e2e8f0; text-decoration: underline; }
+
+/* 設定視窗的一列（標籤 + 選單） */
+.settingRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.settingRow select { font: inherit; padding: 5px 8px; border-radius: 8px; }
+
+/* 觸控：按鈕、組別、格子點兩下不會放大畫面（不用等 300 毫秒判斷是不是雙擊），點下去也不會閃一塊藍色 */
+.actBtn, .topBtn, .openingChip, .seatBtn, .pcRole, .cell, .diceFace { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+/* 手機：頂部一行、玩家卡縮小、操作列固定在畫面底部 */
+@media (max-width: 600px) {
+  .gameTop { padding: 8px 12px; }
+  .gameTop .brand h1 { font-size: 16px; }
+  .topBtn { padding: 5px 9px; font-size: 12.5px; }
+  .langSelect { padding: 5px 4px; font-size: 12.5px; }
+  .playerBar { gap: 8px; margin-bottom: 8px; }
+  .playerBar .seatGroup, .playerBar .seatGroup.isTurn { padding: 8px 10px; }
+  .playerBar .seatLabel { font-size: 14px; }
+  .playerBar .scoreNum { font-size: 22px; }
+  .statusBanner, .statusBanner.human, .statusBanner.cpu, .statusBanner.paused, .statusBanner.review, .statusBanner.ended { min-height: 58px; }
+  .actionBar {
+    position: sticky; bottom: 0; z-index: 30; justify-content: center; gap: 5px;
+    margin: 10px -12px 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    background: rgba(2, 6, 23, 0.92); border-top: 1px solid var(--color-border);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  /* 按鈕列永遠一排（三種語言、開著提示、看歷史時多一顆「從這裡繼續下」都一樣）：不換行、縮小間距，真的塞不下時字被壓縮而不是掉到下一排 */
+  .actionBar { flex-wrap: nowrap; gap: 4px; padding-left: 6px; padding-right: 6px; }
+  .actSep { display: none; }
+  .actBtn { padding: 8px 8px; font-size: 12.5px; min-width: 0; flex: 0 1 auto; white-space: nowrap; overflow: hidden; }
+  .actBtn.icon { width: 34px; flex: 0 0 auto; }
+  #historyFirstBtn, #historyLatestBtn { display: none; }
+}
+
+/* 提示數字的顏色：第 1 級（T）25%、第 2 級（2T，教練強度）50%、第 3 級（4T）以上 100% */
+:root[data-hint-level="1"] .cell .hintPct, :root[data-hint-level="1"] .poolPct { opacity: 0.25; }
+:root[data-hint-level="2"] .cell .hintPct, :root[data-hint-level="2"] .poolPct { opacity: 0.5; }
+.cell .hintPct, .poolPct { transition: opacity 0.4s ease; }
+
+/* ===== 說明視窗：規則／使用說明 ===== */
+#tutorialModal .modalDialog { max-width: 720px; }
+.helpTabs { display: flex; gap: 4px; padding: 0 20px; border-bottom: 1px solid var(--color-border); }
+.helpTab {
+  font: inherit; font-size: 14px; font-weight: 700; color: #94a3b8; cursor: pointer;
+  background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 12px; margin-bottom: -1px;
+}
+.helpTab:hover { color: #e2e8f0; }
+.helpTab.active { color: #f8fafc; border-bottom-color: #38bdf8; }
+.helpRulesLead { margin-bottom: 10px; }
+.helpGuide { font-size: 13.5px; line-height: 1.65; color: #cbd5e1; }
+.helpSection + .helpSection { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(148, 163, 184, 0.18); }
+.helpSection h3 { margin: 0 0 6px; font-size: 15px; color: #f8fafc; }
+.helpSection p { margin: 6px 0; }
+.helpSection ul { margin: 4px 0; padding-left: 20px; }
+.helpSection li { margin: 4px 0; }
+.helpSection b { color: #e2e8f0; }
+.helpGuide kbd {
+  display: inline-block; min-width: 18px; padding: 0 5px; text-align: center; font: inherit; font-size: 12px; line-height: 18px;
+  color: #e2e8f0; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(148, 163, 184, 0.4); border-radius: 4px;
+}
+.helpMark { display: inline-block; min-width: 26px; padding: 1px 6px; border-radius: 10px; color: #fff; font-weight: 900; font-size: 12px; text-align: center; }
+.helpMarks { border-collapse: collapse; margin: 6px 0; width: 100%; }
+.helpMarks td { padding: 5px 6px; vertical-align: top; border-bottom: 1px solid rgba(148, 163, 184, 0.12); }
+.helpMarks td:first-child { width: 34px; }
+.helpMarks td:nth-child(2) { white-space: nowrap; width: 1%; }
+
+/* 玩家卡：不能切換（看歷史／研究分支）時淡一點，點了打開選單說明原因 */
+.pcRole.locked { opacity: 0.6; }
+.roleNote { margin: 0; max-width: 220px; font-size: 12px; line-height: 1.5; color: #fcd34d; }
+
+/* ===== 棋盤樣式：格線細、棋子大，像一般黑白棋 App =====
+ * 格子之間 1px 的格線、不圓角，棋子佔格子的 90%，座標縮成細條。 */
+:root { --board-gap: 1px; --coord-size: 18px; }
+:root .board { padding: 1px; gap: 1px; border-radius: 4px; border-width: 1px; background: #0a2814; box-shadow: none; }
+:root .cell { border-radius: 0; }
+:root .cell .disc { width: 90%; height: 90%; }
+:root .coordTop, :root .coordLeft { font-size: 11px; font-weight: 600; letter-spacing: 0; }
+
+/* ===== 手機：棋盤撐滿螢幕寬度（頁面左右只留 6px），勝率條、選組別跟棋盤（含座標）一樣寬 ===== */
+@media (max-width: 600px) {
+  :root { --coord-size: 14px; }
+  :root .coordTop, :root .coordLeft { font-size: 10px; }
+}
+@media (max-width: 600px) {
+  body { padding: 6px; }
+  :root {
+    --board-max-size: calc(100vw - 12px - var(--coord-size));
+    --five-full: calc(var(--board-max-size) + var(--coord-size));
+  }
+  .boardFrame { margin: 0; }
+  .board, .coordTop, .movePathSvg { width: var(--board-max-size); }
+  .coordLeft, .movePathSvg { height: var(--board-max-size); }
+  .boardWithSide { gap: 8px; }
+  /* 骰子面板：跟棋盤（含座標）一樣寬，橫排 */
+  .sideDicePanel { width: var(--five-full); padding: 8px 10px 6px; gap: 6px; }
+  .sideDiceValLabel { min-height: 1.3em; font-size: 12px; }
+  /* 上面：標題列、玩家卡再緊一點 */
+  .app, #app { gap: 8px; }
+  .playerBar { margin-bottom: 6px; }
+  .playerBar .seatGroup, .playerBar .seatGroup.isTurn { padding: 6px 10px; }
+  .statusBanner, .statusBanner.human, .statusBanner.cpu, .statusBanner.paused, .statusBanner.review, .statusBanner.ended { min-height: 0; margin-top: 8px; padding: 6px 10px; }
+  .statusText { font-size: 12.5px; }
+  .actionBar { margin: 8px -6px 0; }
+}
+
+/* ===== 手機：拿掉毛玻璃模糊與多餘的陰影 =====
+ * backdrop-filter 要在每一個畫面更新時把底下的內容重新模糊一次：頂欄、選組別面板、固定在畫面底部的按鈕列、
+ * 彈出視窗的背景都有，低階手機（Redmi 13C 這類）捲動或棋盤有動畫時就會掉格。改成不透明的底色，看起來幾乎一樣。 */
+@media (max-width: 600px), (pointer: coarse) {
+  .topBar, .gameTop, .sideDicePanel, .actionBar, .modalBackdrop {
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  .topBar, .gameTop { background: #0f172a; }
+  .sideDicePanel { background: #111c32; }
+  .actionBar { background: rgba(2, 6, 23, 0.98); }
+  .modalBackdrop { background: rgba(0, 0, 0, 0.82); }
+  .threatLayer .tMixed { filter: none; } /* 花五的鐵鍊不加陰影（SVG 濾鏡在手機上很慢） */
+}
+
+/* ===== 電腦：棋盤隨視窗放大 =====
+ * 原本棋盤固定最大 520 像素，大螢幕上只佔一小塊。現在取兩個限制中比較小的：
+ *   寬度：棋盤那一欄的寬度（container query 單位 cqw）扣掉勝率條、座標、右邊的選組別面板（--board-side-reserve）
+ *   高度：視窗高度扣掉棋盤上下的東西（頂欄、玩家卡、狀態列、按鈕列…，--board-v-reserve）
+ * 欄位也改成棋盤那一欄比較寬，並且大螢幕上整個版面可以更寬。範圍 360～860 像素（高度不夠時至少 480）。 */
+@media (min-width: 961px) {
+  :root {
+    --board-side-reserve: 200px;
+    --board-v-reserve: 348px;
+    /* 高度不夠的小螢幕：棋盤至少 480（頁面捲一下），但不超過那一欄的寬度 */
+    --board-max-size: clamp(360px, min(calc(100cqw - var(--board-side-reserve)), max(calc(100dvh - var(--board-v-reserve)), 480px)), 860px);
+  }
+  .boardSection { container-type: inline-size; }
+  .mainGrid { grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); }
+  .boardWithSide { gap: 18px; }
+  .boardWithSide .boardFrame { margin: 0; } /* 原本的 auto 邊距會把勝率條、棋盤、選組別面板拉開 */
+}
+@media (min-width: 1500px) {
+  .app, #app { max-width: min(1560px, 96vw); }
+}
+
+/* ===== 骰子面板：目前的點數、骰子展望（擲出 1~6 時走最佳步的勝率）、自選點數 =====
+ * 電腦版：棋盤右側一欄，六列橫條；手機版：棋盤下方一排，六根直條 */
+@media (min-width: 601px) { .sideDicePanel { width: 132px; min-width: 132px; max-width: 132px; } }
+.sideDiceValLabel { width: 100%; font-size: 12px; line-height: 1.3; min-height: 2.6em; overflow-wrap: anywhere; text-align: center; }
+.diceFaceRow { display: grid; grid-template-columns: 1fr; gap: 4px; width: 100%; }
+.diceFace {
+  position: relative; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  height: 26px; padding: 0 6px; border-radius: 7px; cursor: default; overflow: hidden;
+  border: 1.5px solid transparent; background: rgba(255, 255, 255, 0.05); color: #cbd5e1; font: inherit;
+}
+.diceFace .olBar {
+  position: absolute; left: 0; top: 0; bottom: 0; width: var(--ol, 0%); border-radius: 0 3px 3px 0;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.55), rgba(56, 189, 248, 0.55)); transition: width 0.35s ease;
+}
+.diceFace.olDead .olBar { background: linear-gradient(90deg, rgba(71, 85, 105, 0.6), rgba(148, 163, 184, 0.5)); }
+.diceFace.olLow .olBar { background: linear-gradient(90deg, rgba(220, 38, 38, 0.55), rgba(251, 146, 60, 0.55)); }
+.diceFace .olNum, .diceFace .olPct { position: relative; z-index: 1; line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7); }
+.diceFace .olNum { font-size: 13px; font-weight: 800; }
+.diceFace .olPct { font-size: 11.5px; font-weight: 700; color: #f1f5f9; font-variant-numeric: tabular-nums; }
+.diceFace.picked { border-color: #facc15; background: rgba(250, 204, 21, 0.16); }
+.diceFace.pickable { cursor: pointer; }
+.diceFace.pickable:hover { border-color: rgba(250, 204, 21, 0.6); }
+.diceFace:disabled { opacity: 1; }
+.diceOutlookTitle { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 2px; }
+.diceHint { font-size: 11px; color: #94a3b8; text-align: center; line-height: 1.35; }
+.sideDiceSection { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
+@media (max-width: 600px) {
+  .sideDiceSection { gap: 4px; }
+  .diceFaceRow { grid-template-columns: repeat(6, 1fr); }
+  .diceFace { flex-direction: column; justify-content: flex-end; height: 58px; padding: 2px 0 3px; gap: 2px; }
+  .diceFace .olBar { left: 3px; right: 3px; top: auto; bottom: 0; width: auto; height: var(--ol, 0%); border-radius: 3px 3px 0 0; }
+}
+/* 勝率走勢的提示框：骰運與棋力損失 */
+.winChartTip .wcTipLuck { color: #7dd3fc; margin-top: 2px; }
+
+/* ===== 終局總結 ===== */
+.summaryCard { display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+.summaryTable { width: 100%; border-collapse: collapse; }
+.summaryTable th, .summaryTable td { padding: 5px 8px; text-align: center; border-bottom: 1px solid rgba(148, 163, 184, 0.16); }
+.summaryTable th:first-child, .summaryTable td:first-child { text-align: left; }
+.summaryTable th { color: #94a3b8; font-weight: 600; }
+.summaryHead { font-weight: 800; font-size: 15px; }
+.summaryJump { display: flex; flex-wrap: wrap; gap: 6px; }
+.summaryJump button {
+  font: inherit; font-size: 12px; font-weight: 800; color: #fff; border: none; border-radius: 9px; padding: 3px 9px; cursor: pointer;
+}
+.summaryJump button.mk-brilliant { background: #1baca6; }
+.summaryJump button.mk-good { background: #22a06b; }
+.summaryJump button.mk-interesting { background: #4f8cdb; }
+.summaryJump button.mk-dubious { background: #ca8a04; }
+.summaryJump button.mk-mistake { background: #f59e0b; }
+.summaryJump button.mk-blunder { background: #dc2626; }
+.summaryTable .summaryMarks { text-align: left; }
+.summaryTable .summaryMarks .mvMark { margin: 0 4px 3px 0; }
+.summaryNote { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+.pos { color: #4ade80; } .neg { color: #f87171; }
+
+/* 白方的分數旁標貼目 */
+.scoreWrap { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; line-height: 1; }
+.scoreWrap .komiTag { font-size: 10.5px; font-weight: 600; color: #94a3b8; white-space: nowrap; }
+
+/* 匯入棋譜、新局種子：輸入框跟其他設定一樣的深色 */
+#importText, #newGameSeed {
+  background: #0f172a; color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 8px; padding: 6px 9px; font: inherit;
+}
+#importText { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; box-sizing: border-box; }

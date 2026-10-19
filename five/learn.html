@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a0f1c" />
+  <title>五連黑白棋 規則學院</title>
+  <meta name="description" content="五連黑白棋規則學院：用 8 個互動小關卡學會 4 組棋子、夾住落子、同組五連、翻面五連、擋威脅與終局數棋。" />
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="256x256" href="../assets/icon.png">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="../shared/academy.css" />
+  <link rel="stylesheet" href="../shared/ui.css" />
+  <link rel="stylesheet" href="./learn/learn.css" />
+</head>
+<body>
+  <div class="acadApp">
+    <header class="acadTop">
+      <h2 class="brand"><game-switcher current="five"></game-switcher></h2>
+      <span class="spacer"></span>
+      <lang-select></lang-select>
+      <a class="btn" href="../index.html" data-academy-home>回到遊戲</a>
+    </header>
+    <main id="academy"></main>
+  </div>
+  <script type="module" src="../shared/game-switcher.js"></script>
+  <script type="module" src="../shared/lang-select.js"></script>
+  <script type="module">
+    import { startAcademy } from "../shared/academy.js";
+    import { lessons } from "./learn/lessons.js";
+    import { t } from "./learn/i18n.js";
+    startAcademy({
+      id: "five",
+      t,
+      playHref: "../index.html",
+      lessons,
+      root: document.getElementById("academy")
+    });
+  </script>
+</body>
+</html>

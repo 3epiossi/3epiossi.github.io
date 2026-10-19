@@ -12,7 +12,8 @@
 
   <style>
     :root {
-      --cell: clamp(34px, 5.6vw, 52px);
+      /* 下限 34px；320px 寬的手機放不下 8 格加座標，下限跟著螢幕縮 */
+      --cell: clamp(min(34px, calc((100vw - 108px) / 8)), 5.6vw, 52px);
       --coord: 22px;
       --accent: #38bdf8;
       --bg: #0b1329;
@@ -662,7 +663,7 @@
     /* Puzzle Quick Index Navigation Grid */
     .puzzleNavGrid {
       display: grid;
-      grid-template-columns: repeat(8, 1fr);
+      grid-template-columns: repeat(8, minmax(0, 1fr));
       gap: 6px;
     }
 
@@ -719,13 +720,9 @@
   <div class="app">
     <!-- Top Navigation Bar -->
     <header class="topNav">
-      <div class="langSwitcher">
-        <button class="langBtn" data-lang="zh" onclick="setLang('zh')">中</button>
-        <button class="langBtn" data-lang="en" onclick="setLang('en')">EN</button>
-        <button class="langBtn" data-lang="ja" onclick="setLang('ja')">日</button>
-      </div>
+      <lang-select></lang-select>
       <div class="brandTitle">
-        <span id="brandTitleText">誰會贏？</span>
+        <game-switcher id="brandTitleText" current="whowins"></game-switcher>
         <span class="badge" id="badgeText">官方規則學院</span>
       </div>
       <div class="navActions">
@@ -855,6 +852,8 @@
     </main>
   </div>
 
+  <script type="module" src="./shared/game-switcher.js"></script>
+  <script type="module" src="./shared/lang-select.js"></script>
   <script>
     const N = 8;
     const EMPTY = 0, BLACK = 1, WHITE = 2;
@@ -1311,6 +1310,7 @@
       });
       applyTutorialI18n();
       loadPuzzle(currentPuzzleIdx);
+      window.dispatchEvent(new Event('langchange'));
     }
 
     function applyTutorialI18n() {

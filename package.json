@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test tests/*.test.js",
+    "test:district": "node --test district/tests/*.test.js",
+    "measure:district": "node district/tests/measure.js",
     "build": "node build.js",
     "export": "node export_workspace.js"
   },

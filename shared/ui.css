@@ -1,0 +1,252 @@
+/**
+ * 三個遊戲共用的介面樣式：規則視窗、設定視窗（分頁、設定列、分段按鈕、開關）與按鈕。
+ * 五連黑白棋、誰會贏？的舊彈窗（.modalDialog 等）與劃區爭霸的 .sheetDialog 也套用同一套外觀，
+ * 所以三個遊戲打開設定或規則時，看到的是同一種視窗。
+ */
+
+:root {
+  --ui-bg: #0b1220;
+  --ui-surface: #111a2e;
+  --ui-surface-2: #172238;
+  --ui-surface-3: #1f2c46;
+  --ui-line: rgba(148, 163, 184, 0.18);
+  --ui-line-strong: rgba(148, 163, 184, 0.34);
+  --ui-text: #e8edf6;
+  --ui-muted: #94a3b8;
+  --ui-faint: #64748b;
+  --ui-accent: #7dd3fc;
+  --ui-danger: #f87171;
+  --ui-radius: 18px;
+  --ui-radius-sm: 10px;
+}
+
+/* ------------------------------------------------------------------ */
+/* 視窗外殼：.uiDialog（規則視窗）、.modalDialog（舊彈窗）、.sheetDialog（劃區爭霸） */
+/* ------------------------------------------------------------------ */
+
+dialog.uiDialog {
+  width: min(680px, calc(100vw - 24px));
+  max-height: min(88vh, 760px);
+  padding: 0;
+  border: 1px solid var(--ui-line-strong);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  font: 15px/1.55 "Noto Sans TC", "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow: hidden;
+}
+dialog.uiDialog[open] { display: flex; flex-direction: column; animation: uiPop 0.2s ease-out; }
+dialog.uiDialog::backdrop { background: rgba(3, 7, 16, 0.66); backdrop-filter: blur(4px); }
+@keyframes uiPop { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
+
+body .modalDialog { overflow: hidden; }
+body .modalBody { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+body .modalDialog > .uiTabs, body .sheetDialog > .uiTabs { flex: none; }
+body .modalDialog, body .sheetDialog {
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-line-strong);
+  border-radius: var(--ui-radius);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+body .modalHeader, body .sheetHeader, .uiDlgHead {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 20px 14px 24px;
+  border-bottom: 0;
+}
+body .modalTitle, body .sheetHeader h2, .uiDlgHead h2 {
+  margin: 0; font-size: 1.15rem; font-weight: 800; letter-spacing: 0; color: var(--ui-text);
+}
+body .modalCloseBtn, .uiIconBtn {
+  display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0;
+  border: 0; border-radius: 9px; background: transparent; color: var(--ui-muted);
+  font-size: 18px; line-height: 1; cursor: pointer;
+}
+body .modalCloseBtn:hover, .uiIconBtn:hover { background: var(--ui-surface-3); color: var(--ui-text); }
+body .modalBody, body .sheetBody, .uiDlgBody { padding: 4px 24px 20px; }
+.uiDlgBody { overflow-y: auto; flex: 1; }
+body .modalFooter, body .sheetFooter, .uiDlgFoot {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 14px 24px; border-top: 1px solid var(--ui-line); background: transparent;
+}
+
+/* 按鈕 */
+.uiBtn, body .modalFooter .btn, body .sheetFooter .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 40px; padding: 0 16px; border-radius: 10px;
+  border: 1px solid var(--ui-line-strong); background: var(--ui-surface-2); color: var(--ui-text);
+  font: inherit; font-size: 0.92rem; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.uiBtn:hover, body .modalFooter .btn:hover, body .sheetFooter .btn:hover { background: var(--ui-surface-3); }
+.uiBtn.primary, body .modalFooter .btn.primary, body .sheetFooter .btn.primary, body .sheetFooter .btnPrimary {
+  background: #f1f5f9; border-color: #f1f5f9; color: #0b1220;
+}
+.uiBtn.primary:hover, body .modalFooter .btn.primary:hover, body .sheetFooter .btn.primary:hover, body .sheetFooter .btnPrimary:hover { background: #fff; }
+body .modalFooter .btn.danger { color: var(--ui-danger); }
+.uiBtn svg { width: 18px; height: 18px; flex: none; }
+.uiBtn:focus-visible, .uiTab:focus-visible, .uiIconBtn:focus-visible, .uiSeg button:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
+
+/* ------------------------------------------------------------------ */
+/* 分頁                                                                  */
+/* ------------------------------------------------------------------ */
+
+.uiTabs { display: flex; gap: 4px; padding: 0 20px; border-bottom: 1px solid var(--ui-line); overflow-x: auto; }
+.uiTab {
+  flex: none; display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 14px; margin-bottom: -1px; border: 0; border-bottom: 2px solid transparent;
+  background: transparent; color: var(--ui-muted); font: inherit; font-size: 0.92rem; font-weight: 600; cursor: pointer;
+}
+.uiTab:hover { color: var(--ui-text); }
+.uiTab.on { color: var(--ui-text); border-bottom-color: var(--ui-accent); }
+.uiTab svg { width: 16px; height: 16px; }
+.uiPanel[hidden] { display: none !important; }
+.uiPanel { padding-top: 14px; display: flex; flex-direction: column; gap: 16px; }
+
+/* ------------------------------------------------------------------ */
+/* 規則視窗內容                                                          */
+/* ------------------------------------------------------------------ */
+
+.uiGoal { margin: 0; padding: 12px 14px; border-radius: 12px; background: rgba(125, 211, 252, 0.09); border: 1px solid rgba(125, 211, 252, 0.25); font-weight: 600; color: #dbeafe; }
+.uiSteps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; counter-reset: step; }
+.uiSteps li {
+  counter-increment: step; display: flex; flex-direction: column; gap: 10px; padding: 12px;
+  border-radius: 14px; background: var(--ui-surface-2); border: 1px solid var(--ui-line);
+}
+.uiArt { position: relative; border-radius: 10px; background: #0b1220; overflow: hidden; aspect-ratio: 16 / 9; }
+.uiArt svg { width: 100%; height: 100%; display: block; }
+.uiArt::before {
+  content: counter(step); position: absolute; left: 8px; top: 8px; z-index: 1;
+  width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%;
+  background: #f1f5f9; color: #0b1220; font-size: 0.78rem; font-weight: 800;
+}
+.uiStepText b { display: block; font-size: 0.98rem; margin-bottom: 2px; }
+.uiStepText p { margin: 0; font-size: 0.86rem; font-weight: 400; color: var(--ui-muted); line-height: 1.5; }
+.uiNote { margin: 0 2px; font-size: 0.84rem; color: var(--ui-muted); }
+
+.uiKeys { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.uiKeys li { display: flex; align-items: baseline; gap: 14px; padding: 10px 2px; border-bottom: 1px solid var(--ui-line); font-size: 0.92rem; }
+.uiKeys li:last-child { border-bottom: 0; }
+.uiKeys kbd { flex: none; min-width: 74px; text-align: center; padding: 2px 8px; border-radius: 7px; border: 1px solid var(--ui-line-strong); background: var(--ui-surface-2); font: inherit; font-size: 0.85rem; font-weight: 700; }
+.uiKeys span { color: var(--ui-muted); }
+.uiGuide { margin-top: 12px; border: 1px solid var(--ui-line); border-radius: 12px; }
+.uiGuide summary { padding: 11px 14px; cursor: pointer; font-weight: 600; color: var(--ui-muted); }
+.uiGuide[open] summary { color: var(--ui-text); border-bottom: 1px solid var(--ui-line); }
+.uiGuide .uiGuideBody { padding: 4px 14px 14px; font-size: 0.88rem; color: #cbd5e1; }
+.uiGuide .uiGuideBody h3 { font-size: 0.95rem; margin: 14px 0 6px; color: var(--ui-text); }
+
+/* ------------------------------------------------------------------ */
+/* 設定：區塊、設定列、分段按鈕、開關                                         */
+/* ------------------------------------------------------------------ */
+
+.uiSection { margin: 0 0 22px; }
+.uiSection:last-child { margin-bottom: 0; }
+.uiSectionHead { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; }
+.uiSectionHead h3 { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--ui-text); }
+.uiSectionHead span { font-size: 0.78rem; color: var(--ui-muted); }
+
+.uiRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 0; border-top: 1px solid var(--ui-line); }
+.uiRow:first-of-type { border-top: 0; }
+.uiLabel { display: flex; flex-direction: column; min-width: 0; }
+.uiLabel strong { font-size: 0.92rem; font-weight: 600; }
+.uiLabel span { font-size: 0.78rem; color: var(--ui-muted); line-height: 1.4; }
+
+.uiSeg { display: inline-flex; padding: 2px; gap: 2px; border-radius: 10px; background: #0b1220; border: 1px solid var(--ui-line); flex: none; }
+.uiSeg button {
+  height: 32px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--ui-muted);
+  font: inherit; font-size: 0.84rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.uiSeg button:hover { color: var(--ui-text); }
+.uiSeg button.on { background: var(--ui-surface-3); color: var(--ui-text); }
+
+/* 舊設定列（五連黑白棋與誰會贏的 .settingRow + .settingsHint）重新整理成新外觀 */
+body .settingRow {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin: 0; padding: 11px 0 2px; border-top: 1px solid var(--ui-line);
+}
+body .settingRow label, body .settingRow > span { font-size: 0.92rem; font-weight: 600; color: var(--ui-text); }
+body .settingRow select,
+body .uiBody select, body .modalBody select {
+  min-height: 36px; padding: 0 30px 0 12px; border-radius: 9px; border: 1px solid var(--ui-line-strong);
+  background-color: #0b1220; color: var(--ui-text); font: inherit; font-size: 0.88rem;
+}
+body .settingsHint {
+  margin: 0 0 8px; padding: 0; border: 0; background: transparent; border-radius: 0;
+  font-size: 0.78rem; line-height: 1.45; color: var(--ui-muted);
+}
+body .modalBody input[type="text"] {
+  min-height: 36px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--ui-line-strong);
+  background: #0b1220; color: var(--ui-text); font: inherit; font-size: 0.9rem;
+}
+body .modalBody input[type="text"]:focus, body .modalBody select:focus { outline: none; border-color: var(--ui-accent); }
+
+/* 選項小卡（主題、棋子文字、寶石色…）統一成同一種晶片 */
+body .skinPresetChip {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px;
+  border-radius: 10px; border: 1px solid var(--ui-line-strong); background: var(--ui-surface-2); color: var(--ui-text);
+  font: inherit; font-size: 0.86rem; cursor: pointer;
+}
+body .skinPresetChip:hover { background: var(--ui-surface-3); }
+body .skinPresetChip.active { border-color: var(--ui-accent); box-shadow: 0 0 0 1px var(--ui-accent) inset; background: var(--ui-surface-3); }
+body .skinThemeSection, body .skinSideCard { background: transparent; border: 1px solid var(--ui-line); border-radius: 14px; padding: 14px; }
+body .skinSectionTitle { font-size: 0.86rem; font-weight: 700; color: var(--ui-text); }
+
+@media (max-width: 640px) {
+  .uiSteps { grid-template-columns: 1fr; }
+  .uiSteps li { flex-direction: row; align-items: center; }
+  .uiSteps .uiArt { width: 132px; flex: none; }
+  dialog.uiDialog { width: calc(100vw - 16px); max-height: 92vh; }
+  body .modalBody, body .sheetBody, .uiDlgBody { padding-left: 16px; padding-right: 16px; }
+  .uiDlgHead, body .modalHeader, body .sheetHeader { padding-left: 16px; }
+  .uiRow, body .settingRow { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) { dialog.uiDialog[open] { animation: none; } }
+
+/* 語言選單：三個遊戲標題列同一個樣子 */
+lang-select { display: inline-block; }
+.uiLangSelect {
+  font: inherit; font-size: 13px; font-weight: 600; color: #cbd5e1;
+  height: 34px; padding: 0 26px 0 10px; border-radius: 9px; cursor: pointer;
+  border: 1px solid rgba(148, 163, 184, 0.28); background-color: rgba(15, 23, 42, 0.6);
+}
+.uiLangSelect:hover { background-color: rgba(30, 41, 59, 0.8); }
+.uiLangSelect:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
+/* 手機：標題列塞不下時（英文、日文的按鈕較長），由遊戲名稱縮成「…」，按鈕與語言選單不縮；
+   語言選單寬度跟著最長的選項（English），也一併收窄 */
+@media (max-width: 640px) {
+  header .brand, header .brand h1 { min-width: 0; }
+  header .topActions { flex: none; }
+  .uiLangSelect { padding: 0 18px 0 6px; max-width: 78px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* 操作列按鈕：沿用傑利蠑螈的 toolBtn 設計（線條圖示在上、文字在下，平時透明，懸停與開啟時浮起） */
+/* 五連黑白棋與誰會贏？的 .actionBar 共用 */
+/* ------------------------------------------------------------------ */
+
+.actionBar { --ico-refresh: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12a9 9 0 1 1-3-6.7L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3C/svg%3E"); --ico-hint: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6'/%3E%3Cpath d='M10 22h4'/%3E%3Cpath d='M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z'/%3E%3C/svg%3E"); --ico-play: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 4l13 8-13 8z'/%3E%3C/svg%3E"); --ico-pause: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 4v16'/%3E%3Cpath d='M16 4v16'/%3E%3C/svg%3E"); justify-content: center; }
+.actionBar .actBtn {
+  flex-direction: column; gap: 3px; min-width: 54px; padding: 7px 10px 6px;
+  background: transparent; border: 1px solid transparent; border-radius: 10px;
+  color: var(--ui-muted); font-size: 11.5px; font-weight: 500; line-height: 1.2;
+}
+.actionBar .actBtn:hover:not(:disabled) { background: var(--ui-surface-2); color: var(--ui-text); }
+.actionBar .actBtn.active, .actionBar .actBtn.primary,
+.actionBar .actBtn.active:hover:not(:disabled), .actionBar .actBtn.primary:hover:not(:disabled) {
+  background: var(--ui-surface-2); border-color: var(--ui-line-strong); color: var(--ui-text); box-shadow: none;
+}
+.actionBar .actBtn.icon { min-width: 0; width: 38px; padding: 10px 0; font-size: 14px; flex-direction: row; }
+.actionBar .actBtn:not(.icon)::before {
+  content: ""; width: 18px; height: 18px; flex: none; background: currentColor;
+  -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat;
+}
+#restartBtn { --ico: var(--ico-refresh); }
+#hintBtn { --ico: var(--ico-hint); }
+#watchBtn, #pauseResumeBtn.primary, #resumeHereBtn { --ico: var(--ico-play); }
+#pauseResumeBtn { --ico: var(--ico-pause); }
+.actionBar .actSep { height: 30px; }
+@media (max-width: 720px) {
+  .actionBar .actBtn { min-width: 0; padding: 6px 6px 5px; font-size: 11px; }
+  .actionBar .actBtn.icon { width: 32px; padding: 10px 0; }
+}
