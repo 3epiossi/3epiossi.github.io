@@ -640,6 +640,11 @@ html { scrollbar-gutter: stable; }
   .boardWithSide { gap: 8px; }
   /* 選組別：一列四顆，標題拿掉（下面那行字已經說要選組別） */
   .sideDicePanel { width: var(--five-full); padding: 8px 10px 6px; gap: 6px; }
+  /* 選組別面板跟按鈕列一樣浮在底部：短螢幕（例如 iPhone SE）捲不到棋盤下方時，四個花色還是看得到 */
+  .sideDicePanel {
+    position: sticky; bottom: var(--action-bar-h, 64px); z-index: 29;
+    border-radius: 12px 12px 0 0; box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.45);
+  }
   .sideDicePanel .sideTurnLabel { display: none; }
   .sideDiceSection { gap: 4px; }
   .handWidget { grid-template-columns: repeat(4, 52px); gap: 14px; justify-content: center; }

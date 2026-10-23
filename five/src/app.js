@@ -130,6 +130,18 @@ export class WeightedOthelloApp {
     this.init();
   }
 
+  /**
+   * 手機上選組別面板跟按鈕列一樣浮在畫面底部（短螢幕捲不到棋盤下方時也看得到），
+   * 它要貼在按鈕列正上方，所以把按鈕列的實際高度（含 iPhone 底部安全區）寫進 --action-bar-h。
+   */
+  trackActionBarHeight() {
+    const bar = document.querySelector(".actionBar");
+    if (!bar || typeof ResizeObserver !== "function") return;
+    const set = () => document.documentElement.style.setProperty("--action-bar-h", `${bar.offsetHeight}px`);
+    new ResizeObserver(set).observe(bar);
+    set();
+  }
+
   init() {
     ModalManager.init();
     applyI18n();
@@ -164,6 +176,7 @@ export class WeightedOthelloApp {
 
     this.bindDOMEvents();
     this.bindKeyboardShortcuts();
+    this.trackActionBarHeight();
     this.applyTheme(this.settings.theme || "neon");
     this.applyAnimationLevel();
 
